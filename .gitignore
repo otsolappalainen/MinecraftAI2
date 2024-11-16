@@ -1,0 +1,28 @@
+# Ignore Python cache files
+*.pyc
+__pycache__/
+
+# Ignore data and log files
+*.pkl
+*.npy
+*.csv
+logs/
+data/
+
+# Ignore virtual environments
+.venv/
+.env/
+
+# Ignore model and checkpoint files
+*.pth
+*.zip
+*.dll
+*.pyd
+
+# Ignore images
+*.png
+
+# Ignore specific folders
+scripts/game_interface/ppo_tensorboard/
+scripts/full_ai/training_logs/
+fresh-repo/
