@@ -21,6 +21,7 @@ def parse_log_file(file_path):
         "Yaw": [],
         "Pitch": [],
         "Action": [],
+        "Action Name": [],
         "Reward": [],
         "Cumulative Reward": []
     }
@@ -30,10 +31,10 @@ def parse_log_file(file_path):
             match = re.match(
                 r"Step (\d+): X = ([\d\.-]+), Y = ([\d\.-]+), Z = ([\d\.-]+), "
                 r"Yaw = ([\d\.-]+), Pitch = ([\d\.-]+), Action = (\d+), "
-                r"Reward = ([\d\.-]+), Cumulative Reward = ([\d\.-]+)", line
+                r"Action Name = (\w+), Reward = ([\d\.-]+), Cumulative Reward = ([\d\.-]+)", line
             )
             if match:
-                step, x, y, z, yaw, pitch, action, reward, cum_reward = match.groups()
+                step, x, y, z, yaw, pitch, action, action_name, reward, cum_reward = match.groups()
                 data["Step"].append(int(step))
                 data["X"].append(float(x))
                 data["Y"].append(float(y))
@@ -41,6 +42,7 @@ def parse_log_file(file_path):
                 data["Yaw"].append(float(yaw))
                 data["Pitch"].append(float(pitch))
                 data["Action"].append(int(action))
+                data["Action Name"].append(action_name)
                 data["Reward"].append(float(reward))
                 data["Cumulative Reward"].append(float(cum_reward))
     
@@ -51,7 +53,9 @@ def aggregate_data(df, bin_size):
     Aggregate data into bins of size `bin_size` to reduce resolution.
     """
     df["Bin"] = df["Step"] // bin_size
-    aggregated = df.groupby("Bin").mean().reset_index()
+    # Aggregate only numeric columns
+    numeric_columns = ["Step", "X", "Y", "Z", "Yaw", "Pitch", "Reward", "Cumulative Reward"]
+    aggregated = df[numeric_columns].groupby(df["Bin"]).mean().reset_index()
     aggregated["Step"] = aggregated["Bin"] * bin_size  # Map bins back to steps
     return aggregated
 
