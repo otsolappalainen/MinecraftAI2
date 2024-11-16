@@ -40,6 +40,23 @@ def handle_thread_exception(args):
 
 threading.excepthook = handle_thread_exception
 
+class CustomLRSchedule:
+    """
+    Custom learning rate schedule that starts with a high learning rate and decays it over time.
+    """
+    def __init__(self, initial_lr=0.001, decay_rate=0.99):
+        self.initial_lr = initial_lr
+        self.decay_rate = decay_rate
+
+    def __call__(self, progress_remaining):
+        """
+        Calculate the learning rate based on the remaining training progress.
+        progress_remaining: Fraction of training left (1.0 at the start, 0.0 at the end).
+        """
+        return self.initial_lr * (self.decay_rate ** (1 - progress_remaining))
+
+lr_schedule = CustomLRSchedule(initial_lr=0.001, decay_rate=0.99)
+
 class TimestampedEvalCallback(EvalCallback):
     def __init__(self, *args, save_path, **kwargs):
         super(TimestampedEvalCallback, self).__init__(*args, **kwargs)
@@ -54,6 +71,15 @@ class TimestampedEvalCallback(EvalCallback):
             self.model.save(best_model_path)
             self.logger.info(f"Best model saved as: {best_model_path}")
         return result
+
+class LogLrCallback(BaseCallback):
+    def __init__(self, verbose=0):
+        super(LogLrCallback, self).__init__(verbose)
+
+    def _on_step(self):
+        current_lr = self.model.lr_schedule(self.locals["progress_remaining"])
+        self.logger.record("train/learning_rate", current_lr)
+        return True
 
 
 
@@ -279,9 +305,9 @@ def choose_model_to_load(env, policy_kwargs, models_dir, args):
             policy="MultiInputPolicy",
             env=env,
             verbose=1 if args.debug else 0,
-            learning_rate=0.0003,
-            n_steps=1024,
-            batch_size=128,
+            learning_rate=lr_schedule,
+            n_steps=512,
+            batch_size=64,
             n_epochs=20,
             tensorboard_log="./ppo_minecraft_tensorboard/",
             policy_kwargs=policy_kwargs,
@@ -336,9 +362,9 @@ def main():
             policy="MultiInputPolicy",
             env=env,
             verbose=1 if args.debug else 0,
-            learning_rate=0.0003,
-            n_steps=1024,
-            batch_size=128,
+            learning_rate=lr_schedule,
+            n_steps=512,
+            batch_size=64,
             n_epochs=20,
             tensorboard_log="./ppo_minecraft_tensorboard/",
             policy_kwargs=policy_kwargs,
@@ -349,6 +375,8 @@ def main():
 
     logger.info("Starting keyboard listener for stopping training...")
     listener = start_keyboard_listener()
+
+    log_lr_callback = LogLrCallback()
 
     # Callbacks
     eval_callback = TimestampedEvalCallback(
@@ -369,7 +397,7 @@ def main():
     log_dir = r'E:\training data\fullAIlogs'
     logging_callback = LoggingCallback(log_dir=log_dir)
 
-    callback = CallbackList([eval_callback, stop_training_callback, checkpoint_callback, logging_callback])
+    callback = CallbackList([eval_callback, stop_training_callback, checkpoint_callback, logging_callback, log_lr_callback])
 
     # Training variables
     total_timesteps = 100000
@@ -407,9 +435,9 @@ def main():
                                 policy="MultiInputPolicy",
                                 env=env,
                                 verbose=1 if args.debug else 0,
-                                learning_rate=0.0003,
-                                n_steps=1024,
-                                batch_size=128,
+                                learning_rate=lr_schedule,
+                                n_steps=512,
+                                batch_size=64,
                                 n_epochs=20,
                                 tensorboard_log="./ppo_minecraft_tensorboard/",
                                 policy_kwargs=policy_kwargs,
@@ -420,9 +448,9 @@ def main():
                             policy="MultiInputPolicy",
                             env=env,
                             verbose=1 if args.debug else 0,
-                            learning_rate=0.0003,
-                            n_steps=1024,
-                            batch_size=128,
+                            learning_rate=lr_schedule,
+                            n_steps=512,
+                            batch_size=64,
                             n_epochs=20,
                             tensorboard_log="./ppo_minecraft_tensorboard/",
                             policy_kwargs=policy_kwargs,
