@@ -311,7 +311,7 @@ class MinecraftAgent:
             pyautogui.mouseUp(button='left')
             self.is_left_clicking = False
 
-    def right_click(self, hold_duration=0.2):
+    def right_click(self, hold_duration=0.1):
         print("Performing right click...")
         pyautogui.mouseDown(button='right')
         time.sleep(hold_duration)

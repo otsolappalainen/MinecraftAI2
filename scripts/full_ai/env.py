@@ -13,7 +13,7 @@ import torch
 
 # Constants
 ACTION_DELAY = 0.2
-MAX_EPISODE_LENGTH = 500
+MAX_EPISODE_LENGTH = 1000
 TASK_SIZE = 20
 REWARD_MODEL = "constant_x"  # or "random_task"
 TRAINING_LOGS_DIR = "training_logs"
@@ -268,8 +268,8 @@ class MinecraftEnv(gym.Env):
         # Reset step counter
         self.step_counter = 0
 
-        # Set action mask to allow only specific actions
-        allowed_actions = ['move_forward', 'turn_left', 'turn_right']
+        # Set action mask to allow only specific actions (0, 23, 24)
+        allowed_actions = ['move_forward', 'big_turn_left', 'big_turn_right']
         self.current_mask = np.zeros(len(self.action_map), dtype=np.float32)
         for action_id, action_name in self.action_map.items():
             if action_name in allowed_actions:

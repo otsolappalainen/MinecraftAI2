@@ -40,7 +40,7 @@ TIMESTAMPED_BEST_MODELS_DIR = os.path.join(LOGS_DIR, "timestamped_best_models")
 
 # Training parameters (default settings)
 TRAINING_PARAMS = {
-    'n_steps': 512,
+    'n_steps': 1024,
     'batch_size': 64,
     'n_epochs': 10,
     'total_timesteps': 100000,
@@ -186,8 +186,6 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         image_shape = observation_space.spaces['image'].shape
         position_shape = observation_space.spaces['position'].shape
         task_shape = observation_space.spaces['task'].shape[0]
-        
-
 
         # CNN for image input
         n_input_channels = 1  # Assuming grayscale images
@@ -206,21 +204,17 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
             sample_image = torch.zeros((1, n_input_channels, *image_shape))
             self.image_feature_dim = self.image_cnn(sample_image).view(-1).shape[0]
 
-        # Feedforward networks for other inputs
-        self.position_net = nn.Sequential(
-            nn.Linear(position_shape[0], 64),
+        # Shared network for combined position and task
+        self.position_task_net = nn.Sequential(
+            nn.Linear(position_shape[0] + task_shape, 128),  # Combine position and task
             nn.ReLU(),
-            nn.Linear(64, 64),
+            nn.Linear(128, 128),
             nn.ReLU(),
-        )
-
-        self.task_net = nn.Sequential(
-            nn.Linear(task_shape, 32),
-            nn.ReLU(),
-            nn.Linear(32, 32),
+            nn.Linear(128, 64),  # Output compressed size
             nn.ReLU(),
         )
 
+        # Separate network for other scalar inputs
         self.scalar_net = nn.Sequential(
             nn.Linear(3, 32),  # Health, hunger, alive
             nn.ReLU(),
@@ -229,46 +223,40 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         )
 
         # Compute total feature dimension
-        self._features_dim = self.image_feature_dim + 64 + 32 + 32
+        self._features_dim = self.image_feature_dim + 64 + 32
         logger.info(f"CustomCombinedExtractor initialized with features_dim={self._features_dim}")
 
     def forward(self, observations):
+        # Process image input
         image_obs = observations['image'].float()
         logger.debug(f"Original image_obs shape: {image_obs.shape}")
 
         # Ensure image_obs is [batch_size, channels, height, width]
         if len(image_obs.shape) == 2:
-            # [H, W] -> [1, 1, H, W]
             image_obs = image_obs.unsqueeze(0).unsqueeze(0)
         elif len(image_obs.shape) == 3:
-            # [batch_size, H, W] -> [batch_size, 1, H, W]
             image_obs = image_obs.unsqueeze(1)
-        elif len(image_obs.shape) == 4:
-            # Already in [batch_size, channels, height, width], no action needed
-            pass
-        else:
-            raise ValueError(f"Unexpected image_obs shape: {image_obs.shape}")
 
         logger.debug(f"Processed image_obs shape: {image_obs.shape}")
-
-        # Now pass to CNN
         image_features = self.image_cnn(image_obs)
         logger.debug(f"Image features shape: {image_features.shape}")
 
-        # Process other observations as before...
+        # Combine position and task features
         batch_size = image_obs.shape[0]
         position_obs = observations['position'].float().view(batch_size, -1)
-        position_features = self.position_net(position_obs)
         task_obs = observations['task'].float().view(batch_size, -1)
-        task_features = self.task_net(task_obs)
+        position_task_input = torch.cat((position_obs, task_obs), dim=1)
+        position_task_features = self.position_task_net(position_task_input)
+
+        # Process scalar inputs
         health = observations['health'].view(batch_size, 1).float()
         hunger = observations['hunger'].view(batch_size, 1).float()
         alive = observations['alive'].view(batch_size, 1).float()
         scalar_obs = torch.cat([health, hunger, alive], dim=1)
         scalar_features = self.scalar_net(scalar_obs)
 
-        # Concatenate features
-        features = torch.cat((image_features, position_features, task_features, scalar_features), dim=1)
+        # Concatenate all features
+        features = torch.cat((image_features, position_task_features, scalar_features), dim=1)
         logger.debug(f"Concatenated features shape: {features.shape}")
 
         return features
@@ -295,8 +283,7 @@ class MaskedPolicy(ActorCriticPolicy):
             # Backup: Create a custom action_mask if missing.
             # Assuming we have 6 possible actions (indexed 0 through 5)
             custom_action_mask = np.zeros(action_logits.shape)  # All actions invalid by default
-            custom_action_mask[[0, 4, 5]] = 1  # Set actions 0, 4, and 5 as valid
-            
+            custom_action_mask[[0, 23, 24]] = 1  # Set actions 0, 23, and 24 as valid
             # Apply the custom action_mask to the logits
             masked_logits = action_logits + (1 - custom_action_mask) * -1e9
 
@@ -493,7 +480,7 @@ def main():
     )
 
     checkpoint_callback = TimestampedCheckpointCallback(
-        save_freq=200,
+        save_freq=400,
         save_path=MODELS_DIR,
         verbose=1
     )

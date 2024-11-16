@@ -6,6 +6,9 @@ import pandas as pd
 # Define the folder containing log files
 log_folder = r"C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\training_logs"
 
+# Parameters for graph resolution
+BIN_SIZE = 10  # Number of steps per bin for aggregation (e.g., 10, 100, 1000)
+
 def parse_log_file(file_path):
     """
     Parse a single log file to extract training data.
@@ -43,51 +46,63 @@ def parse_log_file(file_path):
     
     return pd.DataFrame(data)
 
-def plot_graphs(df, file_name, output_dir):
+def aggregate_data(df, bin_size):
     """
-    Plot graphs from a dataframe and save them as images.
+    Aggregate data into bins of size `bin_size` to reduce resolution.
+    """
+    df["Bin"] = df["Step"] // bin_size
+    aggregated = df.groupby("Bin").mean().reset_index()
+    aggregated["Step"] = aggregated["Bin"] * bin_size  # Map bins back to steps
+    return aggregated
+
+def plot_combined_graphs(df, output_dir, bin_size):
+    """
+    Plot combined graphs from the aggregated dataframe.
     """
     os.makedirs(output_dir, exist_ok=True)
     
+    # Aggregate data for reduced resolution
+    aggregated_df = aggregate_data(df, bin_size)
+
     # Plot Reward over Steps
     plt.figure()
-    plt.plot(df["Step"], df["Reward"], label="Reward")
+    plt.plot(aggregated_df["Step"], aggregated_df["Reward"], label="Reward")
     plt.xlabel("Step")
     plt.ylabel("Reward")
-    plt.title(f"Reward Over Steps - {file_name}")
+    plt.title(f"Reward Over Steps (Bin Size: {bin_size})")
     plt.legend()
-    plt.savefig(os.path.join(output_dir, f"{file_name}_reward.png"))
+    plt.savefig(os.path.join(output_dir, f"combined_reward_{bin_size}.png"))
     plt.close()
 
     # Plot Cumulative Reward over Steps
     plt.figure()
-    plt.plot(df["Step"], df["Cumulative Reward"], label="Cumulative Reward", color="orange")
+    plt.plot(aggregated_df["Step"], aggregated_df["Cumulative Reward"], label="Cumulative Reward", color="orange")
     plt.xlabel("Step")
     plt.ylabel("Cumulative Reward")
-    plt.title(f"Cumulative Reward Over Steps - {file_name}")
+    plt.title(f"Cumulative Reward Over Steps (Bin Size: {bin_size})")
     plt.legend()
-    plt.savefig(os.path.join(output_dir, f"{file_name}_cumulative_reward.png"))
+    plt.savefig(os.path.join(output_dir, f"combined_cumulative_reward_{bin_size}.png"))
     plt.close()
 
     # Plot Position (X, Z) over Steps
     plt.figure()
-    plt.plot(df["Step"], df["X"], label="X Position")
-    plt.plot(df["Step"], df["Z"], label="Z Position", color="green")
+    plt.plot(aggregated_df["Step"], aggregated_df["X"], label="X Position")
+    plt.plot(aggregated_df["Step"], aggregated_df["Z"], label="Z Position", color="green")
     plt.xlabel("Step")
     plt.ylabel("Position")
-    plt.title(f"Position Over Steps - {file_name}")
+    plt.title(f"Position Over Steps (Bin Size: {bin_size})")
     plt.legend()
-    plt.savefig(os.path.join(output_dir, f"{file_name}_position.png"))
+    plt.savefig(os.path.join(output_dir, f"combined_position_{bin_size}.png"))
     plt.close()
 
     # Plot Yaw over Steps
     plt.figure()
-    plt.plot(df["Step"], df["Yaw"], label="Yaw", color="purple")
+    plt.plot(aggregated_df["Step"], aggregated_df["Yaw"], label="Yaw", color="purple")
     plt.xlabel("Step")
     plt.ylabel("Yaw")
-    plt.title(f"Yaw Over Steps - {file_name}")
+    plt.title(f"Yaw Over Steps (Bin Size: {bin_size})")
     plt.legend()
-    plt.savefig(os.path.join(output_dir, f"{file_name}_yaw.png"))
+    plt.savefig(os.path.join(output_dir, f"combined_yaw_{bin_size}.png"))
     plt.close()
 
     # Plot Average Reward per Action
@@ -96,21 +111,29 @@ def plot_graphs(df, file_name, output_dir):
     plt.bar(action_rewards.index, action_rewards.values)
     plt.xlabel("Action")
     plt.ylabel("Average Reward")
-    plt.title(f"Average Reward per Action - {file_name}")
+    plt.title("Average Reward per Action")
     plt.xticks(action_rewards.index)
-    plt.savefig(os.path.join(output_dir, f"{file_name}_avg_reward_per_action.png"))
+    plt.savefig(os.path.join(output_dir, "combined_avg_reward_per_action.png"))
     plt.close()
 
-def process_all_logs(log_folder, output_dir="graphs"):
+def process_and_plot_all_logs(log_folder, output_dir="combined_graphs", bin_size=BIN_SIZE):
     """
-    Process all log files in the folder and generate graphs.
+    Process all log files, combine data, and generate graphs.
     """
+    all_data = []
     for file_name in os.listdir(log_folder):
         if file_name.endswith(".txt"):
             file_path = os.path.join(log_folder, file_name)
             print(f"Processing {file_name}...")
             df = parse_log_file(file_path)
-            plot_graphs(df, os.path.splitext(file_name)[0], output_dir)
+            all_data.append(df)
+    
+    # Combine all data into one DataFrame
+    combined_df = pd.concat(all_data, ignore_index=True)
+    print(f"Total steps processed: {len(combined_df)}")
+    
+    # Plot combined graphs
+    plot_combined_graphs(combined_df, output_dir, bin_size)
 
 # Run the script
-process_all_logs(log_folder)
+process_and_plot_all_logs(log_folder)
