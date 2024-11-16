@@ -40,6 +40,22 @@ def handle_thread_exception(args):
 
 threading.excepthook = handle_thread_exception
 
+class TimestampedEvalCallback(EvalCallback):
+    def __init__(self, *args, save_path, **kwargs):
+        super(TimestampedEvalCallback, self).__init__(*args, **kwargs)
+        self.save_path = save_path
+
+    def _on_step(self) -> bool:
+        result = super(TimestampedEvalCallback, self)._on_step()
+        if self.best_model_save_path is not None and self.best_model_updated:
+            # Save the best model with a timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            best_model_path = os.path.join(self.best_model_save_path, f"best_model_{timestamp}.zip")
+            self.model.save(best_model_path)
+            self.logger.info(f"Best model saved as: {best_model_path}")
+        return result
+
+
 
 class TimestampedCheckpointCallback(BaseCallback):
     """
@@ -335,11 +351,11 @@ def main():
     listener = start_keyboard_listener()
 
     # Callbacks
-    eval_callback = EvalCallback(
+    eval_callback = TimestampedEvalCallback(
         eval_env,
-        best_model_save_path="./logs/best_model",
+        best_model_save_path="./logs/best_model",  # Directory to save the best model
         log_path="./logs/",
-        eval_freq=500,
+        eval_freq=500,  # Evaluate every 500 steps
         deterministic=True,
         render=False
     )
@@ -430,16 +446,13 @@ def main():
                 logger.debug(f"Training completed for iteration. Total timesteps trained: {timesteps_trained}")
                 last_progress_time = time.time()
 
-                if (timesteps_trained+1) % reset_interval == 0:
-                    logger.info(f"Reset condition met at timestep {timesteps_trained}. Resetting training...")
-                    # Save the current model to a temporary file
-                    temp_model_path = os.path.join(models_dir, "temp_model.zip")
-                    model.save(temp_model_path)
-                    # Reload the model from the saved state
-                    model = PPO.load(temp_model_path, env=env)
-                    # Optionally, clean up the temporary file
-                    if os.path.exists(temp_model_path):
-                        os.remove(temp_model_path)
+                # Load the best model after evaluation
+                best_model_path = os.path.join(eval_callback.best_model_save_path, "best_model.zip")
+                if os.path.exists(best_model_path):
+                    logger.info("Using the best model for the next training iteration.")
+                    model = PPO.load(best_model_path, env=env)
+                else:
+                    logger.info("No best model found. Continuing with the current model.")
 
                 if stop_training:
                     logger.info("Stop training flag set. Exiting training loop.")
