@@ -1,0 +1,3222 @@
+Episode Log
+Reward found at step 235: 235
+Episode ended. Cumulative Reward: 1291.3508510926852
+Reward found at step 237: 237
+Episode ended. Cumulative Reward: 1104.3425428529308
+Reward found at step 383: 383
+Episode ended. Cumulative Reward: 1352.860511603446
+Reward found at step 397: 397
+Episode ended. Cumulative Reward: 1418.3011034797778
+Reward found at step 436: 436
+Episode ended. Cumulative Reward: 1413.5777898934687
+Reward found at step 628: 628
+Episode ended. Cumulative Reward: 1350.1771582570232
+Reward found at step 548: 548
+Episode ended. Cumulative Reward: 1370.2097235506412
+Reward found at step 963: 963
+Episode ended. Cumulative Reward: 1705.012235253314
+Episode ended. Cumulative Reward: 36.79270861297903
+Episode ended. Cumulative Reward: 403.3902534302425
+Episode ended. Cumulative Reward: 389.18628874968346
+Episode ended. Cumulative Reward: 312.3158055176403
+Episode ended. Cumulative Reward: 354.44552248262244
+Episode ended. Cumulative Reward: 224.23037410700402
+Episode ended. Cumulative Reward: 487.7529108132731
+Episode ended. Cumulative Reward: 205.05929639593313
+Episode ended. Cumulative Reward: 296.7438215793293
+Episode ended. Cumulative Reward: 487.9795403686646
+Episode ended. Cumulative Reward: 413.81759841224994
+Episode ended. Cumulative Reward: 169.40874723473684
+Episode ended. Cumulative Reward: 602.7052475304114
+Episode ended. Cumulative Reward: 336.5294975632923
+Episode ended. Cumulative Reward: 430.1115092976284
+Episode ended. Cumulative Reward: 315.03506359535163
+Episode ended. Cumulative Reward: 433.4738881627053
+Episode ended. Cumulative Reward: 395.4152311849765
+Episode ended. Cumulative Reward: 359.8281459274191
+Episode ended. Cumulative Reward: 473.77341472475814
+Reward found at step 937: 937
+Episode ended. Cumulative Reward: 2174.0502503442276
+Episode ended due to reaching max steps: 1000, at distance: 720.4807618374838, action 2
+Episode ended. Cumulative Reward: -19282.175545488073
+Episode ended due to reaching max steps: 1000, at distance: 84.16127676669369, action 3
+Episode ended. Cumulative Reward: 181.4992674383809
+Episode ended due to reaching max steps: 1000, at distance: 111.1546848573146, action 0
+Episode ended. Cumulative Reward: 692.9495967257583
+Episode ended due to reaching max steps: 1000, at distance: 41.8549886504179, action 3
+Episode ended. Cumulative Reward: 328.56954662422436
+Episode ended due to reaching max steps: 1000, at distance: 271.8881854132028, action 3
+Episode ended. Cumulative Reward: 173.59724427613116
+Episode ended due to reaching max steps: 1000, at distance: 1021.2420629047747, action 1
+Episode ended. Cumulative Reward: -47120.77105651941
+Episode ended due to reaching max steps: 1000, at distance: 1034.4620637682112, action 2
+Episode ended. Cumulative Reward: -46917.97380235715
+Episode ended due to reaching max steps: 1000, at distance: 1166.6291945243097, action 3
+Episode ended. Cumulative Reward: -65498.54318955628
+Episode ended due to reaching max steps: 1000, at distance: 88.22428317734663, action 3
+Episode ended. Cumulative Reward: -6.379006195216903
+Episode ended due to reaching max steps: 1000, at distance: 392.08523010207597, action 3
+Episode ended. Cumulative Reward: -497.32843694762914
+Episode ended due to reaching max steps: 1000, at distance: 483.43970584986243, action 2
+Episode ended. Cumulative Reward: -645.8829593172638
+Episode ended due to reaching max steps: 1000, at distance: 697.9209788938061, action 0
+Episode ended. Cumulative Reward: -13329.444856017823
+Episode ended due to reaching max steps: 1000, at distance: 18.311066938727063, action 4
+Episode ended. Cumulative Reward: 550.2646766941009
+Episode ended due to reaching max steps: 1000, at distance: 106.96655344506823, action 2
+Episode ended. Cumulative Reward: 12.06089408358028
+Episode ended due to reaching max steps: 1000, at distance: 1089.2122675928078, action 3
+Episode ended. Cumulative Reward: -54573.37753729864
+Episode ended due to reaching max steps: 1000, at distance: 37.51324368084229, action 0
+Episode ended. Cumulative Reward: 881.9195666076689
+Episode ended due to reaching max steps: 1000, at distance: 21.037968359990366, action 1
+Episode ended. Cumulative Reward: 57.22198724629247
+Episode ended due to reaching max steps: 1000, at distance: 898.1157901819691, action 1
+Episode ended. Cumulative Reward: -42673.490149142635
+Episode ended due to reaching max steps: 1000, at distance: 38.20190792640093, action 1
+Episode ended. Cumulative Reward: 464.3252623782017
+Reward found at step 628: 628
+Episode ended. Cumulative Reward: 1630.9660346211554
+Reward found at step 662: 662
+Episode ended. Cumulative Reward: 1698.2484675848584
+Reward found at step 763: 763
+Episode ended. Cumulative Reward: 1483.7269254335786
+Reward found at step 801: 801
+Episode ended. Cumulative Reward: 1881.781853851466
+Episode ended due to reaching max steps: 1000, at distance: 141.71253306452454, action 0
+Episode ended. Cumulative Reward: 534.6984474538915
+Episode ended. Cumulative Reward: 166.79774335339846
+Episode ended. Cumulative Reward: 11.95299452354027
+Episode ended. Cumulative Reward: -114.77663758096493
+Episode ended. Cumulative Reward: 350.8335649073584
+Episode ended. Cumulative Reward: 221.01518337888908
+Episode ended. Cumulative Reward: 308.8462157900889
+Episode ended. Cumulative Reward: 796.1597893377418
+Episode ended. Cumulative Reward: 896.4429882782711
+Episode ended. Cumulative Reward: 555.6509134255473
+Episode ended. Cumulative Reward: 581.7071577238632
+Episode ended. Cumulative Reward: 285.4223678632545
+Episode ended. Cumulative Reward: 300.2842165573228
+Episode ended. Cumulative Reward: -24.825110708443617
+Episode ended. Cumulative Reward: 552.140218404101
+Episode ended. Cumulative Reward: 795.9410565192491
+Episode ended. Cumulative Reward: 725.789028447452
+Episode ended. Cumulative Reward: -13054.356799300722
+Episode ended. Cumulative Reward: 321.0018873456138
+Episode ended. Cumulative Reward: 382.9432389348857
+Episode ended. Cumulative Reward: 377.60991997497166
+Reward found at step 147: 147
+Episode ended. Cumulative Reward: 1236.7892603668686
+Reward found at step 283: 283
+Episode ended. Cumulative Reward: 1229.7965485131358
+Episode ended due to reaching max steps: 1000, at distance: 53.150983340849216, action 1
+Episode ended. Cumulative Reward: 117.49070658785689
+Episode ended due to reaching max steps: 1000, at distance: 71.79747411418958, action 1
+Episode ended. Cumulative Reward: 478.4062356373821
+Episode ended due to reaching max steps: 1000, at distance: 325.64800468730056, action 3
+Episode ended. Cumulative Reward: -278.65126924379064
+Episode ended due to reaching max steps: 1000, at distance: 1237.9149186777865, action 2
+Episode ended. Cumulative Reward: -74947.60771538648
+Episode ended due to reaching max steps: 1000, at distance: 1034.9016343176875, action 3
+Episode ended. Cumulative Reward: -47936.39843650279
+Episode ended due to reaching max steps: 1000, at distance: 99.83307642559834, action 1
+Episode ended. Cumulative Reward: 39.38934888496456
+Episode ended due to reaching max steps: 1000, at distance: 1009.2553789494406, action 1
+Episode ended. Cumulative Reward: -43500.30488053857
+Episode ended due to reaching max steps: 1000, at distance: 1188.4884676771076, action 1
+Episode ended. Cumulative Reward: -92485.02619901091
+Episode ended due to reaching max steps: 1000, at distance: 887.042008259748, action 2
+Episode ended. Cumulative Reward: -28347.469131861166
+Episode ended due to reaching max steps: 1000, at distance: 620.6744222073905, action 1
+Episode ended. Cumulative Reward: -42061.39719307785
+Episode ended due to reaching max steps: 1000, at distance: 44.76310467705344, action 0
+Episode ended. Cumulative Reward: 598.967047050475
+Episode ended due to reaching max steps: 1000, at distance: 825.416343407617, action 1
+Episode ended. Cumulative Reward: -47502.73870624682
+Episode ended due to reaching max steps: 1000, at distance: 1463.3262970893918, action 2
+Episode ended. Cumulative Reward: -110324.95019686442
+Episode ended due to reaching max steps: 1000, at distance: 671.2472266988128, action 2
+Episode ended. Cumulative Reward: -8832.070854022504
+Episode ended due to reaching max steps: 1000, at distance: 41.110259548535375, action 0
+Episode ended. Cumulative Reward: 999.4487668447233
+Episode ended due to reaching max steps: 1000, at distance: 34.703371346638036, action 0
+Episode ended. Cumulative Reward: 806.3842977044658
+Episode ended due to reaching max steps: 1000, at distance: 799.0248877715118, action 3
+Episode ended. Cumulative Reward: -21607.12074364738
+Episode ended due to reaching max steps: 1000, at distance: 21.199342898832658, action 4
+Episode ended. Cumulative Reward: 561.0315350653599
+Episode ended. Cumulative Reward: -3423.592431794696
+Episode ended. Cumulative Reward: -12.63418577523015
+Episode ended. Cumulative Reward: 56.57043894880411
+Episode ended. Cumulative Reward: 7.505286127445629
+Episode ended. Cumulative Reward: 37.54111550283858
+Episode ended. Cumulative Reward: 46.78026332209629
+Episode ended. Cumulative Reward: 72.06095422110292
+Episode ended. Cumulative Reward: 69.02531719441936
+Episode ended. Cumulative Reward: 42.39761324409267
+Episode ended. Cumulative Reward: 0.1505951170172466
+Episode ended. Cumulative Reward: 51.661463853131636
+Episode ended. Cumulative Reward: 56.77047247305029
+Episode ended. Cumulative Reward: 67.87565935385373
+Episode ended. Cumulative Reward: 64.73254223484173
+Episode ended. Cumulative Reward: 779.0774414176705
+Episode ended. Cumulative Reward: 54.72338852626075
+Episode ended. Cumulative Reward: -25.492316392771727
+Episode ended. Cumulative Reward: 35.448502569108086
+Episode ended. Cumulative Reward: 277.92564989733904
+Episode ended. Cumulative Reward: 32.714433141993254
+Reward found at step 111: 111
+Episode ended. Cumulative Reward: 1069.438592548593
+Reward found at step 156: 156
+Episode ended. Cumulative Reward: 1118.9780159630823
+Reward found at step 462: 462
+Episode ended. Cumulative Reward: 1456.4361673604444
+Reward found at step 516: 516
+Episode ended. Cumulative Reward: 1241.938952663906
+Reward found at step 762: 762
+Episode ended. Cumulative Reward: 1669.849885512103
+Episode ended. Cumulative Reward: 623.3425045276801
+Episode ended. Cumulative Reward: 792.0817792481703
+Episode ended. Cumulative Reward: 70.16828063438984
+Episode ended. Cumulative Reward: 531.430924221896
+Episode ended. Cumulative Reward: 615.497444260217
+Episode ended. Cumulative Reward: 303.15059734571236
+Episode ended. Cumulative Reward: 95.15685856976364
+Episode ended. Cumulative Reward: 491.608943184803
+Episode ended. Cumulative Reward: 169.07663736809008
+Episode ended. Cumulative Reward: 193.83265446368705
+Episode ended. Cumulative Reward: 149.9689244036451
+Episode ended. Cumulative Reward: 277.1661814996357
+Episode ended. Cumulative Reward: 175.75908141756884
+Episode ended. Cumulative Reward: 241.59539817887824
+Episode ended. Cumulative Reward: -7738.980574236332
+Episode ended. Cumulative Reward: 361.644355358064
+Episode ended. Cumulative Reward: 817.0017952394142
+Episode ended. Cumulative Reward: 460.1014775567176
+Episode ended. Cumulative Reward: 566.1742895637151
+Episode ended. Cumulative Reward: 360.7029201046404
+Reward found at step 147: 147
+Episode ended. Cumulative Reward: 1235.3176126868452
+Reward found at step 531: 531
+Episode ended. Cumulative Reward: 1436.6881801672266
+Reward found at step 745: 745
+Episode ended. Cumulative Reward: 2157.544565450925
+Episode ended due to reaching max steps: 1000, at distance: 583.6947200247977, action 2
+Episode ended. Cumulative Reward: -724.3462285926405
+Episode ended due to reaching max steps: 1000, at distance: 40.72795316054947, action 0
+Episode ended. Cumulative Reward: 63.886403842447805
+Episode ended due to reaching max steps: 1000, at distance: 872.9051385268623, action 2
+Episode ended. Cumulative Reward: -27526.71850498561
+Episode ended due to reaching max steps: 1000, at distance: 49.15060235679218, action 2
+Episode ended. Cumulative Reward: 609.4913840417925
+Episode ended due to reaching max steps: 1000, at distance: 35.94648762710298, action 2
+Episode ended. Cumulative Reward: 263.06259643520934
+Episode ended due to reaching max steps: 1000, at distance: 1005.3990918623467, action 0
+Episode ended. Cumulative Reward: -49774.986158651685
+Episode ended due to reaching max steps: 1000, at distance: 1028.8433578069241, action 2
+Episode ended. Cumulative Reward: -45909.45116890511
+Episode ended due to reaching max steps: 1000, at distance: 1040.5019710344188, action 1
+Episode ended. Cumulative Reward: -66046.55933327039
+Episode ended due to reaching max steps: 1000, at distance: 84.62715481117947, action 1
+Episode ended. Cumulative Reward: -28.063043039353516
+Episode ended due to reaching max steps: 1000, at distance: 611.8202422853861, action 0
+Episode ended. Cumulative Reward: -9594.658660668767
+Episode ended due to reaching max steps: 1000, at distance: 769.2749212150312, action 2
+Episode ended. Cumulative Reward: -16925.502402250622
+Episode ended due to reaching max steps: 1000, at distance: 578.5071169798061, action 1
+Episode ended. Cumulative Reward: -442.1638451588584
+Episode ended due to reaching max steps: 1000, at distance: 816.7753509668529, action 1
+Episode ended. Cumulative Reward: -59131.77877064071
+Episode ended due to reaching max steps: 1000, at distance: 535.229332751088, action 0
+Episode ended. Cumulative Reward: -756.9218759533252
+Episode ended due to reaching max steps: 1000, at distance: 1425.8675905191697, action 0
+Episode ended. Cumulative Reward: -104607.0131019628
+Episode ended due to reaching max steps: 1000, at distance: 567.283742711977, action 2
+Episode ended. Cumulative Reward: -934.3726591632078
+Episode ended due to reaching max steps: 1000, at distance: 452.49887516953703, action 1
+Episode ended. Cumulative Reward: -305.24379984642303
+Episode ended due to reaching max steps: 1000, at distance: 252.23423012553303, action 1
+Episode ended. Cumulative Reward: 262.4182911044114
+Reward found at step 261: 261
+Episode ended. Cumulative Reward: 1121.959469820445
+Episode ended due to reaching max steps: 1000, at distance: 544.5448295981108, action 3
+Episode ended. Cumulative Reward: -45805.69087843532
+Reward found at step 599: 599
+Episode ended. Cumulative Reward: 1536.2984683379723
+Reward found at step 612: 612
+Episode ended. Cumulative Reward: 1299.539632223323
+Reward found at step 643: 643
+Episode ended. Cumulative Reward: 1811.3240748666246
+Reward found at step 830: 830
+Episode ended. Cumulative Reward: 1841.6027711492004
+Reward found at step 813: 813
+Episode ended. Cumulative Reward: 1667.042276777597
+Reward found at step 846: 846
+Episode ended. Cumulative Reward: 1454.1578447597606
+Episode ended. Cumulative Reward: 135.65090077819605
+Episode ended. Cumulative Reward: 282.87023784889914
+Episode ended. Cumulative Reward: -0.8869372162263574
+Episode ended. Cumulative Reward: 389.4312021490403
+Episode ended. Cumulative Reward: 313.4169296619377
+Episode ended. Cumulative Reward: 390.87512275263964
+Episode ended. Cumulative Reward: 439.10529402579016
+Episode ended. Cumulative Reward: 747.9051055985433
+Episode ended. Cumulative Reward: 410.87750010745094
+Episode ended. Cumulative Reward: -41.883633504192915
+Episode ended. Cumulative Reward: 99.06622281252311
+Episode ended. Cumulative Reward: 78.76062564283473
+Episode ended. Cumulative Reward: 133.47238952837003
+Episode ended. Cumulative Reward: 1006.5042924438663
+Episode ended. Cumulative Reward: 73.00832403172629
+Episode ended. Cumulative Reward: 445.10925727329237
+Episode ended. Cumulative Reward: 134.0901773397104
+Episode ended. Cumulative Reward: 646.7263031908121
+Episode ended. Cumulative Reward: 194.2675111538072
+Episode ended. Cumulative Reward: 663.526245765564
+Reward found at step 489: 489
+Episode ended. Cumulative Reward: 1642.6525330236113
+Episode ended due to reaching max steps: 1000, at distance: 57.346451052169755, action 1
+Episode ended. Cumulative Reward: 183.01326878439576
+Episode ended due to reaching max steps: 1000, at distance: 18.539114389976703, action 3
+Episode ended. Cumulative Reward: 1131.3681803277434
+Episode ended due to reaching max steps: 1000, at distance: 162.0757939025717, action 2
+Episode ended. Cumulative Reward: 418.00029563061236
+Episode ended due to reaching max steps: 1000, at distance: 260.1838420090681, action 2
+Episode ended. Cumulative Reward: 106.52599244977387
+Episode ended due to reaching max steps: 1000, at distance: 97.66668846168136, action 0
+Episode ended. Cumulative Reward: 522.4971204802083
+Episode ended due to reaching max steps: 1000, at distance: 68.08315103067243, action 5
+Episode ended. Cumulative Reward: 292.49042518565886
+Episode ended due to reaching max steps: 1000, at distance: 52.353110969680436, action 2
+Episode ended. Cumulative Reward: 926.8771890489755
+Episode ended due to reaching max steps: 1000, at distance: 24.667925843852608, action 0
+Episode ended. Cumulative Reward: 449.8016684826208
+Episode ended due to reaching max steps: 1000, at distance: 16.423148472907453, action 2
+Episode ended. Cumulative Reward: 183.5449659678609
+Episode ended due to reaching max steps: 1000, at distance: 1134.5018325163119, action 2
+Episode ended. Cumulative Reward: -65550.2728206846
+Episode ended due to reaching max steps: 1000, at distance: 85.86998960888795, action 3
+Episode ended. Cumulative Reward: 15.345876502264787
+Episode ended due to reaching max steps: 1000, at distance: 1270.462556832761, action 3
+Episode ended. Cumulative Reward: -80483.1021536445
+Episode ended due to reaching max steps: 1000, at distance: 41.26942536659915, action 0
+Episode ended. Cumulative Reward: 84.3386412016026
+Episode ended due to reaching max steps: 1000, at distance: 918.778088435413, action 2
+Episode ended. Cumulative Reward: -31907.861801572115
+Episode ended due to reaching max steps: 1000, at distance: 338.23273821774325, action 1
+Episode ended. Cumulative Reward: -633.8735059871759
+Episode ended due to reaching max steps: 1000, at distance: 864.6647152200485, action 1
+Episode ended. Cumulative Reward: -27864.354674045466
+Episode ended due to reaching max steps: 1000, at distance: 52.090011161271356, action 0
+Episode ended. Cumulative Reward: 356.63857363908494
+Episode ended due to reaching max steps: 1000, at distance: 1184.9721973271958, action 1
+Episode ended. Cumulative Reward: -85558.86598281786
+Episode ended due to reaching max steps: 1000, at distance: 917.8748922053713, action 1
+Episode ended. Cumulative Reward: -54851.13913451168
+Episode ended. Cumulative Reward: 34.54204379569779
+Episode ended. Cumulative Reward: 111.61898935523016
+Episode ended. Cumulative Reward: 9.968558522358194
+Episode ended. Cumulative Reward: 115.2064576703782
+Episode ended. Cumulative Reward: 12.481053950016445
+Episode ended. Cumulative Reward: -67.07430452002188
+Episode ended. Cumulative Reward: 31.735553009973955
+Episode ended. Cumulative Reward: 104.34221327988266
+Episode ended. Cumulative Reward: 139.8901406979765
+Episode ended. Cumulative Reward: 76.47596040348822
+Episode ended. Cumulative Reward: 47.644463145569375
+Episode ended. Cumulative Reward: 82.37924428071
+Episode ended. Cumulative Reward: 132.69112355280288
+Episode ended. Cumulative Reward: -22103.723952871733
+Episode ended. Cumulative Reward: 60.88441626878557
+Episode ended. Cumulative Reward: -93.62103436288245
+Episode ended. Cumulative Reward: -11.016087735953818
+Episode ended. Cumulative Reward: 148.041088160482
+Episode ended. Cumulative Reward: 110.48145460974723
+Episode ended. Cumulative Reward: 91.11352683686187
+Reward found at step 457: 457
+Episode ended. Cumulative Reward: 1329.306457612097
+Reward found at step 623: 623
+Episode ended. Cumulative Reward: 1353.94509751248
+Reward found at step 699: 699
+Episode ended. Cumulative Reward: 1657.2288505608744
+Reward found at step 865: 865
+Episode ended. Cumulative Reward: 1894.3180457269846
+Episode ended. Cumulative Reward: -37.93948361544878
+Episode ended. Cumulative Reward: 660.8419361107708
+Episode ended. Cumulative Reward: 874.3570004563428
+Episode ended. Cumulative Reward: 676.2659835163472
+Episode ended. Cumulative Reward: 642.5197998827222
+Episode ended. Cumulative Reward: 952.8703312054674
+Episode ended. Cumulative Reward: 645.3574546676792
+Episode ended. Cumulative Reward: 604.8580579255765
+Episode ended. Cumulative Reward: 142.26254691280556
+Episode ended. Cumulative Reward: 213.90133072596348
+Episode ended. Cumulative Reward: 277.4396664371002
+Episode ended. Cumulative Reward: 293.0893906259006
+Episode ended. Cumulative Reward: 786.8070317729614
+Episode ended. Cumulative Reward: -41.491064533600365
+Episode ended. Cumulative Reward: 432.41718609426664
+Episode ended. Cumulative Reward: 489.9947439055614
+Episode ended. Cumulative Reward: 391.64454422220354
+Episode ended. Cumulative Reward: 400.94462807854063
+Episode ended. Cumulative Reward: 832.7666252217952
+Episode ended. Cumulative Reward: 339.74000409106236
+Reward found at step 350: 350
+Episode ended. Cumulative Reward: 1550.3268450726773
+Episode ended due to reaching max steps: 1000, at distance: 1077.2852946316432, action 1
+Episode ended. Cumulative Reward: -74341.63889104495
+Episode ended due to reaching max steps: 1000, at distance: 522.916567528736, action 0
+Episode ended. Cumulative Reward: -30374.07122975387
+Episode ended due to reaching max steps: 1000, at distance: 1451.6740990535648, action 1
+Episode ended. Cumulative Reward: -110434.51574796942
+Episode ended due to reaching max steps: 1000, at distance: 1038.0935688470877, action 3
+Episode ended. Cumulative Reward: -47284.73743976563
+Episode ended due to reaching max steps: 1000, at distance: 584.5867388254164, action 1
+Episode ended. Cumulative Reward: -2456.944929460621
+Episode ended due to reaching max steps: 1000, at distance: 920.5372520398827, action 1
+Episode ended. Cumulative Reward: -32211.265245172937
+Episode ended due to reaching max steps: 1000, at distance: 178.1004463362862, action 2
+Episode ended. Cumulative Reward: 205.61639163005475
+Episode ended due to reaching max steps: 1000, at distance: 43.3371958516156, action 1
+Episode ended. Cumulative Reward: 910.8481958950762
+Episode ended due to reaching max steps: 1000, at distance: 84.56657905505995, action 0
+Episode ended. Cumulative Reward: 305.3683290250108
+Episode ended due to reaching max steps: 1000, at distance: 516.111169676053, action 1
+Episode ended. Cumulative Reward: -817.9522975748831
+Episode ended due to reaching max steps: 1000, at distance: 186.22152386655608, action 3
+Episode ended. Cumulative Reward: -220.10647556786796
+Episode ended due to reaching max steps: 1000, at distance: 35.820627879837986, action 3
+Episode ended. Cumulative Reward: 946.5404319335917
+Episode ended due to reaching max steps: 1000, at distance: 1305.7439067035866, action 0
+Episode ended. Cumulative Reward: -96623.61292182516
+Episode ended due to reaching max steps: 1000, at distance: 495.2677911045526, action 1
+Episode ended. Cumulative Reward: -882.3403778804666
+Episode ended due to reaching max steps: 1000, at distance: 1128.6570169825345, action 2
+Episode ended. Cumulative Reward: -62892.634072391964
+Episode ended due to reaching max steps: 1000, at distance: 1144.919058009862, action 1
+Episode ended. Cumulative Reward: -61196.94614094621
+Episode ended due to reaching max steps: 1000, at distance: 53.755739873650924, action 2
+Episode ended. Cumulative Reward: 568.6418586964463
+Episode ended due to reaching max steps: 1000, at distance: 696.6521946971742, action 2
+Episode ended. Cumulative Reward: -48155.41446127327
+Episode ended due to reaching max steps: 1000, at distance: 180.24944621572817, action 0
+Episode ended. Cumulative Reward: -180.57081484707265
+Episode ended due to reaching max steps: 1000, at distance: 84.66092386892213, action 3
+Episode ended. Cumulative Reward: 450.7161785839255
+Reward found at step 482: 482
+Episode ended. Cumulative Reward: 1529.6328536681265
+Reward found at step 494: 494
+Episode ended. Cumulative Reward: 1572.4963470747261
+Reward found at step 533: 533
+Episode ended. Cumulative Reward: 1532.9632296263817
+Reward found at step 651: 651
+Episode ended. Cumulative Reward: 1777.7615013867332
+Reward found at step 686: 686
+Episode ended. Cumulative Reward: 1403.4344245149282
+Reward found at step 828: 828
+Episode ended. Cumulative Reward: 1911.2596557738507
+Episode ended. Cumulative Reward: -2444.553520862739
+Episode ended. Cumulative Reward: -72.94971749347715
+Episode ended. Cumulative Reward: 325.478722052598
+Episode ended. Cumulative Reward: 176.74582314174006
+Episode ended. Cumulative Reward: 18.44047106427149
+Episode ended. Cumulative Reward: 710.8713235567952
+Episode ended. Cumulative Reward: 420.24904298662165
+Episode ended. Cumulative Reward: 201.50751315216064
+Episode ended. Cumulative Reward: 394.33264500553554
+Episode ended. Cumulative Reward: 964.0955006894741
+Episode ended. Cumulative Reward: 498.7548822835455
+Episode ended. Cumulative Reward: 295.18090477901006
+Episode ended. Cumulative Reward: 563.7087637456384
+Episode ended. Cumulative Reward: 236.1646338052833
+Episode ended. Cumulative Reward: 558.411522431533
+Episode ended. Cumulative Reward: 676.2852510370979
+Episode ended. Cumulative Reward: 187.87206262006384
+Episode ended. Cumulative Reward: 563.1545943748744
+Episode ended. Cumulative Reward: 1030.9581108321972
+Episode ended. Cumulative Reward: 709.7049884756293
+Episode ended due to reaching max steps: 1000, at distance: 504.1058316443419, action 3
+Episode ended. Cumulative Reward: -352.39792827906956
+Episode ended due to reaching max steps: 1000, at distance: 82.0433274406428, action 1
+Episode ended. Cumulative Reward: 394.8991461171911
+Episode ended due to reaching max steps: 1000, at distance: 831.2334685192106, action 3
+Episode ended. Cumulative Reward: -22354.33168595088
+Episode ended due to reaching max steps: 1000, at distance: 46.43661270014444, action 2
+Episode ended. Cumulative Reward: 829.2530125757607
+Episode ended due to reaching max steps: 1000, at distance: 843.3118990865539, action 3
+Episode ended. Cumulative Reward: -23622.979650304726
+Episode ended due to reaching max steps: 1000, at distance: 23.282059260340638, action 0
+Episode ended. Cumulative Reward: 972.8308615175812
+Episode ended due to reaching max steps: 1000, at distance: 979.4101084550108, action 0
+Episode ended. Cumulative Reward: -77683.88737418667
+Episode ended due to reaching max steps: 1000, at distance: 1112.0855961198215, action 3
+Episode ended. Cumulative Reward: -58383.933098654285
+Episode ended due to reaching max steps: 1000, at distance: 46.593937755474116, action 3
+Episode ended. Cumulative Reward: 408.0576888552499
+Episode ended due to reaching max steps: 1000, at distance: 1096.2115059913137, action 0
+Episode ended. Cumulative Reward: -55931.37406669994
+Episode ended due to reaching max steps: 1000, at distance: 625.8783979868617, action 3
+Episode ended. Cumulative Reward: -22988.229957833824
+Episode ended due to reaching max steps: 1000, at distance: 20.260925217819878, action 1
+Episode ended. Cumulative Reward: 601.0110946783675
+Episode ended due to reaching max steps: 1000, at distance: 838.5319172135521, action 3
+Episode ended. Cumulative Reward: -25962.381503256653
+Episode ended due to reaching max steps: 1000, at distance: 887.0147189855763, action 3
+Episode ended. Cumulative Reward: -75792.39037690213
+Episode ended due to reaching max steps: 1000, at distance: 39.87329941021242, action 0
+Episode ended. Cumulative Reward: 183.99431382126733
+Episode ended due to reaching max steps: 1000, at distance: 676.0018699689215, action 3
+Episode ended. Cumulative Reward: -9614.714701663908
+Episode ended due to reaching max steps: 1000, at distance: 214.16394068333702, action 3
+Episode ended. Cumulative Reward: -19.975195685148833
+Episode ended due to reaching max steps: 1000, at distance: 336.60855137954144, action 1
+Episode ended. Cumulative Reward: 12.833008828140805
+Episode ended due to reaching max steps: 1000, at distance: 70.82828082937381, action 0
+Episode ended. Cumulative Reward: 255.84741159310119
+Episode ended due to reaching max steps: 1000, at distance: 32.347309695611116, action 1
+Episode ended. Cumulative Reward: -957.4132899296671
+Episode ended. Cumulative Reward: 60.905665324407096
+Episode ended. Cumulative Reward: 91.24939079831353
+Episode ended. Cumulative Reward: 174.36424127501277
+Episode ended. Cumulative Reward: 175.35011567422737
+Episode ended. Cumulative Reward: 24.06253575634463
+Episode ended. Cumulative Reward: 174.2957566838603
+Episode ended. Cumulative Reward: 133.680296777281
+Episode ended. Cumulative Reward: 118.4884912690564
+Episode ended. Cumulative Reward: 131.42145935412395
+Episode ended. Cumulative Reward: 188.66430787047238
+Episode ended. Cumulative Reward: -60.893633182857
+Episode ended. Cumulative Reward: 182.59775473136983
+Episode ended. Cumulative Reward: 121.96053690397446
+Episode ended. Cumulative Reward: 181.57402657208507
+Episode ended. Cumulative Reward: 30.31769610699861
+Episode ended. Cumulative Reward: 174.44312531358435
+Episode ended. Cumulative Reward: -22.850781658596247
+Episode ended. Cumulative Reward: 60.32274147069978
+Episode ended. Cumulative Reward: 0.6370901822622272
+Episode ended. Cumulative Reward: 5.096120699496282
+Reward found at step 158: 158
+Episode ended. Cumulative Reward: 1123.268324776204
+Reward found at step 302: 302
+Episode ended. Cumulative Reward: 1295.7806153282106
+Reward found at step 401: 401
+Episode ended. Cumulative Reward: 1206.1290773809253
+Reward found at step 444: 444
+Episode ended. Cumulative Reward: 1234.1051076525575
+Reward found at step 705: 705
+Episode ended. Cumulative Reward: 1812.5137183549564
+Reward found at step 732: 732
+Episode ended. Cumulative Reward: 1806.4976413432942
+Reward found at step 749: 749
+Episode ended. Cumulative Reward: 1933.5268075784675
+Reward found at step 789: 789
+Episode ended. Cumulative Reward: 1510.419087349179
+Reward found at step 417: 417
+Episode ended. Cumulative Reward: 1432.9652211324812
+Reward found at step 832: 832
+Episode ended. Cumulative Reward: 1770.35533138368
+Reward found at step 849: 849
+Episode ended. Cumulative Reward: 1292.3593219020133
+Episode ended. Cumulative Reward: -17.06623840465494
+Episode ended. Cumulative Reward: 324.3215872788638
+Episode ended. Cumulative Reward: 162.8988909980113
+Episode ended. Cumulative Reward: 33.84571296016899
+Episode ended. Cumulative Reward: 396.5445568724152
+Episode ended. Cumulative Reward: 620.8573010535401
+Episode ended. Cumulative Reward: 927.8990520608413
+Episode ended. Cumulative Reward: 473.8572743991214
+Episode ended. Cumulative Reward: 122.82486953660396
+Episode ended. Cumulative Reward: 506.9655792268588
+Episode ended. Cumulative Reward: 919.6269273648555
+Episode ended. Cumulative Reward: 869.0858824345853
+Episode ended. Cumulative Reward: 704.2870400656894
+Episode ended. Cumulative Reward: 859.2161684232784
+Episode ended. Cumulative Reward: 566.0530601954874
+Episode ended. Cumulative Reward: -0.6525241220308544
+Episode ended. Cumulative Reward: -27.907730547970687
+Episode ended. Cumulative Reward: 8.019512802157692
+Episode ended. Cumulative Reward: 347.6943722789713
+Episode ended. Cumulative Reward: 63.51393303408332
+Reward found at step 542: 542
+Episode ended. Cumulative Reward: 1339.5407211444212
+Reward found at step 567: 567
+Episode ended. Cumulative Reward: 1529.5162654938258
+Episode ended due to reaching max steps: 1000, at distance: 934.6331095540527, action 3
+Episode ended. Cumulative Reward: -41866.2958415946
+Episode ended due to reaching max steps: 1000, at distance: 1158.0571048217319, action 0
+Episode ended. Cumulative Reward: -65001.28332840959
+Episode ended due to reaching max steps: 1000, at distance: 1299.3147025676546, action 1
+Episode ended. Cumulative Reward: -85714.48073366824
+Episode ended due to reaching max steps: 1000, at distance: 369.3275789758787, action 2
+Episode ended. Cumulative Reward: 155.3099735094225
+Episode ended due to reaching max steps: 1000, at distance: 11.17572233244768, action 2
+Episode ended. Cumulative Reward: 54.066322575896834
+Episode ended due to reaching max steps: 1000, at distance: 161.8704374376423, action 2
+Episode ended. Cumulative Reward: 758.6439573271824
+Episode ended due to reaching max steps: 1000, at distance: 152.16261158892422, action 3
+Episode ended. Cumulative Reward: 695.2587445887
+Episode ended due to reaching max steps: 1000, at distance: 631.7119982556626, action 2
+Episode ended. Cumulative Reward: -12366.920500693697
+Episode ended due to reaching max steps: 1000, at distance: 88.1356824694226, action 0
+Episode ended. Cumulative Reward: 362.4941530696153
+Episode ended due to reaching max steps: 1000, at distance: 52.88557098394237, action 1
+Episode ended. Cumulative Reward: 248.12523522489113
+Episode ended due to reaching max steps: 1000, at distance: 1149.1364223244846, action 3
+Episode ended. Cumulative Reward: -62700.65549885475
+Episode ended due to reaching max steps: 1000, at distance: 56.035445144818866, action 3
+Episode ended. Cumulative Reward: -65.71284439261525
+Episode ended due to reaching max steps: 1000, at distance: 1077.2021660205874, action 1
+Episode ended. Cumulative Reward: -52046.667166905056
+Episode ended due to reaching max steps: 1000, at distance: 287.15302095721233, action 2
+Episode ended. Cumulative Reward: 168.2351134778329
+Episode ended due to reaching max steps: 1000, at distance: 281.267073301909, action 0
+Episode ended. Cumulative Reward: -330.27974478770284
+Episode ended due to reaching max steps: 1000, at distance: 652.0900402285469, action 2
+Episode ended. Cumulative Reward: -5170.675550629152
+Episode ended due to reaching max steps: 1000, at distance: 143.49216268390052, action 0
+Episode ended. Cumulative Reward: 315.35644182732517
+Episode ended due to reaching max steps: 1000, at distance: 234.88632322692627, action 0
+Episode ended. Cumulative Reward: 56.63256227593354
+Reward found at step 0: 0
+Episode ended. Cumulative Reward: 1001.5860148624128
+Reward found at step 259: 259
+Episode ended. Cumulative Reward: 1286.4040079049316
+Reward found at step 308: 308
+Episode ended. Cumulative Reward: 1107.3072038478294
+Reward found at step 793: 793
+Episode ended. Cumulative Reward: 1477.9571368693223
+Reward found at step 489: 489
+Episode ended. Cumulative Reward: 1562.0092279493097
+Episode ended due to reaching max steps: 1000, at distance: 46.73916678568139, action 2
+Episode ended. Cumulative Reward: 372.7069651173748
+Reward found at step 578: 578
+Episode ended. Cumulative Reward: 1409.3710885259907
+Reward found at step 627: 627
+Episode ended. Cumulative Reward: 1690.5020579822171
+Reward found at step 624: 624
+Episode ended. Cumulative Reward: 1403.191796885609
+Episode ended. Cumulative Reward: 224.44727183181186
+Episode ended. Cumulative Reward: 201.07771280533834
+Episode ended. Cumulative Reward: 60.4951510265073
+Episode ended. Cumulative Reward: 315.9591367852037
+Episode ended. Cumulative Reward: 62.314664342256776
+Episode ended. Cumulative Reward: 295.50838017508033
+Episode ended. Cumulative Reward: 717.9587089650693
+Episode ended. Cumulative Reward: 581.5093797634307
+Episode ended. Cumulative Reward: 282.63258426387864
+Episode ended. Cumulative Reward: 337.3703168221664
+Episode ended. Cumulative Reward: 407.170535813817
+Episode ended. Cumulative Reward: -19.491974176374697
+Episode ended. Cumulative Reward: 293.725886679901
+Episode ended. Cumulative Reward: 561.8662504405963
+Episode ended. Cumulative Reward: 676.9125008975577
+Episode ended. Cumulative Reward: 428.3446680105716
+Episode ended. Cumulative Reward: 384.58441022918123
+Episode ended. Cumulative Reward: 288.9771010605549
+Episode ended. Cumulative Reward: 360.70505942205625
+Episode ended. Cumulative Reward: 428.6433708647945
+Reward found at step 164: 164
+Episode ended. Cumulative Reward: 1189.2439275491608
+Reward found at step 329: 329
+Episode ended. Cumulative Reward: 1424.768454681328
+Reward found at step 594: 594
+Episode ended. Cumulative Reward: 1324.5008826486899
+Episode ended due to reaching max steps: 1000, at distance: 103.87882062120508, action 0
+Episode ended. Cumulative Reward: 67.31551039346252
+Episode ended due to reaching max steps: 1000, at distance: 401.15153501544296, action 3
+Episode ended. Cumulative Reward: -400.8531726423401
+Episode ended due to reaching max steps: 1000, at distance: 771.1019241617432, action 2
+Episode ended. Cumulative Reward: -30171.578355723883
+Episode ended due to reaching max steps: 1000, at distance: 1143.0262856341353, action 3
+Episode ended. Cumulative Reward: -61337.60367325252
+Episode ended due to reaching max steps: 1000, at distance: 418.61352237274116, action 0
+Episode ended. Cumulative Reward: -220.22034430119493
+Episode ended due to reaching max steps: 1000, at distance: 915.3895311887961, action 2
+Episode ended. Cumulative Reward: -31932.630669630562
+Episode ended due to reaching max steps: 1000, at distance: 206.2283093597628, action 0
+Episode ended. Cumulative Reward: -156.78313525142488
+Episode ended due to reaching max steps: 1000, at distance: 24.845122215130214, action 3
+Episode ended. Cumulative Reward: 579.2753141876235
+Episode ended due to reaching max steps: 1000, at distance: 368.1765896435644, action 0
+Episode ended. Cumulative Reward: -64.45430916203475
+Episode ended due to reaching max steps: 1000, at distance: 1419.7778737261006, action 3
+Episode ended. Cumulative Reward: -105171.81371302479
+Episode ended due to reaching max steps: 1000, at distance: 266.52335069265473, action 1
+Episode ended. Cumulative Reward: -230.09467012168534
+Episode ended due to reaching max steps: 1000, at distance: 163.551454357058, action 0
+Episode ended. Cumulative Reward: 376.52290306638054
+Episode ended due to reaching max steps: 1000, at distance: 399.138146452156, action 2
+Episode ended. Cumulative Reward: -58.4540165572829
+Episode ended due to reaching max steps: 1000, at distance: 857.9574640002444, action 1
+Episode ended. Cumulative Reward: -26574.666936745252
+Episode ended due to reaching max steps: 1000, at distance: 178.2786107300808, action 0
+Episode ended. Cumulative Reward: 767.4490596351379
+Episode ended due to reaching max steps: 1000, at distance: 334.19627800058333, action 3
+Episode ended. Cumulative Reward: 321.6985636292417
+Episode ended due to reaching max steps: 1000, at distance: 312.8318370239755, action 1
+Episode ended. Cumulative Reward: 154.87099561396633
+Episode ended due to reaching max steps: 1000, at distance: 769.7018204592403, action 3
+Episode ended. Cumulative Reward: -37304.830363725996
+Episode ended. Cumulative Reward: 169.09671687741707
+Episode ended. Cumulative Reward: 151.96650721099786
+Episode ended. Cumulative Reward: 130.60077959570197
+Episode ended. Cumulative Reward: 86.54581318857151
+Episode ended. Cumulative Reward: -106.92637292412667
+Episode ended. Cumulative Reward: 238.51790058916544
+Episode ended. Cumulative Reward: 204.86474989718965
+Episode ended. Cumulative Reward: -6.845364860036625
+Episode ended. Cumulative Reward: -0.888885664774989
+Episode ended. Cumulative Reward: 392.64164188380846
+Episode ended. Cumulative Reward: 143.17114845473816
+Episode ended. Cumulative Reward: 143.9711722757463
+Episode ended. Cumulative Reward: 254.48117366249596
+Episode ended. Cumulative Reward: 50.114271532076586
+Episode ended. Cumulative Reward: -48.372491140671855
+Episode ended. Cumulative Reward: 113.9782677834927
+Episode ended. Cumulative Reward: 222.99109376930141
+Episode ended. Cumulative Reward: -58.886948328067206
+Episode ended. Cumulative Reward: 163.13883376358604
+Episode ended. Cumulative Reward: 71.00060691104332
+Reward found at step 317: 317
+Episode ended. Cumulative Reward: 1251.827311963826
+Reward found at step 566: 566
+Episode ended. Cumulative Reward: 1432.755076905006
+Reward found at step 702: 702
+Episode ended. Cumulative Reward: 1581.9830167221107
+Episode ended. Cumulative Reward: 101.12231944308303
+Episode ended. Cumulative Reward: 254.81426208457873
+Episode ended. Cumulative Reward: 235.9838137803253
+Episode ended. Cumulative Reward: 688.7133484902885
+Episode ended. Cumulative Reward: -8.925336757291234
+Episode ended. Cumulative Reward: 529.836541067886
+Episode ended. Cumulative Reward: -132.30122621902362
+Episode ended. Cumulative Reward: 707.7726811448719
+Episode ended. Cumulative Reward: 79.45932150029256
+Episode ended. Cumulative Reward: -10676.746382240864
+Episode ended. Cumulative Reward: 625.9427877750938
+Episode ended. Cumulative Reward: 36.625187243020946
+Episode ended. Cumulative Reward: 828.5650034057212
+Episode ended. Cumulative Reward: 445.55506230244714
+Episode ended. Cumulative Reward: 627.1695236678879
+Episode ended. Cumulative Reward: 206.6589547283354
+Episode ended. Cumulative Reward: 558.6856148561662
+Episode ended. Cumulative Reward: 419.3078704709129
+Episode ended. Cumulative Reward: 674.9560484140595
+Episode ended. Cumulative Reward: 327.13124439809053
+Episode ended due to reaching max steps: 1000, at distance: 28.467877504931725, action 0
+Episode ended. Cumulative Reward: 175.56795105210523
+Episode ended due to reaching max steps: 1000, at distance: 597.0347269230969, action 1
+Episode ended. Cumulative Reward: -847.6343370548233
+Episode ended due to reaching max steps: 1000, at distance: 20.124072709234994, action 5
+Episode ended. Cumulative Reward: 707.041811113146
+Episode ended due to reaching max steps: 1000, at distance: 748.5933750304538, action 0
+Episode ended. Cumulative Reward: -28730.08647400479
+Episode ended due to reaching max steps: 1000, at distance: 1390.093929738878, action 2
+Episode ended. Cumulative Reward: -101158.93078987468
+Episode ended due to reaching max steps: 1000, at distance: 1102.971624334954, action 2
+Episode ended. Cumulative Reward: -65134.40937173623
+Episode ended due to reaching max steps: 1000, at distance: 77.06388289507112, action 2
+Episode ended. Cumulative Reward: 612.7554929498884
+Episode ended due to reaching max steps: 1000, at distance: 415.9230706665762, action 3
+Episode ended. Cumulative Reward: -236.34829349056622
+Episode ended due to reaching max steps: 1000, at distance: 402.0409572492425, action 1
+Episode ended. Cumulative Reward: -635.6270530411641
+Episode ended due to reaching max steps: 1000, at distance: 779.1049961890677, action 2
+Episode ended. Cumulative Reward: -17339.23643637277
+Episode ended due to reaching max steps: 1000, at distance: 38.67860973196702, action 1
+Episode ended. Cumulative Reward: -9.386864064116239
+Episode ended due to reaching max steps: 1000, at distance: 403.12083366154957, action 0
+Episode ended. Cumulative Reward: -40172.82742986115
+Episode ended due to reaching max steps: 1000, at distance: 1490.5828747647167, action 1
+Episode ended. Cumulative Reward: -110890.21938224806
+Episode ended due to reaching max steps: 1000, at distance: 28.453956606320734, action 1
+Episode ended. Cumulative Reward: 504.18916992257147
+Episode ended due to reaching max steps: 1000, at distance: 1120.2541405502366, action 3
+Episode ended. Cumulative Reward: -60730.96579002523
+Episode ended due to reaching max steps: 1000, at distance: 44.89842038465906, action 1
+Episode ended. Cumulative Reward: 677.3427529420467
+Episode ended due to reaching max steps: 1000, at distance: 215.89766369733286, action 3
+Episode ended. Cumulative Reward: 76.63430407647957
+Episode ended due to reaching max steps: 1000, at distance: 56.64038170865051, action 1
+Episode ended. Cumulative Reward: 129.08324254826772
+Episode ended due to reaching max steps: 1000, at distance: 1010.5848578110671, action 0
+Episode ended. Cumulative Reward: -46582.93175919506
+Episode ended due to reaching max steps: 1000, at distance: 50.54891358418085, action 0
+Episode ended. Cumulative Reward: 615.978762562253
+Reward found at step 150: 150
+Episode ended. Cumulative Reward: 1075.4224077811243
+Reward found at step 571: 571
+Episode ended. Cumulative Reward: 1370.6729688868916
+Reward found at step 470: 470
+Episode ended. Cumulative Reward: 1326.4811922339331
+Reward found at step 816: 816
+Episode ended. Cumulative Reward: 2008.1165746643517
+Episode ended. Cumulative Reward: 383.8008921878685
+Episode ended. Cumulative Reward: 98.15070788919597
+Episode ended. Cumulative Reward: 794.8235742532587
+Episode ended. Cumulative Reward: 754.777115910447
+Episode ended. Cumulative Reward: 853.8235393555243
+Episode ended. Cumulative Reward: 832.5179266371168
+Episode ended. Cumulative Reward: 788.1033601714367
+Episode ended. Cumulative Reward: 773.5090707392214
+Episode ended. Cumulative Reward: 203.9368726356966
+Episode ended. Cumulative Reward: 271.6835703038487
+Episode ended. Cumulative Reward: 508.69084151289553
+Episode ended. Cumulative Reward: 302.55609332611937
+Episode ended. Cumulative Reward: -89378.58119607711
+Episode ended. Cumulative Reward: 838.9985974689544
+Episode ended. Cumulative Reward: 715.6108420205002
+Episode ended. Cumulative Reward: 193.13308923625635
+Episode ended. Cumulative Reward: 140.28617953300676
+Episode ended. Cumulative Reward: 647.5620182894896
+Episode ended. Cumulative Reward: 979.6881311200951
+Episode ended. Cumulative Reward: 577.0724608051418
+Reward found at step 549: 549
+Episode ended. Cumulative Reward: 1649.4902712090927
+Reward found at step 870: 870
+Episode ended. Cumulative Reward: 2022.905308584248
+Episode ended due to reaching max steps: 1000, at distance: 367.4038910772296, action 0
+Episode ended. Cumulative Reward: -111.47442758366356
+Episode ended due to reaching max steps: 1000, at distance: 119.53991928120483, action 3
+Episode ended. Cumulative Reward: 614.0180150810475
+Episode ended due to reaching max steps: 1000, at distance: 871.223222611069, action 3
+Episode ended. Cumulative Reward: -26686.354671954716
+Episode ended due to reaching max steps: 1000, at distance: 714.5633579739311, action 2
+Episode ended. Cumulative Reward: -12528.726600545997
+Episode ended due to reaching max steps: 1000, at distance: 784.8322355744003, action 3
+Episode ended. Cumulative Reward: -44769.58119190658
+Episode ended due to reaching max steps: 1000, at distance: 738.9004660932023, action 3
+Episode ended. Cumulative Reward: -42272.456587072214
+Episode ended due to reaching max steps: 1000, at distance: 195.80300116741503, action 0
+Episode ended. Cumulative Reward: 434.4563239157965
+Episode ended due to reaching max steps: 1000, at distance: 297.15921503014584, action 2
+Episode ended. Cumulative Reward: 286.0642316252123
+Episode ended due to reaching max steps: 1000, at distance: 117.97027693109315, action 1
+Episode ended. Cumulative Reward: 670.5831581921706
+Episode ended due to reaching max steps: 1000, at distance: 286.36148625629005, action 1
+Episode ended. Cumulative Reward: 52.51841661178298
+Episode ended due to reaching max steps: 1000, at distance: 737.3864482079878, action 2
+Episode ended. Cumulative Reward: -41417.93818745091
+Episode ended due to reaching max steps: 1000, at distance: 295.20226985465086, action 0
+Episode ended. Cumulative Reward: 561.9672822656327
+Episode ended due to reaching max steps: 1000, at distance: 27.52590592436313, action 0
+Episode ended. Cumulative Reward: 840.8183832576033
+Episode ended due to reaching max steps: 1000, at distance: 39.44881204220582, action 1
+Episode ended. Cumulative Reward: 508.36530871667424
+Episode ended due to reaching max steps: 1000, at distance: 377.6294998245669, action 2
+Episode ended. Cumulative Reward: 360.2991097891894
+Episode ended due to reaching max steps: 1000, at distance: 80.01854629889314, action 2
+Episode ended. Cumulative Reward: 338.17521369416
+Episode ended due to reaching max steps: 1000, at distance: 109.40628256083428, action 0
+Episode ended. Cumulative Reward: 45.90891120922379
+Episode ended due to reaching max steps: 1000, at distance: 1032.239473352065, action 1
+Episode ended. Cumulative Reward: -63417.566714118955
+Episode ended. Cumulative Reward: 161.85532223867756
+Episode ended. Cumulative Reward: 296.0266968916061
+Episode ended. Cumulative Reward: 203.14310019747734
+Episode ended. Cumulative Reward: 61.02589054030011
+Episode ended. Cumulative Reward: 258.85379574056344
+Episode ended. Cumulative Reward: 258.5266835104617
+Episode ended. Cumulative Reward: 169.25224543590366
+Episode ended. Cumulative Reward: 32.00082876317026
+Episode ended. Cumulative Reward: 49.05427995127695
+Episode ended. Cumulative Reward: 115.019504106258
+Episode ended. Cumulative Reward: 313.9981582750237
+Episode ended. Cumulative Reward: 146.61857010716454
+Episode ended. Cumulative Reward: 213.8604909687197
+Episode ended. Cumulative Reward: -172.00987245051385
+Episode ended. Cumulative Reward: 118.1682044444407
+Episode ended. Cumulative Reward: 107.7719510899509
+Episode ended. Cumulative Reward: 361.9775091474148
+Episode ended. Cumulative Reward: 230.8496378081427
+Episode ended. Cumulative Reward: 159.78210869094227
+Episode ended. Cumulative Reward: 111.14924862099451
+Reward found at step 169: 169
+Episode ended. Cumulative Reward: 1137.7188058293152
+Reward found at step 180: 180
+Episode ended. Cumulative Reward: 1126.313614883481
+Reward found at step 215: 215
+Episode ended. Cumulative Reward: 1117.2724707883247
+Reward found at step 466: 466
+Episode ended. Cumulative Reward: 1215.4427171221382
+Reward found at step 504: 504
+Episode ended. Cumulative Reward: 1585.0881751641255
+Reward found at step 523: 523
+Episode ended. Cumulative Reward: 1491.6111795686757
+Reward found at step 501: 501
+Episode ended. Cumulative Reward: 1417.9808318638832
+Reward found at step 745: 745
+Episode ended. Cumulative Reward: 1971.687102694324
+Episode ended. Cumulative Reward: 93.67144247132117
+Episode ended. Cumulative Reward: 630.9068639618961
+Episode ended. Cumulative Reward: 23.057931348191232
+Episode ended. Cumulative Reward: -12635.745668518828
+Episode ended. Cumulative Reward: 244.9665100351077
+Episode ended. Cumulative Reward: 773.9294417798021
+Episode ended. Cumulative Reward: 228.24344223281344
+Episode ended. Cumulative Reward: 169.67672004740461
+Episode ended. Cumulative Reward: 519.8113296777599
+Episode ended. Cumulative Reward: -320.0894261620855
+Episode ended. Cumulative Reward: 187.84206069484773
+Episode ended. Cumulative Reward: 180.94198049632905
+Episode ended. Cumulative Reward: 73.97601454504765
+Episode ended. Cumulative Reward: 273.1913144496753
+Episode ended. Cumulative Reward: 789.8600626014968
+Episode ended. Cumulative Reward: 342.55078321088763
+Episode ended. Cumulative Reward: -48214.260498627045
+Episode ended. Cumulative Reward: 414.62638381445765
+Episode ended. Cumulative Reward: 23.62428534862265
+Episode ended. Cumulative Reward: -4.401438096688821
+Reward found at step 471: 471
+Episode ended. Cumulative Reward: 1533.7602731530687
+Reward found at step 601: 601
+Episode ended. Cumulative Reward: 1750.1438087466627
+Reward found at step 794: 794
+Episode ended. Cumulative Reward: 1834.5091293207179
+Reward found at step 317: 317
+Episode ended. Cumulative Reward: 1328.6171346736992
+Episode ended due to reaching max steps: 1000, at distance: 505.0382189167973, action 0
+Episode ended. Cumulative Reward: -731.1221738730211
+Episode ended due to reaching max steps: 1000, at distance: 68.74799612706347, action 3
+Episode ended. Cumulative Reward: 620.9736528043718
+Episode ended due to reaching max steps: 1000, at distance: 1203.8246786388363, action 3
+Episode ended. Cumulative Reward: -72754.33133461354
+Episode ended due to reaching max steps: 1000, at distance: 986.3337398220816, action 3
+Episode ended. Cumulative Reward: -45869.24008548019
+Episode ended due to reaching max steps: 1000, at distance: 828.6446810085073, action 1
+Episode ended. Cumulative Reward: -43789.53151638068
+Episode ended due to reaching max steps: 1000, at distance: 18.782870139851855, action 0
+Episode ended. Cumulative Reward: 329.3107824143967
+Episode ended due to reaching max steps: 1000, at distance: 752.0658363280236, action 0
+Episode ended. Cumulative Reward: -50942.71859795857
+Episode ended due to reaching max steps: 1000, at distance: 114.99223671472065, action 1
+Episode ended. Cumulative Reward: 290.3745948434823
+Episode ended due to reaching max steps: 1000, at distance: 54.81441122246549, action 2
+Episode ended. Cumulative Reward: -7.9309650014257045
+Episode ended due to reaching max steps: 1000, at distance: 1173.952853752444, action 2
+Episode ended. Cumulative Reward: -67497.92101041132
+Episode ended due to reaching max steps: 1000, at distance: 63.90178323751696, action 3
+Episode ended. Cumulative Reward: 780.6464689242267
+Episode ended due to reaching max steps: 1000, at distance: 291.09355189334593, action 0
+Episode ended. Cumulative Reward: 13.830204116020923
+Episode ended due to reaching max steps: 1000, at distance: 480.208702509978, action 3
+Episode ended. Cumulative Reward: -20503.94683709304
+Episode ended due to reaching max steps: 1000, at distance: 361.143654489077, action 1
+Episode ended. Cumulative Reward: 296.57405699184324
+Episode ended due to reaching max steps: 1000, at distance: 31.990457828782013, action 0
+Episode ended. Cumulative Reward: 788.2706729341693
+Episode ended due to reaching max steps: 1000, at distance: 813.7395758876731, action 2
+Episode ended. Cumulative Reward: -21001.471933374054
+Episode ended due to reaching max steps: 1000, at distance: 36.19630038823631, action 2
+Episode ended. Cumulative Reward: 467.9013063155679
+Reward found at step 291: 291
+Episode ended. Cumulative Reward: 1328.2436092688597
+Reward found at step 412: 412
+Episode ended. Cumulative Reward: 1184.365752859252
+Reward found at step 435: 435
+Episode ended. Cumulative Reward: 1488.9883541877725
+Episode ended due to reaching max steps: 1000, at distance: 208.52938879103954, action 2
+Episode ended. Cumulative Reward: 191.57069992651384
+Reward found at step 111: 111
+Episode ended. Cumulative Reward: 1075.4877181981115
+Reward found at step 730: 730
+Episode ended. Cumulative Reward: 1736.959384307147
+Episode ended due to reaching max steps: 1000, at distance: 105.48473714418162, action 1
+Episode ended. Cumulative Reward: -71.79369306535881
+Reward found at step 963: 963
+Episode ended. Cumulative Reward: 1287.0734405550375
+Episode ended. Cumulative Reward: 830.0328261449254
+Episode ended. Cumulative Reward: 556.737272592977
+Episode ended. Cumulative Reward: 928.4858165524773
+Episode ended. Cumulative Reward: 337.338970015501
+Episode ended. Cumulative Reward: 47.103801528721334
+Episode ended. Cumulative Reward: 794.0754052137269
+Episode ended. Cumulative Reward: 747.5151433820656
+Episode ended. Cumulative Reward: 304.0569631413529
+Episode ended. Cumulative Reward: 16.528473510020376
+Episode ended. Cumulative Reward: 158.95366841429797
+Episode ended. Cumulative Reward: 96.30776068405544
+Episode ended. Cumulative Reward: 287.78593008944705
+Episode ended. Cumulative Reward: 527.7719837970219
+Episode ended. Cumulative Reward: -154.71987725678008
+Episode ended. Cumulative Reward: 314.6121782099959
+Episode ended. Cumulative Reward: 841.0361080118596
+Episode ended. Cumulative Reward: 109.5257459145503
+Episode ended. Cumulative Reward: 196.04250702037615
+Episode ended. Cumulative Reward: 575.76157481401
+Episode ended. Cumulative Reward: 233.8614631276647
+Episode ended due to reaching max steps: 1000, at distance: 877.6669769549758, action 2
+Episode ended. Cumulative Reward: -27446.419005639607
+Episode ended due to reaching max steps: 1000, at distance: 912.9867038577897, action 3
+Episode ended. Cumulative Reward: -34723.84719159085
+Episode ended due to reaching max steps: 1000, at distance: 31.073650065267877, action 3
+Episode ended. Cumulative Reward: 317.07073787493187
+Episode ended due to reaching max steps: 1000, at distance: 148.46397101416898, action 2
+Episode ended. Cumulative Reward: 740.8152384273834
+Episode ended due to reaching max steps: 1000, at distance: 43.383440267986636, action 0
+Episode ended. Cumulative Reward: 358.7657696050917
+Episode ended due to reaching max steps: 1000, at distance: 1109.1422562970654, action 0
+Episode ended. Cumulative Reward: -56429.42264160418
+Episode ended due to reaching max steps: 1000, at distance: 459.3631921297014, action 0
+Episode ended. Cumulative Reward: -125.93316131131269
+Episode ended due to reaching max steps: 1000, at distance: 21.089140105543727, action 0
+Episode ended. Cumulative Reward: 610.1542379970208
+Episode ended due to reaching max steps: 1000, at distance: 849.0079170743675, action 3
+Episode ended. Cumulative Reward: -24228.49673568158
+Episode ended due to reaching max steps: 1000, at distance: 854.9155001590453, action 1
+Episode ended. Cumulative Reward: -52707.74323116636
+Episode ended due to reaching max steps: 1000, at distance: 56.59255729071029, action 0
+Episode ended. Cumulative Reward: 244.81608216274458
+Episode ended due to reaching max steps: 1000, at distance: 554.4561449623546, action 3
+Episode ended. Cumulative Reward: -88.6642093590782
+Episode ended due to reaching max steps: 1000, at distance: 970.6093077899669, action 0
+Episode ended. Cumulative Reward: -45676.645681582995
+Episode ended due to reaching max steps: 1000, at distance: 487.05900794785106, action 0
+Episode ended. Cumulative Reward: -10278.042578826846
+Episode ended due to reaching max steps: 1000, at distance: 76.6068549748633, action 0
+Episode ended. Cumulative Reward: 962.3663358826094
+Episode ended due to reaching max steps: 1000, at distance: 870.5244819758816, action 1
+Episode ended. Cumulative Reward: -26529.093054525893
+Episode ended due to reaching max steps: 1000, at distance: 1099.7982168983594, action 3
+Episode ended. Cumulative Reward: -59484.93754946446
+Episode ended due to reaching max steps: 1000, at distance: 1220.2135388186869, action 0
+Episode ended. Cumulative Reward: -72313.08717583236
+Episode ended due to reaching max steps: 1000, at distance: 48.35095768421005, action 3
+Episode ended. Cumulative Reward: 821.2473718069939
+Episode ended due to reaching max steps: 1000, at distance: 39.576344152527675, action 1
+Episode ended. Cumulative Reward: 824.9353899859611
+Episode ended. Cumulative Reward: 107.81727955969379
+Episode ended. Cumulative Reward: 132.4414319732075
+Episode ended. Cumulative Reward: 275.2782062259194
+Episode ended. Cumulative Reward: -3566.9056914722373
+Episode ended. Cumulative Reward: 331.86241889917983
+Episode ended. Cumulative Reward: 260.4608646929378
+Episode ended. Cumulative Reward: 238.38403959697732
+Episode ended. Cumulative Reward: 116.3029789018309
+Episode ended. Cumulative Reward: 183.77159052605603
+Episode ended. Cumulative Reward: 250.2005621280924
+Episode ended. Cumulative Reward: 158.91225281709285
+Episode ended. Cumulative Reward: 307.66523100697094
+Episode ended. Cumulative Reward: 245.41232132351467
+Episode ended. Cumulative Reward: -16327.429247135637
+Episode ended. Cumulative Reward: -65.66410998705732
+Episode ended. Cumulative Reward: 308.9791123932349
+Episode ended. Cumulative Reward: 284.6644448732035
+Episode ended. Cumulative Reward: -2922.4490403218765
+Episode ended. Cumulative Reward: 207.10458904682542
+Episode ended. Cumulative Reward: 84.8912503875298
+Reward found at step 442: 442
+Episode ended. Cumulative Reward: 1260.7284246894412
+Reward found at step 452: 452
+Episode ended. Cumulative Reward: 1422.2644862278948
+Reward found at step 576: 576
+Episode ended. Cumulative Reward: 1536.851144669528
+Reward found at step 195: 195
+Episode ended. Cumulative Reward: 1048.8057662323456
+Episode ended. Cumulative Reward: -27.659378786278438
+Episode ended. Cumulative Reward: 526.8082640092636
+Episode ended. Cumulative Reward: 165.7598306199695
+Episode ended. Cumulative Reward: 463.21008769992966
+Episode ended. Cumulative Reward: -17925.666420727655
+Episode ended. Cumulative Reward: 194.59116874629206
+Episode ended. Cumulative Reward: 160.533739076422
+Episode ended. Cumulative Reward: -22706.220283562172
+Episode ended. Cumulative Reward: 19.64797540180993
+Episode ended. Cumulative Reward: 45.90194621306601
+Episode ended. Cumulative Reward: -259.73554137136546
+Episode ended. Cumulative Reward: -38.794914477427994
+Episode ended. Cumulative Reward: 599.6585472630067
+Episode ended. Cumulative Reward: 94.9069720633895
+Episode ended. Cumulative Reward: 451.05997606015865
+Episode ended. Cumulative Reward: 261.6379847140818
+Episode ended. Cumulative Reward: 64.89211524851996
+Episode ended. Cumulative Reward: 273.96848955114456
+Episode ended. Cumulative Reward: 565.0333996815501
+Episode ended. Cumulative Reward: 74.22536176498903
+Reward found at step 270: 270
+Episode ended. Cumulative Reward: 1328.4209861575011
+Reward found at step 382: 382
+Episode ended. Cumulative Reward: 1229.152396615488
+Episode ended due to reaching max steps: 1000, at distance: 60.272930585519106, action 2
+Episode ended. Cumulative Reward: 179.34262738755555
+Episode ended due to reaching max steps: 1000, at distance: 1021.5925737350177, action 0
+Episode ended. Cumulative Reward: -46041.4899164358
+Episode ended due to reaching max steps: 1000, at distance: 98.36701115324703, action 3
+Episode ended. Cumulative Reward: 543.7639674046206
+Episode ended due to reaching max steps: 1000, at distance: 125.92686533588476, action 1
+Episode ended. Cumulative Reward: 847.3193968829812
+Episode ended due to reaching max steps: 1000, at distance: 42.33281887699563, action 0
+Episode ended. Cumulative Reward: 364.7734687256944
+Episode ended due to reaching max steps: 1000, at distance: 197.0618209157966, action 2
+Episode ended. Cumulative Reward: -227.0815925048566
+Episode ended due to reaching max steps: 1000, at distance: 953.1588332261975, action 1
+Episode ended. Cumulative Reward: -37034.81120508218
+Episode ended due to reaching max steps: 1000, at distance: 19.595524518948796, action 2
+Episode ended. Cumulative Reward: 449.90326447171435
+Episode ended due to reaching max steps: 1000, at distance: 81.50418557911364, action 5
+Episode ended. Cumulative Reward: 100.13355115251605
+Episode ended due to reaching max steps: 1000, at distance: 86.5772385106919, action 1
+Episode ended. Cumulative Reward: 47.73590047184459
+Episode ended due to reaching max steps: 1000, at distance: 369.92947773216514, action 3
+Episode ended. Cumulative Reward: 201.38675002385833
+Episode ended due to reaching max steps: 1000, at distance: 1281.2013748459178, action 2
+Episode ended. Cumulative Reward: -84331.31918295029
+Episode ended due to reaching max steps: 1000, at distance: 44.94654464019063, action 2
+Episode ended. Cumulative Reward: 476.05254904625247
+Episode ended due to reaching max steps: 1000, at distance: 187.97262582777833, action 1
+Episode ended. Cumulative Reward: 299.0264058810677
+Episode ended due to reaching max steps: 1000, at distance: 654.7412312493361, action 1
+Episode ended. Cumulative Reward: -32894.158308851984
+Episode ended due to reaching max steps: 1000, at distance: 762.6304862739933, action 3
+Episode ended. Cumulative Reward: -31984.233429831576
+Episode ended due to reaching max steps: 1000, at distance: 385.313658749808, action 0
+Episode ended. Cumulative Reward: -41.22653503907134
+Episode ended due to reaching max steps: 1000, at distance: 41.001678647642635, action 2
+Episode ended. Cumulative Reward: 886.114236408975
+Episode ended due to reaching max steps: 1000, at distance: 395.15172312409896, action 2
+Episode ended. Cumulative Reward: -689.7566003971866
+Reward found at step 368: 368
+Episode ended. Cumulative Reward: 1251.1859998054433
+Episode ended due to reaching max steps: 1000, at distance: 164.14167439960133, action 1
+Episode ended. Cumulative Reward: 105.5038463470928
+Reward found at step 422: 422
+Episode ended. Cumulative Reward: 1510.4277804699336
+Reward found at step 504: 504
+Episode ended. Cumulative Reward: 1403.963970267576
+Reward found at step 296: 296
+Episode ended. Cumulative Reward: 1255.068117387441
+Reward found at step 569: 569
+Episode ended. Cumulative Reward: 1512.8517325054922
+Reward found at step 607: 607
+Episode ended. Cumulative Reward: 1501.9010075425836
+Reward found at step 739: 739
+Episode ended. Cumulative Reward: 1582.6117815975917
+Reward found at step 423: 423
+Episode ended. Cumulative Reward: 1516.2998822781765
+Reward found at step 913: 913
+Episode ended. Cumulative Reward: 1360.9809548437936
+Reward found at step 944: 944
+Episode ended. Cumulative Reward: 1537.9859886120753
+Episode ended. Cumulative Reward: 446.76145293801875
+Episode ended. Cumulative Reward: 420.02997290157066
+Episode ended. Cumulative Reward: 205.09618186296882
+Episode ended. Cumulative Reward: 217.5933850777617
+Episode ended. Cumulative Reward: 293.02256906256696
+Episode ended. Cumulative Reward: 894.8095827915048
+Episode ended. Cumulative Reward: 645.2178961384412
+Episode ended. Cumulative Reward: 8.529364160849596
+Episode ended. Cumulative Reward: 547.0551165435824
+Episode ended. Cumulative Reward: 233.36962343391872
+Episode ended. Cumulative Reward: 71.7632379717113
+Episode ended. Cumulative Reward: 280.08144740829783
+Episode ended. Cumulative Reward: 367.7460811500313
+Episode ended. Cumulative Reward: 1012.5415946817792
+Episode ended. Cumulative Reward: -83.69724050389823
+Episode ended. Cumulative Reward: 88.46904018441512
+Episode ended. Cumulative Reward: 579.5037584756142
+Episode ended. Cumulative Reward: -3.453144374061594
+Episode ended. Cumulative Reward: 860.326171669966
+Episode ended. Cumulative Reward: 334.0249792562472
+Reward found at step 0: 0
+Episode ended. Cumulative Reward: 998.5639809632306
+Reward found at step 136: 136
+Episode ended. Cumulative Reward: 1183.8302834543701
+Reward found at step 771: 771
+Episode ended. Cumulative Reward: 1844.6813884050857
+Episode ended due to reaching max steps: 1000, at distance: 59.239325250168214, action 1
+Episode ended. Cumulative Reward: 928.3586024677716
+Episode ended due to reaching max steps: 1000, at distance: 48.04290809495407, action 2
+Episode ended. Cumulative Reward: -52.7112575838266
+Episode ended due to reaching max steps: 1000, at distance: 22.790170097014464, action 1
+Episode ended. Cumulative Reward: 380.8702319333304
+Episode ended due to reaching max steps: 1000, at distance: 1127.0085026248769, action 2
+Episode ended. Cumulative Reward: -61972.11447947723
+Episode ended due to reaching max steps: 1000, at distance: 364.25507163438795, action 0
+Episode ended. Cumulative Reward: 70.45844984793564
+Episode ended due to reaching max steps: 1000, at distance: 874.9105240721341, action 3
+Episode ended. Cumulative Reward: -28458.41121884479
+Episode ended due to reaching max steps: 1000, at distance: 331.62795385215134, action 3
+Episode ended. Cumulative Reward: -335.61174043688953
+Episode ended due to reaching max steps: 1000, at distance: 1221.4785795513972, action 2
+Episode ended. Cumulative Reward: -73603.06958042081
+Episode ended due to reaching max steps: 1000, at distance: 307.7909030448261, action 2
+Episode ended. Cumulative Reward: 68.61099383059246
+Episode ended due to reaching max steps: 1000, at distance: 818.7038171574122, action 0
+Episode ended. Cumulative Reward: -23043.50069847091
+Episode ended due to reaching max steps: 1000, at distance: 28.772982181171013, action 0
+Episode ended. Cumulative Reward: 17.492216937597426
+Episode ended due to reaching max steps: 1000, at distance: 114.1883321888019, action 2
+Episode ended. Cumulative Reward: 75.71433002327694
+Episode ended due to reaching max steps: 1000, at distance: 106.88501415670869, action 4
+Episode ended. Cumulative Reward: 353.49682199589245
+Episode ended due to reaching max steps: 1000, at distance: 29.72070216757094, action 0
+Episode ended. Cumulative Reward: 145.32335615212796
+Episode ended due to reaching max steps: 1000, at distance: 1499.7806277278848, action 2
+Episode ended. Cumulative Reward: -112136.10262697653
+Episode ended due to reaching max steps: 1000, at distance: 1104.0554456718462, action 1
+Episode ended. Cumulative Reward: -57495.56085120835
+Episode ended due to reaching max steps: 1000, at distance: 99.30100346210801, action 2
+Episode ended. Cumulative Reward: -20.44269788335174
+Episode ended due to reaching max steps: 1000, at distance: 659.0336965537184, action 2
+Episode ended. Cumulative Reward: -28283.48300117027
+Episode ended due to reaching max steps: 1000, at distance: 887.2291316442022, action 0
+Episode ended. Cumulative Reward: -31746.74805437508
+Reward found at step 244: 244
+Episode ended. Cumulative Reward: 1155.2041067195769
+Episode ended. Cumulative Reward: 226.29489879450125
+Episode ended. Cumulative Reward: 239.5916751713454
+Episode ended. Cumulative Reward: 119.21204646563028
+Episode ended. Cumulative Reward: 341.8523744756664
+Episode ended. Cumulative Reward: 259.15364730506565
+Episode ended. Cumulative Reward: 435.70361008015533
+Episode ended. Cumulative Reward: -232.45361087435208
+Episode ended. Cumulative Reward: 412.46290763560376
+Episode ended. Cumulative Reward: 426.35760266817965
+Episode ended. Cumulative Reward: 366.3291874158423
+Episode ended. Cumulative Reward: 256.47486256268445
+Episode ended. Cumulative Reward: 381.6140976317563
+Episode ended. Cumulative Reward: 249.89660008815338
+Episode ended. Cumulative Reward: 138.0132632658648
+Episode ended. Cumulative Reward: -64.7989621987424
+Episode ended. Cumulative Reward: 272.79233637383555
+Episode ended. Cumulative Reward: 433.88714491292285
+Episode ended. Cumulative Reward: 483.0819543151945
+Episode ended. Cumulative Reward: 467.9540320061591
+Episode ended. Cumulative Reward: -17.391889035407985
+Reward found at step 487: 487
+Episode ended. Cumulative Reward: 1592.5607731369605
+Reward found at step 547: 547
+Episode ended. Cumulative Reward: 1574.290449280908
+Reward found at step 582: 582
+Episode ended. Cumulative Reward: 1550.5104281178383
+Reward found at step 601: 601
+Episode ended. Cumulative Reward: 1396.5945884015266
+Reward found at step 629: 629
+Episode ended. Cumulative Reward: 1629.67380880966
+Episode ended. Cumulative Reward: 123.07864147211026
+Episode ended. Cumulative Reward: 635.4719332527773
+Episode ended. Cumulative Reward: 119.02628654957067
+Episode ended. Cumulative Reward: -17125.902214526122
+Episode ended. Cumulative Reward: 2.4469154989923254
+Episode ended. Cumulative Reward: 630.2798660163011
+Episode ended. Cumulative Reward: -33110.844660447256
+Episode ended. Cumulative Reward: 482.4769717927369
+Episode ended. Cumulative Reward: 674.4547855023515
+Episode ended. Cumulative Reward: 244.47634851838268
+Episode ended. Cumulative Reward: 519.6332748861879
+Episode ended. Cumulative Reward: 27.20033363078278
+Episode ended. Cumulative Reward: -79.20468794678868
+Episode ended. Cumulative Reward: 503.432568054669
+Episode ended. Cumulative Reward: -290.3608957844272
+Episode ended. Cumulative Reward: 479.0156243504632
+Episode ended. Cumulative Reward: 653.9686065127693
+Episode ended. Cumulative Reward: 6.6599146524361
+Episode ended. Cumulative Reward: 698.8980216696516
+Episode ended. Cumulative Reward: 641.3942274633727
+Reward found at step 844: 844
+Episode ended. Cumulative Reward: 1954.171070431217
+Episode ended due to reaching max steps: 1000, at distance: 901.024218210538, action 0
+Episode ended. Cumulative Reward: -44502.1470741734
+Episode ended due to reaching max steps: 1000, at distance: 421.3034702512153, action 0
+Episode ended. Cumulative Reward: 80.97272620329568
+Episode ended due to reaching max steps: 1000, at distance: 62.524399516188325, action 1
+Episode ended. Cumulative Reward: 840.7472324031147
+Episode ended due to reaching max steps: 1000, at distance: 223.15029641573918, action 2
+Episode ended. Cumulative Reward: 4.762986366324753
+Episode ended due to reaching max steps: 1000, at distance: 1110.7461176428617, action 1
+Episode ended. Cumulative Reward: -56871.619496570696
+Episode ended due to reaching max steps: 1000, at distance: 1253.9264305393594, action 1
+Episode ended. Cumulative Reward: -83643.77526655055
+Episode ended due to reaching max steps: 1000, at distance: 509.2548855075456, action 3
+Episode ended. Cumulative Reward: -896.4689013260611
+Episode ended due to reaching max steps: 1000, at distance: 620.2157265775378, action 1
+Episode ended. Cumulative Reward: -2683.5717720733405
+Episode ended due to reaching max steps: 1000, at distance: 776.4057196618724, action 3
+Episode ended. Cumulative Reward: -17698.69142202495
+Episode ended due to reaching max steps: 1000, at distance: 558.6859511268476, action 3
+Episode ended. Cumulative Reward: -673.5477830859829
+Episode ended due to reaching max steps: 1000, at distance: 1031.0546314106584, action 1
+Episode ended. Cumulative Reward: -46283.53550872886
+Episode ended due to reaching max steps: 1000, at distance: 1086.6658472533688, action 3
+Episode ended. Cumulative Reward: -64023.74526143398
+Episode ended due to reaching max steps: 1000, at distance: 1196.7547947714274, action 3
+Episode ended. Cumulative Reward: -68720.0605588068
+Episode ended due to reaching max steps: 1000, at distance: 131.2701537147946, action 3
+Episode ended. Cumulative Reward: 120.16772010111407
+Episode ended due to reaching max steps: 1000, at distance: 62.40501591747512, action 0
+Episode ended. Cumulative Reward: 331.0918104125386
+Episode ended due to reaching max steps: 1000, at distance: 88.31284484589047, action 5
+Episode ended. Cumulative Reward: 540.087673831146
+Episode ended due to reaching max steps: 1000, at distance: 557.5263071269283, action 2
+Episode ended. Cumulative Reward: -272.0430846881152
+Episode ended due to reaching max steps: 1000, at distance: 859.7102151532234, action 2
+Episode ended. Cumulative Reward: -27835.701230425937
+Episode ended due to reaching max steps: 1000, at distance: 342.4514874632634, action 0
+Episode ended. Cumulative Reward: -261.36605842111607
+Reward found at step 314: 314
+Episode ended. Cumulative Reward: 1324.068956813169
+Reward found at step 572: 572
+Episode ended. Cumulative Reward: 1502.9108813919129
+Reward found at step 720: 720
+Episode ended. Cumulative Reward: 1918.7871879501247
+Reward found at step 779: 779
+Episode ended. Cumulative Reward: 1600.7221974270155
+Reward found at step 264: 264
+Episode ended. Cumulative Reward: 1277.5141956371626
+Episode ended due to reaching max steps: 1000, at distance: 36.277854189710105, action 2
+Episode ended. Cumulative Reward: 750.0508538911843
+Reward found at step 845: 845
+Episode ended. Cumulative Reward: 1900.7133926290185
+Reward found at step 918: 918
+Episode ended. Cumulative Reward: 1498.1511947908702
+Reward found at step 609: 609
+Episode ended. Cumulative Reward: 1542.3648264776411
+Reward found at step 981: 981
+Episode ended. Cumulative Reward: 1745.408405570322
+Episode ended. Cumulative Reward: 23.828815568330356
+Episode ended. Cumulative Reward: 104.66488104068873
+Episode ended. Cumulative Reward: 45.19812364547897
+Episode ended. Cumulative Reward: 144.83145111505132
+Episode ended. Cumulative Reward: 598.1082861804466
+Episode ended. Cumulative Reward: 341.90104583513073
+Episode ended. Cumulative Reward: 832.9055016475895
+Episode ended. Cumulative Reward: 76.39887458752946
+Episode ended. Cumulative Reward: 729.0763954456506
+Episode ended. Cumulative Reward: 137.72601380353973
+Episode ended. Cumulative Reward: 448.708505457266
+Episode ended. Cumulative Reward: 858.0009397957502
+Episode ended. Cumulative Reward: 130.55397355021253
+Episode ended. Cumulative Reward: -124.4931884715011
+Episode ended. Cumulative Reward: 241.65752514891426
+Episode ended. Cumulative Reward: 612.8391048876023
+Episode ended. Cumulative Reward: 29.05969934329721
+Episode ended. Cumulative Reward: 975.2636087208318
+Episode ended. Cumulative Reward: 640.450084005289
+Episode ended. Cumulative Reward: 297.82080345347276
+Episode ended due to reaching max steps: 1000, at distance: 1201.0836547857855, action 2
+Episode ended. Cumulative Reward: -69406.87592381648
+Episode ended due to reaching max steps: 1000, at distance: 1317.4251881822702, action 2
+Episode ended. Cumulative Reward: -87785.99731268556
+Episode ended due to reaching max steps: 1000, at distance: 56.567707537246775, action 3
+Episode ended. Cumulative Reward: 680.2650192227819
+Episode ended due to reaching max steps: 1000, at distance: 287.1609891423543, action 0
+Episode ended. Cumulative Reward: -240.0268696042695
+Episode ended due to reaching max steps: 1000, at distance: 52.27562203597033, action 2
+Episode ended. Cumulative Reward: 406.71704537077846
+Episode ended due to reaching max steps: 1000, at distance: 1182.9243324505558, action 2
+Episode ended. Cumulative Reward: -68743.67385251436
+Episode ended due to reaching max steps: 1000, at distance: 559.2433329539833, action 1
+Episode ended. Cumulative Reward: -502.44220051874015
+Episode ended due to reaching max steps: 1000, at distance: 567.4217335881078, action 1
+Episode ended. Cumulative Reward: -8225.911471781503
+Episode ended due to reaching max steps: 1000, at distance: 44.48264001095536, action 2
+Episode ended. Cumulative Reward: 420.6144244553486
+Episode ended due to reaching max steps: 1000, at distance: 241.13234746489536, action 2
+Episode ended. Cumulative Reward: -251.39343077117934
+Episode ended due to reaching max steps: 1000, at distance: 428.5604024689416, action 3
+Episode ended. Cumulative Reward: -415.026057763499
+Episode ended due to reaching max steps: 1000, at distance: 55.799716027710005, action 0
+Episode ended. Cumulative Reward: 714.3201056481041
+Episode ended due to reaching max steps: 1000, at distance: 1110.6463239234681, action 1
+Episode ended. Cumulative Reward: -56422.37107776588
+Episode ended due to reaching max steps: 1000, at distance: 677.6289171250943, action 3
+Episode ended. Cumulative Reward: -10010.135239331275
+Episode ended due to reaching max steps: 1000, at distance: 1338.4730416738703, action 0
+Episode ended. Cumulative Reward: -94735.56220922455
+Episode ended due to reaching max steps: 1000, at distance: 23.198150693463127, action 1
+Episode ended. Cumulative Reward: 772.0306802381087
+Episode ended due to reaching max steps: 1000, at distance: 40.97730009440825, action 0
+Episode ended. Cumulative Reward: 583.9377313646823
+Episode ended due to reaching max steps: 1000, at distance: 1084.7308222755987, action 3
+Episode ended. Cumulative Reward: -56993.10405890617
+Episode ended due to reaching max steps: 1000, at distance: 60.1649240681786, action 2
+Episode ended. Cumulative Reward: -1015.024830516455
+Episode ended due to reaching max steps: 1000, at distance: 230.79459510518575, action 2
+Episode ended. Cumulative Reward: -123.65213131138574
+Episode ended. Cumulative Reward: 299.07947415569356
+Episode ended. Cumulative Reward: 238.96712757878595
+Episode ended. Cumulative Reward: 392.4002301951788
+Episode ended. Cumulative Reward: 540.0004974943377
+Episode ended. Cumulative Reward: 178.2605530273437
+Episode ended. Cumulative Reward: 23.68778569627775
+Episode ended. Cumulative Reward: 365.69705480769824
+Episode ended. Cumulative Reward: 462.13252729878513
+Episode ended. Cumulative Reward: 401.49975525422775
+Episode ended. Cumulative Reward: 108.92838926409877
+Episode ended. Cumulative Reward: -73.95759092462919
+Episode ended. Cumulative Reward: -9365.513786488547
+Episode ended. Cumulative Reward: 328.90818985965757
+Episode ended. Cumulative Reward: 501.6818984507619
+Episode ended. Cumulative Reward: 375.8930514995098
+Episode ended. Cumulative Reward: -4287.763006637374
+Episode ended. Cumulative Reward: 269.07853847090735
+Episode ended. Cumulative Reward: -7294.454280543365
+Episode ended. Cumulative Reward: 115.72775081466989
+Episode ended. Cumulative Reward: 445.6024122939859
+Reward found at step 0: 0
+Episode ended. Cumulative Reward: 998.9856595021922
+Reward found at step 478: 478
+Episode ended. Cumulative Reward: 1457.9035920468696
+Reward found at step 595: 595
+Episode ended. Cumulative Reward: 1646.3293638919245
+Episode ended. Cumulative Reward: 672.4656471091868
+Episode ended. Cumulative Reward: 496.83698796376177
+Episode ended. Cumulative Reward: 410.9076011006355
+Episode ended. Cumulative Reward: -30363.856498395442
+Episode ended. Cumulative Reward: 540.4847947839824
+Episode ended. Cumulative Reward: 25.57715320741488
+Episode ended. Cumulative Reward: 400.2139079657397
+Episode ended. Cumulative Reward: 297.69986521857555
+Episode ended. Cumulative Reward: 313.80794365766747
+Episode ended. Cumulative Reward: 430.65547826160594
+Episode ended. Cumulative Reward: 199.92774450959118
+Episode ended. Cumulative Reward: 583.008807207587
+Episode ended. Cumulative Reward: 440.0918643735735
+Episode ended. Cumulative Reward: -51.53040295540586
+Episode ended. Cumulative Reward: 11.28473856726896
+Episode ended. Cumulative Reward: 785.3879745621622
+Episode ended. Cumulative Reward: -22216.66496178764
+Episode ended. Cumulative Reward: 719.643525963924
+Episode ended. Cumulative Reward: 90.5999069700627
+Episode ended. Cumulative Reward: 232.1865103326922
+Reward found at step 179: 179
+Episode ended. Cumulative Reward: 1225.8410883143051
+Reward found at step 713: 713
+Episode ended. Cumulative Reward: 1826.1221286138157
+Episode ended due to reaching max steps: 1000, at distance: 828.0434460288312, action 1
+Episode ended. Cumulative Reward: -22261.34998154845
+Episode ended due to reaching max steps: 1000, at distance: 1053.688966383024, action 1
+Episode ended. Cumulative Reward: -58814.19154525892
+Episode ended due to reaching max steps: 1000, at distance: 36.94956514629547, action 1
+Episode ended. Cumulative Reward: 203.23742800398156
+Episode ended due to reaching max steps: 1000, at distance: 41.00955327443159, action 0
+Episode ended. Cumulative Reward: 948.17448365189
+Episode ended due to reaching max steps: 1000, at distance: 12.009573944543314, action 3
+Episode ended. Cumulative Reward: 308.57329742270224
+Episode ended due to reaching max steps: 1000, at distance: 26.6821878411701, action 0
+Episode ended. Cumulative Reward: 665.8758764238701
+Episode ended due to reaching max steps: 1000, at distance: 128.38672292070885, action 2
+Episode ended. Cumulative Reward: 328.2175151394255
+Episode ended due to reaching max steps: 1000, at distance: 1228.6452878154678, action 0
+Episode ended. Cumulative Reward: -88148.96605251492
+Episode ended due to reaching max steps: 1000, at distance: 903.7717638632279, action 3
+Episode ended. Cumulative Reward: -31239.660397671763
+Episode ended due to reaching max steps: 1000, at distance: 1040.0784419411402, action 0
+Episode ended. Cumulative Reward: -68377.97337648536
+Episode ended due to reaching max steps: 1000, at distance: 636.7259307351472, action 1
+Episode ended. Cumulative Reward: -6332.596730341988
+Episode ended due to reaching max steps: 1000, at distance: 235.32957436442393, action 2
+Episode ended. Cumulative Reward: 8.80931960113594
+Episode ended due to reaching max steps: 1000, at distance: 1121.869041439706, action 0
+Episode ended. Cumulative Reward: -65919.96751804244
+Episode ended due to reaching max steps: 1000, at distance: 236.40899172212463, action 1
+Episode ended. Cumulative Reward: 377.5123725358715
+Episode ended due to reaching max steps: 1000, at distance: 1072.0761581269003, action 0
+Episode ended. Cumulative Reward: -82458.90476368739
+Episode ended due to reaching max steps: 1000, at distance: 377.6950580911391, action 2
+Episode ended. Cumulative Reward: -193.77362823820908
+Episode ended due to reaching max steps: 1000, at distance: 810.99253019494, action 2
+Episode ended. Cumulative Reward: -21534.15390707226
+Episode ended due to reaching max steps: 1000, at distance: 970.8789914810095, action 3
+Episode ended. Cumulative Reward: -44907.551267693896
+Episode ended due to reaching max steps: 1000, at distance: 1216.0436111876409, action 1
+Episode ended. Cumulative Reward: -78919.8519976737
+Reward found at step 334: 334
+Episode ended. Cumulative Reward: 1264.409705201006
+Reward found at step 473: 473
+Episode ended. Cumulative Reward: 1393.1710803657356
+Episode ended due to reaching max steps: 1000, at distance: 17.693031980726403, action 2
+Episode ended. Cumulative Reward: 458.4842884886735
+Reward found at step 752: 752
+Episode ended. Cumulative Reward: 1937.631099517587
+Reward found at step 804: 804
+Episode ended. Cumulative Reward: 1785.5701083201584
+Reward found at step 831: 831
+Episode ended. Cumulative Reward: 1331.7608153504466
+Episode ended. Cumulative Reward: 263.35556466189377
+Episode ended. Cumulative Reward: 424.262622340054
+Episode ended. Cumulative Reward: 857.976846541733
+Episode ended. Cumulative Reward: 371.12394933867506
+Episode ended. Cumulative Reward: 278.83126941739135
+Episode ended. Cumulative Reward: 665.2206718174681
+Episode ended. Cumulative Reward: 17.491234609270407
+Episode ended. Cumulative Reward: 264.57401323856027
+Episode ended. Cumulative Reward: 694.5457278996021
+Episode ended. Cumulative Reward: -14346.089030186931
+Episode ended. Cumulative Reward: 152.70201567171438
+Episode ended. Cumulative Reward: 191.1986487977557
+Episode ended. Cumulative Reward: 826.8138528538609
+Episode ended. Cumulative Reward: 441.88649929559017
+Episode ended. Cumulative Reward: 107.80796100506973
+Episode ended. Cumulative Reward: 483.5816424057033
+Episode ended. Cumulative Reward: 661.7802089104323
+Episode ended. Cumulative Reward: 748.5172805793741
+Episode ended. Cumulative Reward: 729.3965697081966
+Episode ended. Cumulative Reward: 797.4631556087078
+Reward found at step 403: 403
+Episode ended. Cumulative Reward: 1617.8223315867626
+Reward found at step 474: 474
+Episode ended. Cumulative Reward: 1265.9498235643823
+Episode ended due to reaching max steps: 1000, at distance: 948.3619055570894, action 3
+Episode ended. Cumulative Reward: -37279.00343052938
+Episode ended due to reaching max steps: 1000, at distance: 63.26043135649461, action 0
+Episode ended. Cumulative Reward: 921.8393626824541
+Episode ended due to reaching max steps: 1000, at distance: 28.99468929899372, action 5
+Episode ended. Cumulative Reward: 254.81868976871255
+Episode ended due to reaching max steps: 1000, at distance: 50.664587757023476, action 3
+Episode ended. Cumulative Reward: 508.7029720417554
+Episode ended due to reaching max steps: 1000, at distance: 1366.0972062096562, action 0
+Episode ended. Cumulative Reward: -99577.93905995713
+Episode ended due to reaching max steps: 1000, at distance: 843.1094469531126, action 2
+Episode ended. Cumulative Reward: -24267.596682990246
+Episode ended due to reaching max steps: 1000, at distance: 367.50534144031866, action 1
+Episode ended. Cumulative Reward: 268.818943542394
+Episode ended due to reaching max steps: 1000, at distance: 1069.6626393956612, action 3
+Episode ended. Cumulative Reward: -77014.58411237675
+Episode ended due to reaching max steps: 1000, at distance: 115.98859968282454, action 0
+Episode ended. Cumulative Reward: 104.43555010242082
+Episode ended due to reaching max steps: 1000, at distance: 19.200802671163395, action 1
+Episode ended. Cumulative Reward: 305.30132493416147
+Episode ended due to reaching max steps: 1000, at distance: 1093.2935525021219, action 3
+Episode ended. Cumulative Reward: -57830.89152646556
+Episode ended due to reaching max steps: 1000, at distance: 68.4645776655403, action 0
+Episode ended. Cumulative Reward: 660.5980322089654
+Episode ended due to reaching max steps: 1000, at distance: 64.07090364754409, action 2
+Episode ended. Cumulative Reward: 881.4059961933684
+Episode ended due to reaching max steps: 1000, at distance: 833.2799288122186, action 1
+Episode ended. Cumulative Reward: -42821.21809274163
+Episode ended due to reaching max steps: 1000, at distance: 1087.9033308604687, action 1
+Episode ended. Cumulative Reward: -53173.12885713449
+Episode ended due to reaching max steps: 1000, at distance: 77.31884416463988, action 0
+Episode ended. Cumulative Reward: 42.67886326084866
+Episode ended due to reaching max steps: 1000, at distance: 180.072337615805, action 3
+Episode ended. Cumulative Reward: 624.1989186605542
+Episode ended due to reaching max steps: 1000, at distance: 708.189139567725, action 3
+Episode ended. Cumulative Reward: -13751.078630510456
+Reward found at step 402: 402
+Episode ended. Cumulative Reward: 1285.1483850600962
+Episode ended due to reaching max steps: 1000, at distance: 605.2207869445816, action 4
+Episode ended. Cumulative Reward: -34750.06201900212
+Episode ended. Cumulative Reward: 558.6092757677598
+Episode ended. Cumulative Reward: 268.1942683726383
+Episode ended. Cumulative Reward: 105.92709929534294
+Episode ended. Cumulative Reward: 317.8787318251516
+Episode ended. Cumulative Reward: 354.90565039784974
+Episode ended. Cumulative Reward: 464.45493075622494
+Episode ended. Cumulative Reward: 346.52744529247343
+Episode ended. Cumulative Reward: 465.417495366355
+Episode ended. Cumulative Reward: 37.97750029175927
+Episode ended. Cumulative Reward: 162.43416827035804
+Episode ended. Cumulative Reward: 584.3068117588282
+Episode ended. Cumulative Reward: 419.9325121440646
+Episode ended. Cumulative Reward: -16.481115801158467
+Episode ended. Cumulative Reward: -30.226556820216274
+Episode ended. Cumulative Reward: -33.773326974019824
+Episode ended. Cumulative Reward: 42.89148572407203
+Episode ended. Cumulative Reward: 229.29500835485973
+Episode ended. Cumulative Reward: 437.3057039592377
+Episode ended. Cumulative Reward: 129.82973659386062
+Episode ended. Cumulative Reward: 312.479953388089
+Reward found at step 271: 271
+Episode ended. Cumulative Reward: 1306.8025031898296
+Reward found at step 435: 435
+Episode ended. Cumulative Reward: 1411.8245684122032
+Reward found at step 497: 497
+Episode ended. Cumulative Reward: 1238.4609639330583
+Episode ended. Cumulative Reward: 599.1139782393375
+Episode ended. Cumulative Reward: 541.056741264192
+Episode ended. Cumulative Reward: 276.40027204936507
+Episode ended. Cumulative Reward: 478.100271675454
+Episode ended. Cumulative Reward: 310.8706029727923
+Episode ended. Cumulative Reward: 357.12142709573766
+Episode ended. Cumulative Reward: 174.11692774798723
+Episode ended. Cumulative Reward: 45.441669865211225
+Episode ended. Cumulative Reward: 427.6283617178268
+Episode ended. Cumulative Reward: 405.8124002616752
+Episode ended. Cumulative Reward: -630.2089323354922
+Episode ended. Cumulative Reward: 501.58384548186905
+Episode ended. Cumulative Reward: 163.80046330632746
+Episode ended. Cumulative Reward: 354.2070783686833
+Episode ended. Cumulative Reward: 383.7346083115076
+Episode ended. Cumulative Reward: 559.8293179112254
+Episode ended. Cumulative Reward: -15.46299702083354
+Episode ended. Cumulative Reward: 362.34190856949317
+Episode ended. Cumulative Reward: 35.23172914394769
+Episode ended. Cumulative Reward: -18.84303381556788
+Reward found at step 415: 415
+Episode ended. Cumulative Reward: 1631.6311873238585
+Episode ended due to reaching max steps: 1000, at distance: 1058.9106555817934, action 3
+Episode ended. Cumulative Reward: -49373.97167687349
+Episode ended due to reaching max steps: 1000, at distance: 24.613862692712907, action 0
+Episode ended. Cumulative Reward: 553.7119643737734
+Episode ended due to reaching max steps: 1000, at distance: 34.46741409526249, action 1
+Episode ended. Cumulative Reward: 656.6809364241326
+Episode ended due to reaching max steps: 1000, at distance: 57.457323745241865, action 3
+Episode ended. Cumulative Reward: 795.2721348262173
+Episode ended due to reaching max steps: 1000, at distance: 20.395821199067772, action 0
+Episode ended. Cumulative Reward: 372.4586139896163
+Episode ended due to reaching max steps: 1000, at distance: 78.23445183902055, action 4
+Episode ended. Cumulative Reward: 385.2303227648881
+Episode ended due to reaching max steps: 1000, at distance: 46.2255716084452, action 3
+Episode ended. Cumulative Reward: 848.6935839785467
+Episode ended due to reaching max steps: 1000, at distance: 1402.4878072027434, action 0
+Episode ended. Cumulative Reward: -102918.08730321846
+Episode ended due to reaching max steps: 1000, at distance: 348.7720452390204, action 2
+Episode ended. Cumulative Reward: -363.45234523664425
+Episode ended due to reaching max steps: 1000, at distance: 41.237479376157516, action 2
+Episode ended. Cumulative Reward: 729.5837688805201
+Episode ended due to reaching max steps: 1000, at distance: 37.20335991995483, action 0
+Episode ended. Cumulative Reward: 831.3458047913482
+Episode ended due to reaching max steps: 1000, at distance: 1319.4626835966756, action 0
+Episode ended. Cumulative Reward: -98185.33562861678
+Episode ended due to reaching max steps: 1000, at distance: 37.52423433357402, action 1
+Episode ended. Cumulative Reward: 175.19926575564153
+Episode ended due to reaching max steps: 1000, at distance: 773.6634317425354, action 1
+Episode ended. Cumulative Reward: -24842.694630611273
+Episode ended due to reaching max steps: 1000, at distance: 83.8083677814965, action 3
+Episode ended. Cumulative Reward: 851.9262141933945
+Episode ended due to reaching max steps: 1000, at distance: 34.44960937278135, action 3
+Episode ended. Cumulative Reward: 176.1714505885359
+Episode ended due to reaching max steps: 1000, at distance: 606.7752798544559, action 3
+Episode ended. Cumulative Reward: -1903.4330040874106
+Episode ended due to reaching max steps: 1000, at distance: 743.8441697892483, action 1
+Episode ended. Cumulative Reward: -45173.63439327755
+Episode ended due to reaching max steps: 1000, at distance: 288.1498841307859, action 3
+Episode ended. Cumulative Reward: -405.49369907695666
+Reward found at step 347: 347
+Episode ended. Cumulative Reward: 1162.56445608033
+Episode ended due to reaching max steps: 1000, at distance: 689.9427512341158, action 0
+Episode ended. Cumulative Reward: -34488.483846027826
+Reward found at step 477: 477
+Episode ended. Cumulative Reward: 1473.3669340675133
+Reward found at step 755: 755
+Episode ended. Cumulative Reward: 2003.695327731593
+Reward found at step 874: 874
+Episode ended. Cumulative Reward: 1414.1263422747868
+Reward found at step 910: 910
+Episode ended. Cumulative Reward: 1809.8456965578057
+Reward found at step 945: 945
+Episode ended. Cumulative Reward: 1389.0983109430892
+Episode ended. Cumulative Reward: 210.5376347040418
+Episode ended. Cumulative Reward: 512.115646805958
+Episode ended. Cumulative Reward: 187.6481284814919
+Episode ended. Cumulative Reward: 848.4948702403456
+Episode ended. Cumulative Reward: -79.63013500326917
+Episode ended. Cumulative Reward: 509.204930572525
+Episode ended. Cumulative Reward: 735.366417018907
+Episode ended. Cumulative Reward: 410.1005851045969
+Episode ended. Cumulative Reward: 746.7194002190482
+Episode ended. Cumulative Reward: 649.693066801309
+Episode ended. Cumulative Reward: 578.7457025017145
+Episode ended. Cumulative Reward: 74.11247910420434
+Episode ended. Cumulative Reward: 542.0805345965448
+Episode ended. Cumulative Reward: 187.59369077853933
+Episode ended. Cumulative Reward: 215.7705263945137
+Episode ended. Cumulative Reward: 137.36765164192846
+Episode ended. Cumulative Reward: 467.1359011953866
+Episode ended. Cumulative Reward: 48.001611057503396
+Episode ended. Cumulative Reward: 349.4202318988665
+Episode ended. Cumulative Reward: 266.3504734418524
+Reward found at step 394: 394
+Episode ended. Cumulative Reward: 1486.856932465132
+Reward found at step 790: 790
+Episode ended. Cumulative Reward: 1505.7271480692787
+Episode ended due to reaching max steps: 1000, at distance: 600.7396736285804, action 1
+Episode ended. Cumulative Reward: -1151.213675168948
+Episode ended due to reaching max steps: 1000, at distance: 224.18487527112921, action 2
+Episode ended. Cumulative Reward: 400.29809080984114
+Episode ended due to reaching max steps: 1000, at distance: 313.9576524392622, action 2
+Episode ended. Cumulative Reward: 362.94777817771285
+Episode ended due to reaching max steps: 1000, at distance: 235.1347986242372, action 2
+Episode ended. Cumulative Reward: -299.8589260889509
+Episode ended due to reaching max steps: 1000, at distance: 53.399658610021504, action 2
+Episode ended. Cumulative Reward: 683.8122687356298
+Episode ended due to reaching max steps: 1000, at distance: 191.28973666636315, action 3
+Episode ended. Cumulative Reward: -291.96031339024563
+Episode ended due to reaching max steps: 1000, at distance: 69.54774417496232, action 0
+Episode ended. Cumulative Reward: 411.4667870136176
+Episode ended due to reaching max steps: 1000, at distance: 1370.320130840075, action 0
+Episode ended. Cumulative Reward: -98210.45299517599
+Episode ended due to reaching max steps: 1000, at distance: 117.98363709932104, action 1
+Episode ended. Cumulative Reward: 409.53698166427455
+Episode ended due to reaching max steps: 1000, at distance: 640.4929419386674, action 3
+Episode ended. Cumulative Reward: -4182.980728612947
+Episode ended due to reaching max steps: 1000, at distance: 1042.0299090097874, action 2
+Episode ended. Cumulative Reward: -48447.0606825212
+Episode ended due to reaching max steps: 1000, at distance: 1349.307929221036, action 1
+Episode ended. Cumulative Reward: -99955.19884510498
+Episode ended due to reaching max steps: 1000, at distance: 210.8371542730084, action 0
+Episode ended. Cumulative Reward: 345.56609337316087
+Episode ended due to reaching max steps: 1000, at distance: 854.4179881318578, action 3
+Episode ended. Cumulative Reward: -29650.851230642507
+Episode ended due to reaching max steps: 1000, at distance: 1014.9188226371405, action 0
+Episode ended. Cumulative Reward: -45205.63946191594
+Episode ended due to reaching max steps: 1000, at distance: 235.1625678600803, action 2
+Episode ended. Cumulative Reward: 292.3682586643743
+Episode ended due to reaching max steps: 1000, at distance: 1196.0592979625847, action 0
+Episode ended. Cumulative Reward: -74318.60206850743
+Episode ended due to reaching max steps: 1000, at distance: 60.21054078632343, action 1
+Episode ended. Cumulative Reward: 345.3183632348444
+Episode ended due to reaching max steps: 1000, at distance: 221.11205623741898, action 1
+Episode ended. Cumulative Reward: 57.737259894426245
+Episode ended. Cumulative Reward: 197.46543311130785
+Episode ended. Cumulative Reward: 53.39657952999562
+Episode ended. Cumulative Reward: -71.26507539397815
+Episode ended. Cumulative Reward: 67.25675170652698
+Episode ended. Cumulative Reward: 519.8265585419254
+Episode ended. Cumulative Reward: 357.542805553085
+Episode ended. Cumulative Reward: 501.16616554296144
+Episode ended. Cumulative Reward: 445.843137240962
+Episode ended. Cumulative Reward: 507.7489498703513
+Episode ended. Cumulative Reward: 550.4937430457719
+Episode ended. Cumulative Reward: 17.5087806755638
+Episode ended. Cumulative Reward: 560.4857844968003
+Episode ended. Cumulative Reward: 501.7814343760174
+Episode ended. Cumulative Reward: 494.5170642524717
+Episode ended. Cumulative Reward: 207.11493392570966
+Episode ended. Cumulative Reward: 430.5276883077045
+Episode ended. Cumulative Reward: 321.25472092117786
+Episode ended. Cumulative Reward: -32531.077138965484
+Episode ended. Cumulative Reward: 366.1662328106268
+Episode ended. Cumulative Reward: 321.9161760985701
+Reward found at step 379: 379
+Episode ended. Cumulative Reward: 1256.5203609072823
+Reward found at step 508: 508
+Episode ended. Cumulative Reward: 1393.796845280462
+Episode ended. Cumulative Reward: 387.8266899102962
+Episode ended. Cumulative Reward: 163.73860017598605
+Episode ended. Cumulative Reward: -3952.5942245017864
+Episode ended. Cumulative Reward: 309.029174070865
+Episode ended. Cumulative Reward: 308.50224685822053
+Episode ended. Cumulative Reward: 233.701222853487
+Episode ended. Cumulative Reward: -254.2311527478626
+Episode ended. Cumulative Reward: 523.3942945611013
+Episode ended. Cumulative Reward: 468.1738605781112
+Episode ended. Cumulative Reward: 657.5831353013091
+Episode ended. Cumulative Reward: 618.0607688223577
+Episode ended. Cumulative Reward: 141.48930430250857
+Episode ended. Cumulative Reward: 415.054005431523
+Episode ended. Cumulative Reward: 597.5859019661401
+Episode ended. Cumulative Reward: 212.7399044545842
+Episode ended. Cumulative Reward: 9.124945918460185
+Episode ended. Cumulative Reward: 49.40639218116564
+Episode ended. Cumulative Reward: 189.07871994986874
+Episode ended. Cumulative Reward: 126.83863488959332
+Episode ended. Cumulative Reward: 384.1087218158385
+Reward found at step 263: 263
+Episode ended. Cumulative Reward: 1183.926311551275
+Reward found at step 411: 411
+Episode ended. Cumulative Reward: 1476.0007541017126
+Episode ended due to reaching max steps: 1000, at distance: 630.4530736467541, action 3
+Episode ended. Cumulative Reward: -18918.79758378585
+Episode ended due to reaching max steps: 1000, at distance: 969.7995128823765, action 3
+Episode ended. Cumulative Reward: -38334.49270163933
+Episode ended due to reaching max steps: 1000, at distance: 100.32609697851693, action 2
+Episode ended. Cumulative Reward: 658.525313489251
+Episode ended due to reaching max steps: 1000, at distance: 43.22644406493936, action 2
+Episode ended. Cumulative Reward: 727.356890774673
+Episode ended due to reaching max steps: 1000, at distance: 1041.4623664648268, action 2
+Episode ended. Cumulative Reward: -47912.534714141395
+Episode ended due to reaching max steps: 1000, at distance: 31.681653651573303, action 1
+Episode ended. Cumulative Reward: 47.76553990232382
+Episode ended due to reaching max steps: 1000, at distance: 463.986506953493, action 1
+Episode ended. Cumulative Reward: -355.08510159769924
+Episode ended due to reaching max steps: 1000, at distance: 59.07404559879216, action 1
+Episode ended. Cumulative Reward: 877.0882513981053
+Episode ended due to reaching max steps: 1000, at distance: 1273.0507344769503, action 1
+Episode ended. Cumulative Reward: -90114.27774765393
+Episode ended due to reaching max steps: 1000, at distance: 40.8943354984716, action 0
+Episode ended. Cumulative Reward: 471.1644560535126
+Episode ended due to reaching max steps: 1000, at distance: 148.89944306778395, action 2
+Episode ended. Cumulative Reward: 237.35436993757884
+Episode ended due to reaching max steps: 1000, at distance: 561.7988298569705, action 1
+Episode ended. Cumulative Reward: -784.276391344911
+Episode ended due to reaching max steps: 1000, at distance: 70.09541229766843, action 0
+Episode ended. Cumulative Reward: 862.4251653322865
+Episode ended due to reaching max steps: 1000, at distance: 501.18188161597334, action 2
+Episode ended. Cumulative Reward: -12027.512368128077
+Episode ended due to reaching max steps: 1000, at distance: 164.64333711629143, action 0
+Episode ended. Cumulative Reward: 576.7964544003543
+Episode ended due to reaching max steps: 1000, at distance: 943.8758672592094, action 2
+Episode ended. Cumulative Reward: -43468.55932806231
+Episode ended due to reaching max steps: 1000, at distance: 27.250657051597592, action 0
+Episode ended. Cumulative Reward: 439.0895414976365
+Episode ended due to reaching max steps: 1000, at distance: 113.2204858366908, action 3
+Episode ended. Cumulative Reward: 787.136417653244
+Reward found at step 252: 252
+Episode ended. Cumulative Reward: 1196.8460050922274
+Episode ended due to reaching max steps: 1000, at distance: 119.367783479447, action 5
+Episode ended. Cumulative Reward: 455.31718218388926
+Reward found at step 338: 338
+Episode ended. Cumulative Reward: 1198.4620618029699
+Episode ended due to reaching max steps: 1000, at distance: 562.8092027176989, action 1
+Episode ended. Cumulative Reward: -30303.390673058173
+Reward found at step 509: 509
+Episode ended. Cumulative Reward: 1243.060411045614
+Reward found at step 583: 583
+Episode ended. Cumulative Reward: 1226.0772922013916
+Reward found at step 646: 646
+Episode ended. Cumulative Reward: 1437.1576376950077
+Reward found at step 337: 337
+Episode ended. Cumulative Reward: 1337.8285382338574
+Reward found at step 970: 970
+Episode ended. Cumulative Reward: 2010.568665918856
+Episode ended. Cumulative Reward: 475.8634081806448
+Episode ended. Cumulative Reward: 891.4073462856646
+Episode ended. Cumulative Reward: 526.0098619566129
+Episode ended. Cumulative Reward: 385.4100570540709
+Episode ended. Cumulative Reward: 806.3534353019255
+Episode ended. Cumulative Reward: 182.09851374866713
+Episode ended. Cumulative Reward: 415.2999861493644
+Episode ended. Cumulative Reward: 341.9013277028343
+Episode ended. Cumulative Reward: 460.10425691104206
+Episode ended. Cumulative Reward: 510.9070258504553
+Episode ended. Cumulative Reward: 595.1745194258698
+Episode ended. Cumulative Reward: 491.35131788890374
+Episode ended. Cumulative Reward: 157.70505290809487
+Episode ended. Cumulative Reward: 311.7191284393086
+Episode ended. Cumulative Reward: 878.553570287189
+Episode ended. Cumulative Reward: 962.6252904703204
+Episode ended. Cumulative Reward: 30.27777672729212
+Episode ended. Cumulative Reward: 313.51110914337914
+Episode ended. Cumulative Reward: 567.9657365298799
+Episode ended. Cumulative Reward: 499.44113371783703
+Reward found at step 433: 433
+Episode ended. Cumulative Reward: 1257.941605759128
+Episode ended due to reaching max steps: 1000, at distance: 248.16489568843159, action 1
+Episode ended. Cumulative Reward: 202.72148986720248
+Episode ended due to reaching max steps: 1000, at distance: 104.45271590055414, action 1
+Episode ended. Cumulative Reward: 384.2952164899672
+Episode ended due to reaching max steps: 1000, at distance: 226.98391206347478, action 0
+Episode ended. Cumulative Reward: 549.3631387870573
+Episode ended due to reaching max steps: 1000, at distance: 65.12417864599736, action 1
+Episode ended. Cumulative Reward: 126.09834597514292
+Episode ended due to reaching max steps: 1000, at distance: 238.45701585056602, action 1
+Episode ended. Cumulative Reward: 169.8571973436055
+Episode ended due to reaching max steps: 1000, at distance: 85.24547274825261, action 0
+Episode ended. Cumulative Reward: 383.4065797901793
+Episode ended due to reaching max steps: 1000, at distance: 540.0884363505392, action 0
+Episode ended. Cumulative Reward: -126.93848048792256
+Episode ended due to reaching max steps: 1000, at distance: 16.175930346523998, action 1
+Episode ended. Cumulative Reward: 1021.9577398811954
+Episode ended due to reaching max steps: 1000, at distance: 276.6311976710516, action 2
+Episode ended. Cumulative Reward: 66.31114073748256
+Episode ended due to reaching max steps: 1000, at distance: 1257.6261416904963, action 3
+Episode ended. Cumulative Reward: -78633.37307806045
+Episode ended due to reaching max steps: 1000, at distance: 974.0280091917145, action 1
+Episode ended. Cumulative Reward: -51104.73502313847
+Episode ended due to reaching max steps: 1000, at distance: 94.30286089122306, action 4
+Episode ended. Cumulative Reward: 894.3109637020195
+Episode ended due to reaching max steps: 1000, at distance: 69.9301881951808, action 1
+Episode ended. Cumulative Reward: 754.7187897255802
+Episode ended due to reaching max steps: 1000, at distance: 307.83430749792893, action 1
+Episode ended. Cumulative Reward: -415.6971059698516
+Episode ended due to reaching max steps: 1000, at distance: 53.94160215271773, action 1
+Episode ended. Cumulative Reward: 626.3648838140133
+Episode ended due to reaching max steps: 1000, at distance: 21.848032133721755, action 1
+Episode ended. Cumulative Reward: 849.0510388748767
+Episode ended due to reaching max steps: 1000, at distance: 475.67961180380314, action 1
+Episode ended. Cumulative Reward: -508.5294213694507
+Episode ended due to reaching max steps: 1000, at distance: 110.1271367121669, action 1
+Episode ended. Cumulative Reward: 211.45912266922755
+Episode ended due to reaching max steps: 1000, at distance: 21.50886286467322, action 1
+Episode ended. Cumulative Reward: 236.31046905627147
+Reward found at step 307: 307
+Episode ended. Cumulative Reward: 1362.553093483561
+Reward found at step 402: 402
+Episode ended. Cumulative Reward: 1392.39672849214
+Episode ended due to reaching max steps: 1000, at distance: 756.0686941844216, action 3
+Episode ended. Cumulative Reward: -28034.38245994335
+Reward found at step 449: 449
+Episode ended. Cumulative Reward: 1295.4394483933654
+Episode ended. Cumulative Reward: 503.98807602949915
+Episode ended. Cumulative Reward: 252.96133683457882
+Episode ended. Cumulative Reward: 663.6872438413824
+Episode ended. Cumulative Reward: 257.8459929327246
+Episode ended. Cumulative Reward: 707.9981172236062
+Episode ended. Cumulative Reward: 248.75210910370365
+Episode ended. Cumulative Reward: 315.2432749907626
+Episode ended. Cumulative Reward: 599.7531431607757
+Episode ended. Cumulative Reward: 302.14738301375314
+Episode ended. Cumulative Reward: 467.0022390570971
+Episode ended. Cumulative Reward: 583.5463021128663
+Episode ended. Cumulative Reward: 114.32960229518926
+Episode ended. Cumulative Reward: 526.5069108961992
+Episode ended. Cumulative Reward: -11974.026545461666
+Episode ended. Cumulative Reward: 34.698585974777416
+Episode ended. Cumulative Reward: 451.01531749827075
+Episode ended. Cumulative Reward: -37524.01009740976
+Episode ended. Cumulative Reward: 93.50311803312582
+Episode ended. Cumulative Reward: 106.14664284315865
+Episode ended. Cumulative Reward: 192.79935885324971
+Reward found at step 136: 136
+Episode ended. Cumulative Reward: 1084.2931159478994
+Reward found at step 210: 210
+Episode ended. Cumulative Reward: 1243.2944235915138
+Reward found at step 397: 397
+Episode ended. Cumulative Reward: 1350.9682267334215
+Episode ended. Cumulative Reward: 277.95628150887836
+Episode ended. Cumulative Reward: 347.486015350609
+Episode ended. Cumulative Reward: 253.77422962076054
+Episode ended. Cumulative Reward: 563.980650228377
+Episode ended. Cumulative Reward: 447.07651788042887
+Episode ended. Cumulative Reward: 351.95400641788024
+Episode ended. Cumulative Reward: -445.7569584511243
+Episode ended. Cumulative Reward: 103.95331456291251
+Episode ended. Cumulative Reward: -69.80746499991994
+Episode ended. Cumulative Reward: 490.2290722458754
+Episode ended. Cumulative Reward: -4478.406143943983
+Episode ended. Cumulative Reward: 70.84724606581574
+Episode ended. Cumulative Reward: 278.6927230814915
+Episode ended. Cumulative Reward: 410.2324315879306
+Episode ended. Cumulative Reward: -34.601478093079606
+Episode ended. Cumulative Reward: 457.12760765309713
+Episode ended. Cumulative Reward: 408.85206948937025
+Episode ended. Cumulative Reward: 259.85886441811897
+Episode ended. Cumulative Reward: 323.1571996132292
+Episode ended. Cumulative Reward: 515.5410571967552
+Reward found at step 79: 79
+Episode ended. Cumulative Reward: 1083.6421973023444
+Reward found at step 181: 181
+Episode ended. Cumulative Reward: 1213.5312305070445
+Episode ended due to reaching max steps: 1000, at distance: 836.9575260372778, action 3
+Episode ended. Cumulative Reward: -23693.9433226193
+Episode ended due to reaching max steps: 1000, at distance: 792.5212286797752, action 0
+Episode ended. Cumulative Reward: -19585.6550846344
+Episode ended due to reaching max steps: 1000, at distance: 52.08883065886764, action 0
+Episode ended. Cumulative Reward: 105.79898964388327
+Episode ended due to reaching max steps: 1000, at distance: 990.7629959611644, action 2
+Episode ended. Cumulative Reward: -40636.46830073821
+Episode ended due to reaching max steps: 1000, at distance: 254.16587752785608, action 3
+Episode ended. Cumulative Reward: 143.96672076875439
+Episode ended due to reaching max steps: 1000, at distance: 48.20827883463052, action 0
+Episode ended. Cumulative Reward: 127.26919601088773
+Episode ended due to reaching max steps: 1000, at distance: 852.0377244581318, action 0
+Episode ended. Cumulative Reward: -25058.88725573855
+Episode ended due to reaching max steps: 1000, at distance: 1216.1434480900912, action 3
+Episode ended. Cumulative Reward: -72520.7485930379
+Episode ended due to reaching max steps: 1000, at distance: 984.8183560725616, action 1
+Episode ended. Cumulative Reward: -44316.45147201351
+Episode ended due to reaching max steps: 1000, at distance: 51.92742758008371, action 2
+Episode ended. Cumulative Reward: 622.0864435736739
+Episode ended due to reaching max steps: 1000, at distance: 1143.9120580289182, action 0
+Episode ended. Cumulative Reward: -61758.64615993236
+Episode ended due to reaching max steps: 1000, at distance: 641.0382618210696, action 1
+Episode ended. Cumulative Reward: -4629.397828468601
+Episode ended due to reaching max steps: 1000, at distance: 1019.5675899910249, action 1
+Episode ended. Cumulative Reward: -54768.463286417726
+Episode ended due to reaching max steps: 1000, at distance: 161.52468209933866, action 3
+Episode ended. Cumulative Reward: 105.86728389811162
+Episode ended due to reaching max steps: 1000, at distance: 15.696351123364144, action 0
+Episode ended. Cumulative Reward: 769.9240694056601
+Episode ended due to reaching max steps: 1000, at distance: 172.33411809867573, action 2
+Episode ended. Cumulative Reward: 655.506479387813
+Episode ended due to reaching max steps: 1000, at distance: 505.5879377432213, action 0
+Episode ended. Cumulative Reward: -548.0791321956386
+Episode ended due to reaching max steps: 1000, at distance: 30.665969969660438, action 1
+Episode ended. Cumulative Reward: 158.52560105812398
+Episode ended due to reaching max steps: 1000, at distance: 451.7213395027986, action 1
+Episode ended. Cumulative Reward: -553.8674289172419
+Episode ended due to reaching max steps: 1000, at distance: 30.818486733188518, action 4
+Episode ended. Cumulative Reward: 410.1867779588164
+Reward found at step 222: 222
+Episode ended. Cumulative Reward: 1062.1684521240227
+Reward found at step 502: 502
+Episode ended. Cumulative Reward: 1594.5140995275954
+Reward found at step 768: 768
+Episode ended. Cumulative Reward: 1503.6599015423062
+Reward found at step 637: 637
+Episode ended. Cumulative Reward: 1450.366015973388
+Reward found at step 967: 967
+Episode ended. Cumulative Reward: 1754.3350756047864
+Reward found at step 468: 468
+Episode ended. Cumulative Reward: 1437.5133446319596
+Episode ended. Cumulative Reward: 480.39926081921016
+Episode ended. Cumulative Reward: 344.9394897103177
+Episode ended. Cumulative Reward: 193.6279764643984
+Episode ended. Cumulative Reward: 60.69782810720031
+Episode ended. Cumulative Reward: 17.631953437783466
+Episode ended. Cumulative Reward: 516.787271290515
+Episode ended. Cumulative Reward: 870.8973927774354
+Episode ended. Cumulative Reward: -92.08749977181274
+Episode ended. Cumulative Reward: 759.8471160335018
+Episode ended. Cumulative Reward: 48.05314468514587
+Episode ended. Cumulative Reward: 943.3822400946826
+Episode ended. Cumulative Reward: 127.10258832939184
+Episode ended. Cumulative Reward: 73.84338645166535
+Episode ended. Cumulative Reward: 147.99516725390376
+Episode ended. Cumulative Reward: 650.1932395376118
+Episode ended. Cumulative Reward: 860.7989501982383
+Episode ended. Cumulative Reward: 234.06419560825543
+Episode ended. Cumulative Reward: -22563.895686259733
+Episode ended. Cumulative Reward: 492.9248349857272
+Episode ended. Cumulative Reward: 417.24779501221064
+Reward found at step 548: 548
+Episode ended. Cumulative Reward: 1367.5122520186871
+Reward found at step 651: 651
+Episode ended. Cumulative Reward: 1749.3267509450216
+Episode ended due to reaching max steps: 1000, at distance: 26.430650371236457, action 3
+Episode ended. Cumulative Reward: 317.7474507114426
+Episode ended due to reaching max steps: 1000, at distance: 994.396069946877, action 1
+Episode ended. Cumulative Reward: -40932.48679275138
+Episode ended due to reaching max steps: 1000, at distance: 1192.3528870896391, action 3
+Episode ended. Cumulative Reward: -68189.52532823419
+Episode ended due to reaching max steps: 1000, at distance: 28.230340772188743, action 0
+Episode ended. Cumulative Reward: 147.05424031656923
+Episode ended due to reaching max steps: 1000, at distance: 38.128410897079746, action 1
+Episode ended. Cumulative Reward: 182.81869000196366
+Episode ended due to reaching max steps: 1000, at distance: 29.6845291359085, action 1
+Episode ended. Cumulative Reward: 638.7663071623659
+Episode ended due to reaching max steps: 1000, at distance: 56.46318708300921, action 1
+Episode ended. Cumulative Reward: 254.06616458899276
+Episode ended due to reaching max steps: 1000, at distance: 32.78920413713927, action 3
+Episode ended. Cumulative Reward: 18.235695962785528
+Episode ended due to reaching max steps: 1000, at distance: 1148.617167189547, action 3
+Episode ended. Cumulative Reward: -88311.9813828913
+Episode ended due to reaching max steps: 1000, at distance: 134.3161230742353, action 1
+Episode ended. Cumulative Reward: 490.4454767945896
+Episode ended due to reaching max steps: 1000, at distance: 137.06753648567144, action 2
+Episode ended. Cumulative Reward: 270.7247779546725
+Episode ended due to reaching max steps: 1000, at distance: 86.02543665112044, action 1
+Episode ended. Cumulative Reward: 170.752899242001
+Episode ended due to reaching max steps: 1000, at distance: 306.4083143471491, action 3
+Episode ended. Cumulative Reward: 291.6023108108079
+Episode ended due to reaching max steps: 1000, at distance: 873.247736397634, action 1
+Episode ended. Cumulative Reward: -27076.986680101672
+Episode ended due to reaching max steps: 1000, at distance: 15.870481594534782, action 1
+Episode ended. Cumulative Reward: 94.32285690646219
+Episode ended due to reaching max steps: 1000, at distance: 580.5290494317534, action 3
+Episode ended. Cumulative Reward: -845.5745520944276
+Episode ended due to reaching max steps: 1000, at distance: 19.629670983339945, action 0
+Episode ended. Cumulative Reward: 512.3840042183364
+Episode ended due to reaching max steps: 1000, at distance: 546.9477942085956, action 3
+Episode ended. Cumulative Reward: -865.0674925583129
+Reward found at step 321: 321
+Episode ended. Cumulative Reward: 1200.3277056633
+Episode ended due to reaching max steps: 1000, at distance: 820.1980179880917, action 2
+Episode ended. Cumulative Reward: -31013.83802138703
+Episode ended. Cumulative Reward: 704.6232075805601
+Episode ended. Cumulative Reward: 335.76992559316375
+Episode ended. Cumulative Reward: 309.65596367581645
+Episode ended. Cumulative Reward: 262.9011719657285
+Episode ended. Cumulative Reward: 752.4601739438094
+Episode ended. Cumulative Reward: 618.2121374077401
+Episode ended. Cumulative Reward: 336.4479736647029
+Episode ended. Cumulative Reward: 506.29599225344487
+Episode ended. Cumulative Reward: 549.7080609133487
+Episode ended. Cumulative Reward: 374.46491947924795
+Episode ended. Cumulative Reward: 392.700002423613
+Episode ended. Cumulative Reward: 678.8671033809568
+Episode ended. Cumulative Reward: 312.29968765530066
+Episode ended. Cumulative Reward: 421.64338252711315
+Episode ended. Cumulative Reward: 686.3518176459465
+Episode ended. Cumulative Reward: -51986.46971931041
+Episode ended. Cumulative Reward: 592.7245771718424
+Episode ended. Cumulative Reward: 5.072694754771419
+Episode ended. Cumulative Reward: 47.970216598009365
+Episode ended. Cumulative Reward: 186.40055128614574
+Reward found at step 336: 336
+Episode ended. Cumulative Reward: 1397.0272013096428
+Episode ended. Cumulative Reward: 586.9310509290574
+Episode ended. Cumulative Reward: 303.10257030236244
+Episode ended. Cumulative Reward: 284.20193756969655
+Episode ended. Cumulative Reward: 387.341490674925
+Episode ended. Cumulative Reward: 375.3574119567814
+Episode ended. Cumulative Reward: 34.57506297556904
+Episode ended. Cumulative Reward: 81.9089713690762
+Episode ended. Cumulative Reward: 487.4135819420883
+Episode ended. Cumulative Reward: 475.3049735022928
+Episode ended. Cumulative Reward: 102.27339764318629
+Episode ended. Cumulative Reward: 500.08978726317696
+Episode ended. Cumulative Reward: 346.5689729717795
+Episode ended. Cumulative Reward: 487.856364281334
+Episode ended. Cumulative Reward: 402.049272611873
+Episode ended. Cumulative Reward: 391.6023411959938
+Episode ended. Cumulative Reward: 5.631236039482985
+Episode ended. Cumulative Reward: -16.04981216014596
+Episode ended. Cumulative Reward: 219.8670105411406
+Episode ended. Cumulative Reward: 546.7152002392295
+Episode ended. Cumulative Reward: 347.1661873710194
+Reward found at step 40: 40
+Episode ended. Cumulative Reward: 1064.430407166276
+Reward found at step 604: 604
+Episode ended. Cumulative Reward: 1677.1656723332992
+Episode ended due to reaching max steps: 1000, at distance: 1058.988906059616, action 2
+Episode ended. Cumulative Reward: -52747.04766566398
+Episode ended due to reaching max steps: 1000, at distance: 1081.0265667707802, action 2
+Episode ended. Cumulative Reward: -54656.739090396855
+Episode ended due to reaching max steps: 1000, at distance: 46.39782507796275, action 3
+Episode ended. Cumulative Reward: 22.867045223001355
+Episode ended due to reaching max steps: 1000, at distance: 1166.791248365971, action 0
+Episode ended. Cumulative Reward: -67159.92144436772
+Episode ended due to reaching max steps: 1000, at distance: 361.2970582012004, action 2
+Episode ended. Cumulative Reward: -122.77319529317583
+Episode ended due to reaching max steps: 1000, at distance: 856.5870919199698, action 1
+Episode ended. Cumulative Reward: -44403.431332900574
+Episode ended due to reaching max steps: 1000, at distance: 48.71895287461356, action 0
+Episode ended. Cumulative Reward: 129.7905991920771
+Episode ended due to reaching max steps: 1000, at distance: 533.9079120130925, action 3
+Episode ended. Cumulative Reward: -418.2081503169105
+Episode ended due to reaching max steps: 1000, at distance: 33.45722523231663, action 0
+Episode ended. Cumulative Reward: 582.5351431795633
+Episode ended due to reaching max steps: 1000, at distance: 1128.8446101526486, action 1
+Episode ended. Cumulative Reward: -84113.69445055422
+Episode ended due to reaching max steps: 1000, at distance: 49.693361349403084, action 1
+Episode ended. Cumulative Reward: 417.05708489895744
+Episode ended due to reaching max steps: 1000, at distance: 69.71773738612902, action 2
+Episode ended. Cumulative Reward: 58.59177699291743
+Episode ended due to reaching max steps: 1000, at distance: 21.608897415575, action 0
+Episode ended. Cumulative Reward: 1022.1875579968172
+Episode ended due to reaching max steps: 1000, at distance: 1092.005057422561, action 1
+Episode ended. Cumulative Reward: -56190.96038626815
+Episode ended due to reaching max steps: 1000, at distance: 1115.603520793243, action 1
+Episode ended. Cumulative Reward: -60829.411690190944
+Episode ended due to reaching max steps: 1000, at distance: 1261.2316176386917, action 2
+Episode ended. Cumulative Reward: -82277.74008745205
+Episode ended due to reaching max steps: 1000, at distance: 152.4453553584138, action 3
+Episode ended. Cumulative Reward: 91.53861049506594
+Episode ended due to reaching max steps: 1000, at distance: 174.94487356524, action 2
+Episode ended. Cumulative Reward: 161.12056944347253
+Episode ended due to reaching max steps: 1000, at distance: 806.7376655138944, action 3
+Episode ended. Cumulative Reward: -42181.890503630195
+Reward found at step 191: 191
+Episode ended. Cumulative Reward: 1134.9703492582955
+Reward found at step 377: 377
+Episode ended. Cumulative Reward: 1184.6130176777879
+Episode ended due to reaching max steps: 1000, at distance: 108.4425061749574, action 1
+Episode ended. Cumulative Reward: 235.315880856427
+Reward found at step 773: 773
+Episode ended. Cumulative Reward: 1604.6091082604048
+Reward found at step 879: 879
+Episode ended. Cumulative Reward: 1889.4942195067106
+Reward found at step 968: 968
+Episode ended. Cumulative Reward: 1726.72772305125
+Episode ended. Cumulative Reward: 824.4483329797921
+Episode ended. Cumulative Reward: 383.7640975655512
+Episode ended. Cumulative Reward: 598.5317641610678
+Episode ended. Cumulative Reward: 431.62174628895093
+Episode ended. Cumulative Reward: 703.9499444562281
+Episode ended. Cumulative Reward: 2.5262765288491664
+Episode ended. Cumulative Reward: 72.75230330720638
+Episode ended. Cumulative Reward: 460.0579657303206
+Episode ended. Cumulative Reward: 151.2881095668438
+Episode ended. Cumulative Reward: 137.96953551993744
+Episode ended. Cumulative Reward: 743.1038746278961
+Episode ended. Cumulative Reward: 649.2156808205488
+Episode ended. Cumulative Reward: 292.2366507641663
+Episode ended. Cumulative Reward: 561.5017537215037
+Episode ended. Cumulative Reward: 182.19488374761556
+Episode ended. Cumulative Reward: 327.7345032367975
+Episode ended. Cumulative Reward: 1010.695819517445
+Episode ended. Cumulative Reward: 249.0578363682299
+Episode ended. Cumulative Reward: 615.9621280910998
+Episode ended. Cumulative Reward: 54.14167325291794
+Episode ended due to reaching max steps: 1000, at distance: 212.1293572649077, action 0
+Episode ended. Cumulative Reward: -30.70508957686775
+Episode ended due to reaching max steps: 1000, at distance: 151.4712251398623, action 0
+Episode ended. Cumulative Reward: 302.1816566369693
+Episode ended due to reaching max steps: 1000, at distance: 1175.9914351001607, action 2
+Episode ended. Cumulative Reward: -77190.57371666894
+Episode ended due to reaching max steps: 1000, at distance: 119.00369860832497, action 0
+Episode ended. Cumulative Reward: 952.0759639114699
+Episode ended due to reaching max steps: 1000, at distance: 690.4518218328991, action 3
+Episode ended. Cumulative Reward: -22897.208620172274
+Episode ended due to reaching max steps: 1000, at distance: 62.267978733547736, action 2
+Episode ended. Cumulative Reward: 590.9922601147684
+Episode ended due to reaching max steps: 1000, at distance: 420.0069760802037, action 2
+Episode ended. Cumulative Reward: -182.66373768072276
+Episode ended due to reaching max steps: 1000, at distance: 107.77998447524297, action 1
+Episode ended. Cumulative Reward: 438.71243169309764
+Episode ended due to reaching max steps: 1000, at distance: 434.9220950074988, action 2
+Episode ended. Cumulative Reward: -428.23117936020384
+Episode ended due to reaching max steps: 1000, at distance: 714.2198689361063, action 2
+Episode ended. Cumulative Reward: -10462.899817738335
+Episode ended due to reaching max steps: 1000, at distance: 198.35397341945227, action 1
+Episode ended. Cumulative Reward: 105.61000173324018
+Episode ended due to reaching max steps: 1000, at distance: 42.31476015522506, action 0
+Episode ended. Cumulative Reward: 493.18403545275015
+Episode ended due to reaching max steps: 1000, at distance: 464.49708444999794, action 2
+Episode ended. Cumulative Reward: -483.40824928280904
+Episode ended due to reaching max steps: 1000, at distance: 1118.4044869340507, action 0
+Episode ended. Cumulative Reward: -59273.10099857908
+Episode ended due to reaching max steps: 1000, at distance: 47.61056753383394, action 2
+Episode ended. Cumulative Reward: 359.57807360150326
+Episode ended due to reaching max steps: 1000, at distance: 120.93417061723481, action 2
+Episode ended. Cumulative Reward: 7.106333568642015
+Episode ended due to reaching max steps: 1000, at distance: 1006.024489562736, action 0
+Episode ended. Cumulative Reward: -45998.98693618626
+Episode ended due to reaching max steps: 1000, at distance: 568.5121958126884, action 2
+Episode ended. Cumulative Reward: -526.329425201884
+Episode ended due to reaching max steps: 1000, at distance: 302.0617516645603, action 0
+Episode ended. Cumulative Reward: -521.5842419300511
+Episode ended due to reaching max steps: 1000, at distance: 80.11926359560299, action 3
+Episode ended. Cumulative Reward: 1018.1943338334348
+Reward found at step 200: 200
+Episode ended. Cumulative Reward: 1139.0184029790366
+Reward found at step 304: 304
+Episode ended. Cumulative Reward: 1160.4347010827405
+Reward found at step 335: 335
+Episode ended. Cumulative Reward: 1076.569694027254
+Reward found at step 433: 433
+Episode ended. Cumulative Reward: 1503.472223630697
+Reward found at step 439: 439
+Episode ended. Cumulative Reward: 1423.3117622464904
+Reward found at step 377: 377
+Episode ended. Cumulative Reward: 1185.5643451983972
+Episode ended. Cumulative Reward: 129.95904196404635
+Episode ended. Cumulative Reward: 527.0134308369009
+Episode ended. Cumulative Reward: -7080.020136126344
+Episode ended. Cumulative Reward: 670.0999907574273
+Episode ended. Cumulative Reward: 810.130834946274
+Episode ended. Cumulative Reward: 714.1133148268672
+Episode ended. Cumulative Reward: 312.07605823251976
+Episode ended. Cumulative Reward: 383.2052946605944
+Episode ended. Cumulative Reward: 306.3057239624819
+Episode ended. Cumulative Reward: 483.70039777323177
+Episode ended. Cumulative Reward: 398.6702642701847
+Episode ended. Cumulative Reward: 439.92462208184327
+Episode ended. Cumulative Reward: -10992.884668295015
+Episode ended. Cumulative Reward: -58.29891952191588
+Episode ended. Cumulative Reward: 341.40329229729844
+Episode ended. Cumulative Reward: 3.729900398109521
+Episode ended. Cumulative Reward: 107.93810661090254
+Episode ended. Cumulative Reward: 174.1548889138856
+Episode ended. Cumulative Reward: 337.0623122698018
+Episode ended. Cumulative Reward: 471.0713094683813
+Episode ended. Cumulative Reward: 564.8407776028582
+Episode ended. Cumulative Reward: 219.7826812019366
+Episode ended. Cumulative Reward: 109.16743578274621
+Episode ended. Cumulative Reward: 299.5445488092291
+Episode ended. Cumulative Reward: 23.220002119676053
+Episode ended. Cumulative Reward: -46.24922699745299
+Episode ended. Cumulative Reward: 304.2056413768237
+Episode ended. Cumulative Reward: 194.92215384191593
+Episode ended. Cumulative Reward: 144.44058147343162
+Episode ended. Cumulative Reward: 400.66930563023465
+Episode ended. Cumulative Reward: 110.59000813340842
+Episode ended. Cumulative Reward: 351.9911317333549
+Episode ended. Cumulative Reward: 160.5660431141224
+Episode ended. Cumulative Reward: 354.53338120430783
+Episode ended. Cumulative Reward: 365.71495351943827
+Episode ended. Cumulative Reward: -55.40303110157754
+Episode ended. Cumulative Reward: 389.58680370585597
+Episode ended. Cumulative Reward: 422.392371161779
+Episode ended. Cumulative Reward: 376.5350874151805
+Episode ended. Cumulative Reward: 350.0418252553028
+Reward found at step 300: 300
+Episode ended. Cumulative Reward: 1167.2255708826838
+Reward found at step 91: 91
+Episode ended. Cumulative Reward: 1112.715174544487
+Reward found at step 541: 541
+Episode ended. Cumulative Reward: 1691.7688130402132
+Reward found at step 666: 666
+Episode ended. Cumulative Reward: 1757.6761592279267
+Episode ended due to reaching max steps: 1000, at distance: 805.7869467277018, action 2
+Episode ended. Cumulative Reward: -41555.99270299258
+Episode ended due to reaching max steps: 1000, at distance: 1133.3438990221923, action 2
+Episode ended. Cumulative Reward: -60736.089676534306
+Episode ended due to reaching max steps: 1000, at distance: 75.06688576502943, action 0
+Episode ended. Cumulative Reward: 192.23905192421051
+Episode ended due to reaching max steps: 1000, at distance: 742.7625317825866, action 2
+Episode ended. Cumulative Reward: -13709.444166518535
+Episode ended due to reaching max steps: 1000, at distance: 89.50690330079479, action 3
+Episode ended. Cumulative Reward: 1002.0007181176086
+Episode ended due to reaching max steps: 1000, at distance: 225.3298955668495, action 1
+Episode ended. Cumulative Reward: 169.8791684620781
+Episode ended due to reaching max steps: 1000, at distance: 463.93360556781704, action 1
+Episode ended. Cumulative Reward: -448.87950332716764
+Episode ended due to reaching max steps: 1000, at distance: 505.99135821599833, action 0
+Episode ended. Cumulative Reward: -34341.89525899591
+Episode ended due to reaching max steps: 1000, at distance: 34.05781779394579, action 4
+Episode ended. Cumulative Reward: 457.16624690183096
+Episode ended due to reaching max steps: 1000, at distance: 36.7771865948906, action 5
+Episode ended. Cumulative Reward: 421.3885630245662
+Episode ended due to reaching max steps: 1000, at distance: 459.65184005463124, action 0
+Episode ended. Cumulative Reward: -526.7689016952837
+Episode ended due to reaching max steps: 1000, at distance: 1125.8709451018808, action 2
+Episode ended. Cumulative Reward: -60460.55724363425
+Episode ended due to reaching max steps: 1000, at distance: 554.391251417975, action 2
+Episode ended. Cumulative Reward: -723.0223039702577
+Episode ended due to reaching max steps: 1000, at distance: 1113.8000336912198, action 1
+Episode ended. Cumulative Reward: -62875.56232582751
+Episode ended due to reaching max steps: 1000, at distance: 945.07827753414, action 3
+Episode ended. Cumulative Reward: -38364.15338185178
+Episode ended due to reaching max steps: 1000, at distance: 993.3916285396508, action 3
+Episode ended. Cumulative Reward: -42388.01501195719
+Episode ended due to reaching max steps: 1000, at distance: 1188.45553180138, action 1
+Episode ended. Cumulative Reward: -67833.43511708095
+Episode ended due to reaching max steps: 1000, at distance: 28.142369634506082, action 1
+Episode ended. Cumulative Reward: 885.8568788014219
+Reward found at step 419: 419
+Episode ended. Cumulative Reward: 1519.7915018419394
+Reward found at step 536: 536
+Episode ended. Cumulative Reward: 1341.2131279666883
+Episode ended due to reaching max steps: 1000, at distance: 63.90266471152011, action 5
+Episode ended. Cumulative Reward: 193.22428451237585
+Episode ended due to reaching max steps: 1000, at distance: 32.411091113333725, action 1
+Episode ended. Cumulative Reward: 495.1241141208701
+Reward found at step 749: 749
+Episode ended. Cumulative Reward: 1680.5199010414947
+Reward found at step 796: 796
+Episode ended. Cumulative Reward: 1773.9454192299743
+Reward found at step 194: 194
+Episode ended. Cumulative Reward: 1091.4865418233815
+Reward found at step 878: 878
+Episode ended. Cumulative Reward: 1044.0254979538968
+Reward found at step 879: 879
+Episode ended. Cumulative Reward: 1695.2869971209625
+Reward found at step 892: 892
+Episode ended. Cumulative Reward: 2056.955276966184
+Episode ended. Cumulative Reward: 487.5995189461767
+Episode ended. Cumulative Reward: 347.6534357782848
+Episode ended. Cumulative Reward: 336.06806942801626
+Episode ended. Cumulative Reward: 505.8432075802972
+Episode ended. Cumulative Reward: 135.7847222558675
+Episode ended. Cumulative Reward: 449.6320467860169
+Episode ended. Cumulative Reward: 401.25638304675886
+Episode ended. Cumulative Reward: 697.5809798293576
+Episode ended. Cumulative Reward: 44.69777753524396
+Episode ended. Cumulative Reward: 123.49550518505517
+Episode ended. Cumulative Reward: 195.50910954263964
+Episode ended. Cumulative Reward: 76.25098933449607
+Episode ended. Cumulative Reward: 710.8558143648
+Episode ended. Cumulative Reward: 256.7491484720007
+Episode ended. Cumulative Reward: -92.16305848362182
+Episode ended. Cumulative Reward: 189.34779678806183
+Episode ended. Cumulative Reward: 137.41513162431875
+Episode ended. Cumulative Reward: 616.7715633790243
+Episode ended. Cumulative Reward: 48.66621291438341
+Episode ended. Cumulative Reward: 910.076075271173
+Reward found at step 182: 182
+Episode ended. Cumulative Reward: 1122.0490268810852
+Reward found at step 544: 544
+Episode ended. Cumulative Reward: 1627.6459180750264
+Episode ended due to reaching max steps: 1000, at distance: 79.9252741002547, action 0
+Episode ended. Cumulative Reward: 331.305126328381
+Episode ended due to reaching max steps: 1000, at distance: 54.31032556916522, action 0
+Episode ended. Cumulative Reward: 354.4975713226767
+Episode ended due to reaching max steps: 1000, at distance: 41.02488357073165, action 2
+Episode ended. Cumulative Reward: 808.267286465291
+Episode ended due to reaching max steps: 1000, at distance: 327.5770135382541, action 0
+Episode ended. Cumulative Reward: -92.47719415804454
+Episode ended due to reaching max steps: 1000, at distance: 351.99547377088396, action 1
+Episode ended. Cumulative Reward: -279.75635325438816
+Episode ended due to reaching max steps: 1000, at distance: 103.18443558725514, action 3
+Episode ended. Cumulative Reward: 541.8329051169025
+Episode ended due to reaching max steps: 1000, at distance: 296.57543378397065, action 1
+Episode ended. Cumulative Reward: 87.16424938187015
+Episode ended due to reaching max steps: 1000, at distance: 323.8590805047929, action 2
+Episode ended. Cumulative Reward: -77.45137887575015
+Episode ended due to reaching max steps: 1000, at distance: 1095.694020396659, action 2
+Episode ended. Cumulative Reward: -54263.09668750698
+Episode ended due to reaching max steps: 1000, at distance: 870.9029752650725, action 2
+Episode ended. Cumulative Reward: -47337.84307147298
+Episode ended due to reaching max steps: 1000, at distance: 98.25627423421413, action 0
+Episode ended. Cumulative Reward: 296.5902525110291
+Episode ended due to reaching max steps: 1000, at distance: 106.74358090457912, action 0
+Episode ended. Cumulative Reward: 744.5855003588559
+Episode ended due to reaching max steps: 1000, at distance: 1127.3624200389747, action 2
+Episode ended. Cumulative Reward: -66116.4518893419
+Episode ended due to reaching max steps: 1000, at distance: 200.9255109844942, action 3
+Episode ended. Cumulative Reward: -65.81403219466222
+Episode ended due to reaching max steps: 1000, at distance: 87.49804152622659, action 3
+Episode ended. Cumulative Reward: 185.80550944594648
+Episode ended due to reaching max steps: 1000, at distance: 1131.2795441827516, action 3
+Episode ended. Cumulative Reward: -73841.80150041956
+Episode ended due to reaching max steps: 1000, at distance: 672.011833387993, action 3
+Episode ended. Cumulative Reward: -34910.24624140154
+Episode ended due to reaching max steps: 1000, at distance: 1156.5398189741043, action 2
+Episode ended. Cumulative Reward: -69972.87467176464
+Reward found at step 178: 178
+Episode ended. Cumulative Reward: 1099.969603701933
+Episode ended due to reaching max steps: 1000, at distance: 30.08398002917499, action 5
+Episode ended. Cumulative Reward: 337.05556262413484
+Reward found at step 268: 268
+Episode ended. Cumulative Reward: 1132.669198377656
+Reward found at step 425: 425
+Episode ended. Cumulative Reward: 1416.0626921074936
+Reward found at step 506: 506
+Episode ended. Cumulative Reward: 1328.5978748468588
+Reward found at step 530: 530
+Episode ended. Cumulative Reward: 1351.2371768822884
+Episode ended due to reaching max steps: 1000, at distance: 47.580770059697755, action 2
+Episode ended. Cumulative Reward: 846.97578874096
+Reward found at step 566: 566
+Episode ended. Cumulative Reward: 1585.1457813768739
+Reward found at step 396: 396
+Episode ended. Cumulative Reward: 1152.8230724487698
+Reward found at step 621: 621
+Episode ended. Cumulative Reward: 1868.0633298363593
+Episode ended. Cumulative Reward: -19.601390497821512
+Episode ended. Cumulative Reward: 21.608846048862233
+Episode ended. Cumulative Reward: -39.00118054327504
+Episode ended. Cumulative Reward: -43.616798091591136
+Episode ended. Cumulative Reward: 18.04583856958743
+Episode ended. Cumulative Reward: -2.71462850273997
+Episode ended. Cumulative Reward: 38.326864556625196
+Episode ended. Cumulative Reward: -5.79804028025535
+Episode ended. Cumulative Reward: 3.231060810738086
+Episode ended. Cumulative Reward: 9.027498673419245
+Episode ended. Cumulative Reward: -18.167645913161948
+Episode ended. Cumulative Reward: 22.48929349807372
+Episode ended. Cumulative Reward: 26.155456285587263
+Episode ended. Cumulative Reward: -3.6422968659312573
+Episode ended. Cumulative Reward: -55.80463218689448
+Episode ended. Cumulative Reward: 3.264831960639981
+Episode ended. Cumulative Reward: -21305.67601591721
+Episode ended. Cumulative Reward: -28772.497143322336
+Episode ended. Cumulative Reward: -32.46981359029462
+Episode ended. Cumulative Reward: 58.36537501130516
+Episode ended. Cumulative Reward: -78815.34896264589
+Episode ended. Cumulative Reward: 219.75032341173574
+Episode ended. Cumulative Reward: 0.0
+Episode ended. Cumulative Reward: -335.2689689039952
+Episode ended. Cumulative Reward: -125.9157394487071
+Episode ended. Cumulative Reward: -53407.103924767056
+Episode ended. Cumulative Reward: -32790.888698486306
+Episode ended. Cumulative Reward: 15.300580707960535
+Episode ended. Cumulative Reward: -52.70888813871534
+Episode ended. Cumulative Reward: -69658.75971113374
+Episode ended. Cumulative Reward: -71.43546710844396
+Episode ended. Cumulative Reward: 167.8754854331345
+Episode ended. Cumulative Reward: -6.893561943941691
+Episode ended. Cumulative Reward: -10.184538188198985
+Episode ended. Cumulative Reward: -28.303256749319985
+Episode ended. Cumulative Reward: -19.207214457883566
+Episode ended. Cumulative Reward: 36.89025386574406
+Episode ended. Cumulative Reward: 30.86205576718862
+Episode ended. Cumulative Reward: -43.46720669962758
+Episode ended. Cumulative Reward: -0.6989325708919978
+Episode ended. Cumulative Reward: 61.12431021152929
+Episode ended. Cumulative Reward: 28.183177656407224
+Episode ended. Cumulative Reward: -41.09509279848453
+Episode ended. Cumulative Reward: 10.88739357770578
+Episode ended. Cumulative Reward: -34.84163055821921
+Episode ended. Cumulative Reward: 33.49788611891586
+Episode ended. Cumulative Reward: -6.239095378849839
+Episode ended. Cumulative Reward: 25.75487834383955
+Episode ended. Cumulative Reward: -28507.917156537453
+Episode ended. Cumulative Reward: -7995.462191661855
+Episode ended. Cumulative Reward: 0.0
+Episode ended. Cumulative Reward: 102.23188983136896
+Episode ended. Cumulative Reward: -301.1038377489278
+Episode ended. Cumulative Reward: -439.5619920741515
+Episode ended. Cumulative Reward: -11.843688282800542
+Episode ended. Cumulative Reward: 336.8594506059286
+Episode ended. Cumulative Reward: 0.0
+Episode ended. Cumulative Reward: -124.91967500627891
+Episode ended. Cumulative Reward: -620.9224140410804
+Episode ended. Cumulative Reward: -72217.54319642449
+Episode ended. Cumulative Reward: -101.92829027595712
+Episode ended. Cumulative Reward: -64094.475235727616
+Episode ended. Cumulative Reward: -40.085947560943566
+Episode ended. Cumulative Reward: 129.23089982271426
+Episode ended. Cumulative Reward: 2.912190544120108
+Episode ended. Cumulative Reward: 7.798234091467521
+Episode ended. Cumulative Reward: 1.0471890318842156
+Episode ended. Cumulative Reward: 1.431653870850937
+Episode ended. Cumulative Reward: -5.714829082105382
+Episode ended. Cumulative Reward: 3.069459710808246
+Episode ended. Cumulative Reward: 1.2173765184290914
+Episode ended. Cumulative Reward: 1.4827559018368106
+Episode ended. Cumulative Reward: -2.484113910016049
+Episode ended. Cumulative Reward: -12.625330551574905
+Episode ended. Cumulative Reward: 2.2225996504066075
+Episode ended. Cumulative Reward: -7.070366238748193
+Episode ended. Cumulative Reward: 0.9355308730963543
+Episode ended. Cumulative Reward: 7.296391308109605
+Episode ended. Cumulative Reward: -2.4011688084744947
+Episode ended. Cumulative Reward: -1.9980357171995138
+Episode ended. Cumulative Reward: -61143.109686223885
+Episode ended. Cumulative Reward: 59.42269285352904
+Episode ended. Cumulative Reward: 39.77224135382423
+Episode ended. Cumulative Reward: 27.263416530183008
+Episode ended. Cumulative Reward: 29.815333376379044
+Episode ended. Cumulative Reward: 17.873593644106222
+Episode ended. Cumulative Reward: 107.35676716914747
+Episode ended. Cumulative Reward: 57.499402251949164
+Episode ended. Cumulative Reward: 38.85918575852338
+Episode ended. Cumulative Reward: 143.9807018464095
+Episode ended. Cumulative Reward: 54.56696384203073
+Episode ended. Cumulative Reward: -30.903423040233292
+Episode ended. Cumulative Reward: 87.1567737708391
+Episode ended. Cumulative Reward: -26.839561733776236
+Episode ended. Cumulative Reward: -60638.74138658072
+Episode ended. Cumulative Reward: 44.853014155987296
+Episode ended. Cumulative Reward: 581.6069729916125
+Episode ended. Cumulative Reward: -204.20191206352365
+Episode ended. Cumulative Reward: -4667.367442852643
+Episode ended. Cumulative Reward: 514.6313936207894
+Episode ended. Cumulative Reward: 471.5275589708029
+Episode ended. Cumulative Reward: 274.5820579211743
+Episode ended. Cumulative Reward: 634.3852840584351
+Episode ended. Cumulative Reward: 57.453497808207544
+Episode ended. Cumulative Reward: 76.44224735089938
+Episode ended. Cumulative Reward: -781.0297482518076
+Episode ended. Cumulative Reward: -378.6671630060802
+Episode ended. Cumulative Reward: -59.45543535567458
+Episode ended. Cumulative Reward: -222.8566188039947
+Episode ended. Cumulative Reward: -18.491038639304406
+Episode ended. Cumulative Reward: -168.7841459786315
+Episode ended. Cumulative Reward: -173.62085552329353
+Episode ended. Cumulative Reward: 10.952413710307724
+Episode ended. Cumulative Reward: -37.73925287221576
+Episode ended. Cumulative Reward: 24.511257098568535
+Episode ended. Cumulative Reward: 65.18831127435539
+Episode ended. Cumulative Reward: -19.13048932562168
+Episode ended. Cumulative Reward: 5.041095400363133
+Episode ended. Cumulative Reward: 108.65868889410524
+Episode ended. Cumulative Reward: -34.03664480460674
+Episode ended. Cumulative Reward: -6.629663822499083
+Episode ended. Cumulative Reward: -22.246741016591727
+Episode ended. Cumulative Reward: 99.03553935557045
+Episode ended. Cumulative Reward: 31.90329906077318
+Episode ended. Cumulative Reward: 90.00186604525425
+Episode ended. Cumulative Reward: -49.3978282110221
+Episode ended. Cumulative Reward: 36.46155093183518
+Episode ended. Cumulative Reward: -9.732070965669095
+Episode ended. Cumulative Reward: -278.3259265589986
+Episode ended. Cumulative Reward: 139.68082485207023
+Episode ended. Cumulative Reward: 291.86495944289175
+Episode ended. Cumulative Reward: 681.5432476975586
+Episode ended. Cumulative Reward: -236.3188204011676
+Episode ended. Cumulative Reward: -177.7632874026923
+Episode ended. Cumulative Reward: -140.95370290853168
+Episode ended. Cumulative Reward: 162.86922613765068
+Episode ended. Cumulative Reward: -122.1372156670638
+Episode ended. Cumulative Reward: -215.55832371495842
+Episode ended. Cumulative Reward: -273.80663778555447
+Episode ended. Cumulative Reward: 364.039060629441
+Episode ended. Cumulative Reward: -65.88603946690387
+Episode ended. Cumulative Reward: -4149.451275022452
+Episode ended. Cumulative Reward: -595.7762312610561
+Episode ended. Cumulative Reward: -17360.950275368614
+Episode ended. Cumulative Reward: 3.4403203715981476
+Episode ended. Cumulative Reward: -7.637891731490754
+Episode ended. Cumulative Reward: 9.978764258940316
+Episode ended. Cumulative Reward: 3.161294527597306
+Episode ended. Cumulative Reward: -11.554113892865757
+Episode ended. Cumulative Reward: 8.206302407431394
+Episode ended. Cumulative Reward: -9.087783481107067
+Episode ended. Cumulative Reward: -1.0403428389430474
+Episode ended. Cumulative Reward: -12.28652321813243
+Episode ended. Cumulative Reward: 11.629420608257135
+Episode ended. Cumulative Reward: 14.6777525528762
+Episode ended. Cumulative Reward: 0.9874364111735758
+Episode ended. Cumulative Reward: 14.143485383631742
+Episode ended. Cumulative Reward: 21.677493705901924
+Episode ended. Cumulative Reward: 4.480224718010049
+Episode ended. Cumulative Reward: -0.43435262817763487
+Episode ended. Cumulative Reward: 1045.219669922466
+Episode ended. Cumulative Reward: 105.81741473934159
+Episode ended. Cumulative Reward: -9.543497036820895
+Episode ended. Cumulative Reward: 17.62762342202484
+Episode ended. Cumulative Reward: -21.389409470562214
+Episode ended. Cumulative Reward: 27.654437263025216
+Episode ended. Cumulative Reward: 1.7873605257276495
+Episode ended. Cumulative Reward: 0.5283777364295474
+Episode ended. Cumulative Reward: 66.79961669171087
+Episode ended. Cumulative Reward: 103.07413406583487
+Episode ended. Cumulative Reward: 76.66514602835997
+Episode ended. Cumulative Reward: -2.922766585453644
+Episode ended. Cumulative Reward: 45.70510053283925
+Episode ended. Cumulative Reward: 77.6272981747818
+Episode ended. Cumulative Reward: 63.42422105282981
+Episode ended. Cumulative Reward: 5.931967363211925
+Episode ended. Cumulative Reward: 17.603877261155162
+Episode ended. Cumulative Reward: 1215.5390339587275
+Episode ended. Cumulative Reward: 311.07868588137126
+Episode ended. Cumulative Reward: 118.31915957601854
+Episode ended. Cumulative Reward: -11897.815951395154
+Episode ended. Cumulative Reward: -76073.53740383615
+Episode ended. Cumulative Reward: -843.1694878985417
+Episode ended. Cumulative Reward: 569.329752964227
+Episode ended. Cumulative Reward: 365.96790834871695
+Episode ended. Cumulative Reward: -448.84236199013037
+Episode ended. Cumulative Reward: 221.4623681709915
+Episode ended. Cumulative Reward: -205.12479973491747
+Episode ended. Cumulative Reward: 748.2830874686725
+Episode ended. Cumulative Reward: -27486.637409448842
+Episode ended. Cumulative Reward: -17604.814791587047
+Episode ended. Cumulative Reward: 255.8736264437947
+Episode ended. Cumulative Reward: -823.7833068380252
+Episode ended. Cumulative Reward: -176.33421087335074
+Episode ended. Cumulative Reward: 53.842244299678555
+Episode ended. Cumulative Reward: -1.610488652463232
+Episode ended. Cumulative Reward: 40.1962840844418
+Episode ended. Cumulative Reward: -68583.6095706725
+Episode ended. Cumulative Reward: 44.18750619363664
+Episode ended. Cumulative Reward: 21.98644316453192
+Episode ended. Cumulative Reward: -28.476005815144426
+Episode ended. Cumulative Reward: 45.36316863813238
+Episode ended. Cumulative Reward: 59.39886306578683
+Episode ended. Cumulative Reward: 11.468536541442575
+Episode ended. Cumulative Reward: 1.400302432539604
+Episode ended. Cumulative Reward: 10.90619223142005
+Episode ended. Cumulative Reward: 39.519532918890036
+Episode ended. Cumulative Reward: 13.439587282069624
+Episode ended. Cumulative Reward: 26.750750940670883
+Episode ended. Cumulative Reward: -53.51377325741714
+Episode ended. Cumulative Reward: 391.4401024579604
+Episode ended. Cumulative Reward: 17.18983651327602
+Episode ended. Cumulative Reward: 144.20077019942374
+Episode ended. Cumulative Reward: -80139.6657563859
+Episode ended. Cumulative Reward: -74126.31267192843
+Episode ended. Cumulative Reward: -50093.68406628019
+Episode ended. Cumulative Reward: -221.4165577928045
+Episode ended. Cumulative Reward: -58122.990388843806
+Episode ended. Cumulative Reward: -22831.65526692375
+Episode ended. Cumulative Reward: 417.6510069647801
+Episode ended. Cumulative Reward: -3026.612326626627
+Episode ended. Cumulative Reward: -344.79381345355483
+Episode ended. Cumulative Reward: -1061.6651916386081
+Episode ended. Cumulative Reward: 270.35087544803895
+Episode ended. Cumulative Reward: -44000.597567078825
+Episode ended. Cumulative Reward: 14.735859422283028
+Episode ended. Cumulative Reward: 22.87204635794501
+Episode ended. Cumulative Reward: 7.328839232930363
+Episode ended. Cumulative Reward: 28.357420579877726
+Episode ended. Cumulative Reward: 6.339284937261198
+Episode ended. Cumulative Reward: 18.746546725177268
+Episode ended. Cumulative Reward: -21.56551029969671
+Episode ended. Cumulative Reward: 19.832754145421518
+Episode ended. Cumulative Reward: -9211.328411818746
+Episode ended. Cumulative Reward: 3.2392136537127953
+Episode ended. Cumulative Reward: 15.878962903043657
+Episode ended. Cumulative Reward: -10.984644133993925
+Episode ended. Cumulative Reward: -18.121311550178177
+Episode ended. Cumulative Reward: 9.550151846183098
+Episode ended. Cumulative Reward: 0.6996595387834503
+Episode ended. Cumulative Reward: -0.9584965469575764
+Episode ended. Cumulative Reward: 32.72913653710958
+Episode ended. Cumulative Reward: 21.49180114772264
+Episode ended. Cumulative Reward: -36.67920451968678
+Episode ended. Cumulative Reward: -55247.77108359473
+Episode ended. Cumulative Reward: -37.15299306779974
+Episode ended. Cumulative Reward: -51.42624845501052
+Episode ended. Cumulative Reward: -35.431062441750356
+Episode ended. Cumulative Reward: 108.05621815149368
+Episode ended. Cumulative Reward: -52155.57810246283
+Episode ended. Cumulative Reward: 159.14604766803973
+Episode ended. Cumulative Reward: 32.40093414908864
+Episode ended. Cumulative Reward: -13.914190752343188
+Episode ended. Cumulative Reward: 52.56012686101707
+Episode ended. Cumulative Reward: 54.332844645188516
+Episode ended. Cumulative Reward: 15.947372372553673
+Episode ended. Cumulative Reward: 32.71584955997503
+Episode ended. Cumulative Reward: 61.64206830133725
+Episode ended. Cumulative Reward: 1384.4081505387423
+Episode ended. Cumulative Reward: -67799.93153550652
+Episode ended. Cumulative Reward: 319.32891570859744
+Episode ended. Cumulative Reward: -68265.08591080215
+Episode ended. Cumulative Reward: -49769.568533100944
+Episode ended. Cumulative Reward: -38184.78676671141
+Episode ended. Cumulative Reward: 335.8212750281683
+Episode ended. Cumulative Reward: -29.969507081166057
+Episode ended. Cumulative Reward: -34051.65648041985
+Episode ended. Cumulative Reward: -543.6324307253809
+Episode ended. Cumulative Reward: -30482.854133394263
+Episode ended. Cumulative Reward: -59104.208850951865
+Episode ended. Cumulative Reward: -70733.35466011408
+Episode ended. Cumulative Reward: -79472.92869789452
+Episode ended. Cumulative Reward: -265.09709956151914
+Episode ended. Cumulative Reward: -11985.726743050482
+Episode ended. Cumulative Reward: -525.495159295818
+Episode ended. Cumulative Reward: -25.660978697853693
+Episode ended. Cumulative Reward: -107.6938943080624
+Episode ended. Cumulative Reward: -29.660052248253237
+Episode ended. Cumulative Reward: 21.542607512179643
+Episode ended. Cumulative Reward: 41.05736120248679
+Episode ended. Cumulative Reward: 19.852412384037848
+Episode ended. Cumulative Reward: -64541.079193924656
+Episode ended. Cumulative Reward: 27.8128353418158
+Episode ended. Cumulative Reward: 17.7824379834193
+Episode ended. Cumulative Reward: 28.573814843575974
+Episode ended. Cumulative Reward: 63.44038659685617
+Episode ended. Cumulative Reward: 54.330474464035206
+Episode ended. Cumulative Reward: -50040.11755394114
+Episode ended. Cumulative Reward: -48586.57937356965
+Episode ended. Cumulative Reward: 49.060548064283125
+Episode ended. Cumulative Reward: 52.813427153924636
+Episode ended. Cumulative Reward: -477.87021661308586
+Episode ended. Cumulative Reward: 179.87433469298009
+Episode ended. Cumulative Reward: -67321.2100508376
+Episode ended. Cumulative Reward: -369.1815569077225
+Episode ended. Cumulative Reward: 365.47332659776964
+Episode ended. Cumulative Reward: -38495.62562513213
+Episode ended. Cumulative Reward: -2197.064218252491
+Episode ended. Cumulative Reward: 207.4115663033591
+Episode ended. Cumulative Reward: -83872.955368896
+Episode ended. Cumulative Reward: -50951.85865805087
+Episode ended. Cumulative Reward: 268.616730609468
+Episode ended. Cumulative Reward: 341.3369869627433
+Episode ended. Cumulative Reward: 495.1742783393221
+Episode ended. Cumulative Reward: -44166.230767632434
+Episode ended. Cumulative Reward: 450.1001033882408
+Episode ended. Cumulative Reward: -3471.6261892078887
+Episode ended. Cumulative Reward: -2.049099015129059
+Episode ended. Cumulative Reward: 17.958739448478298
+Episode ended. Cumulative Reward: 21.754483107653527
+Episode ended. Cumulative Reward: 10.258612088464929
+Episode ended. Cumulative Reward: -1.5558639400493348
+Episode ended. Cumulative Reward: -29.02600616418593
+Episode ended. Cumulative Reward: 6.998731539007167
+Episode ended. Cumulative Reward: -1.753080875886667
+Episode ended. Cumulative Reward: -23.123110014407587
+Episode ended. Cumulative Reward: 50.511652753534804
+Episode ended. Cumulative Reward: 21.182862099659133
+Episode ended. Cumulative Reward: -9.770458952164176
+Episode ended. Cumulative Reward: 17.425037161617126
+Episode ended. Cumulative Reward: 2.780332035463175
+Episode ended. Cumulative Reward: -4.98001925159565
+Episode ended. Cumulative Reward: 11.533864925430521
+Episode ended. Cumulative Reward: 41.227668194499074
+Episode ended. Cumulative Reward: 19.555055474641932
+Episode ended. Cumulative Reward: 58.58510803632328
+Episode ended. Cumulative Reward: 69.71980625096501
+Episode ended. Cumulative Reward: 50.81401972873448
+Episode ended. Cumulative Reward: 92.5848880108424
+Episode ended. Cumulative Reward: 32.602594906165564
+Episode ended. Cumulative Reward: 9.637655017416591
+Episode ended. Cumulative Reward: -31741.984903749937
+Episode ended. Cumulative Reward: 107.52153914294871
+Episode ended. Cumulative Reward: -0.8946613509918961
+Episode ended. Cumulative Reward: 19.05974864844373
+Episode ended. Cumulative Reward: 51.578324100384066
+Episode ended. Cumulative Reward: 54.596818262740385
+Episode ended. Cumulative Reward: 33.147102108000695
+Episode ended. Cumulative Reward: 44.58854957507856
+Episode ended. Cumulative Reward: 1321.3233721350164
+Episode ended. Cumulative Reward: -20338.991607337015
+Episode ended. Cumulative Reward: -32521.37121795318
+Episode ended. Cumulative Reward: -1097.0377610865426
+Episode ended. Cumulative Reward: -637.0449028329782
+Episode ended. Cumulative Reward: -79465.70587684357
+Episode ended. Cumulative Reward: -733.2016641420505
+Episode ended. Cumulative Reward: 56.856649011445256
+Episode ended. Cumulative Reward: -12981.813025435158
+Episode ended. Cumulative Reward: -57622.37535686934
+Episode ended. Cumulative Reward: 578.9779497174344
+Episode ended. Cumulative Reward: -21379.552945943986
+Episode ended. Cumulative Reward: 403.5022138254264
+Episode ended. Cumulative Reward: -56245.844965290344
+Episode ended. Cumulative Reward: -14.27808553309194
+Episode ended. Cumulative Reward: -624.5580623484828
+Episode ended. Cumulative Reward: 73.90786707486018
+Episode ended. Cumulative Reward: 88.75987929654133
+Episode ended. Cumulative Reward: -52.99272653328012
+Episode ended. Cumulative Reward: 54.62519453147161
+Episode ended. Cumulative Reward: 49.18935409925541
+Episode ended. Cumulative Reward: 33.005129696474796
+Episode ended. Cumulative Reward: 102.63943646648897
+Episode ended. Cumulative Reward: -14029.684407834875
+Episode ended. Cumulative Reward: -16.28565453446845
+Episode ended. Cumulative Reward: 90.43051124667215
+Episode ended. Cumulative Reward: 104.99025395692746
+Episode ended. Cumulative Reward: -20074.51211092696
+Episode ended. Cumulative Reward: -20.651466540883234
+Episode ended. Cumulative Reward: 13.53085940012852
+Episode ended. Cumulative Reward: 2.475637189188319
+Episode ended. Cumulative Reward: 75.90158688128008
+Episode ended. Cumulative Reward: 14.894085438433478
+Episode ended. Cumulative Reward: -5896.207418252154
+Episode ended. Cumulative Reward: -1022.2852132428781
+Episode ended. Cumulative Reward: -2580.325507893089
+Episode ended. Cumulative Reward: -102.81229052476112
+Episode ended. Cumulative Reward: -17910.72137182639
+Episode ended. Cumulative Reward: 0.0
+Episode ended. Cumulative Reward: -20793.8078701736
+Episode ended. Cumulative Reward: 511.70890073713673
+Episode ended. Cumulative Reward: -863.4579320803972
+Episode ended. Cumulative Reward: -133.5802644591845
+Episode ended. Cumulative Reward: -7881.9298077100975
+Episode ended. Cumulative Reward: -13659.884716078017
+Episode ended. Cumulative Reward: -192.22105912664495
+Episode ended. Cumulative Reward: -40.55793371620291
+Episode ended. Cumulative Reward: -4616.909402303515
+Episode ended. Cumulative Reward: -24547.718164213544
+Episode ended. Cumulative Reward: -39.06346262199703
+Episode ended. Cumulative Reward: -10.136997045740713
+Episode ended. Cumulative Reward: -22.020779386462436
+Episode ended. Cumulative Reward: -14.321342738713724
+Episode ended. Cumulative Reward: 4.152178398898059
+Episode ended. Cumulative Reward: 29.854365498731568
+Episode ended. Cumulative Reward: -13.866901861548797
+Episode ended. Cumulative Reward: 0.8308562530103814
+Episode ended. Cumulative Reward: -3.3445775918874006
+Episode ended. Cumulative Reward: 22.97472987993187
+Episode ended. Cumulative Reward: 48.13532525870869
+Episode ended. Cumulative Reward: -0.5403771212154425
+Episode ended. Cumulative Reward: 32.96064152763961
+Episode ended. Cumulative Reward: 5.876771198499398
+Episode ended. Cumulative Reward: -9.594915319433312
+Episode ended. Cumulative Reward: -33.807380566652114
+Episode ended. Cumulative Reward: 24.553085253384893
+Episode ended. Cumulative Reward: 25.802663535402985
+Episode ended. Cumulative Reward: 6.2121813739873915
+Episode ended. Cumulative Reward: -30.889628289713983
+Episode ended. Cumulative Reward: 16.38931163823466
+Episode ended. Cumulative Reward: -5.417545294889521
+Episode ended. Cumulative Reward: 174.0398906157027
+Episode ended. Cumulative Reward: 23.20064127633566
+Episode ended. Cumulative Reward: 60.24074051382138
+Episode ended. Cumulative Reward: 48.6002968528544
+Episode ended. Cumulative Reward: -20.45828183352711
+Episode ended. Cumulative Reward: 14.416858914277327
+Episode ended. Cumulative Reward: -62.25486190441313
+Episode ended. Cumulative Reward: 106.29758616000908
+Episode ended. Cumulative Reward: 18.871614226781787
+Episode ended. Cumulative Reward: -10.175460792390083
+Episode ended. Cumulative Reward: -82274.92442856048
+Episode ended. Cumulative Reward: -53690.66300810468
+Episode ended. Cumulative Reward: 27.15715327949188
+Episode ended. Cumulative Reward: -238.356371120431
+Episode ended. Cumulative Reward: 780.2554182453307
+Episode ended. Cumulative Reward: 185.7990591941857
+Episode ended. Cumulative Reward: 468.7303422433224
+Episode ended. Cumulative Reward: -104989.62720817125
+Episode ended. Cumulative Reward: -39974.09284442253
+Episode ended. Cumulative Reward: -236.74566761619997
+Episode ended. Cumulative Reward: -101.77657800094266
+Episode ended. Cumulative Reward: -16558.614974630287
+Episode ended. Cumulative Reward: -60.92335189665141
+Episode ended. Cumulative Reward: 208.95977055156823
+Episode ended. Cumulative Reward: 256.9973080736475
+Episode ended. Cumulative Reward: -731.3210383161814
+Episode ended. Cumulative Reward: 113.44356300786922
+Episode ended. Cumulative Reward: -5.4416763355378635
+Episode ended. Cumulative Reward: -2.5157018258046264
+Episode ended. Cumulative Reward: 8.097200929718838
+Episode ended. Cumulative Reward: -1.6828257858243205
+Episode ended. Cumulative Reward: 43.53011181193017
+Episode ended. Cumulative Reward: 93.89454082704185
+Episode ended. Cumulative Reward: -112.06588408856373
+Episode ended. Cumulative Reward: -28.27085794215094
+Episode ended. Cumulative Reward: 142.25775933721297
+Episode ended. Cumulative Reward: 66.34873285591982
+Episode ended. Cumulative Reward: 82.14682427004982
+Episode ended. Cumulative Reward: 77.43507469008773
+Episode ended. Cumulative Reward: -3.0012086818228454
+Episode ended. Cumulative Reward: 75.2410666073041
+Episode ended. Cumulative Reward: 47.720550312142564
+Episode ended. Cumulative Reward: -77436.5188521566
+Episode ended. Cumulative Reward: -423.3082689735155
+Episode ended. Cumulative Reward: 183.58672342890156
+Episode ended. Cumulative Reward: 218.3725799769103
+Episode ended. Cumulative Reward: -35240.757803031585
+Episode ended. Cumulative Reward: 88.03957183410859
+Episode ended. Cumulative Reward: -33813.29846164952
+Episode ended. Cumulative Reward: -208.32449998965217
+Episode ended. Cumulative Reward: -37766.74020457569
+Episode ended. Cumulative Reward: -35587.75635492761
+Episode ended. Cumulative Reward: -429.34978637740545
+Episode ended. Cumulative Reward: -5041.74162954665
+Episode ended. Cumulative Reward: -737.8746574943538
+Episode ended. Cumulative Reward: 255.22402087781404
+Episode ended. Cumulative Reward: 143.9044039743173
+Episode ended. Cumulative Reward: -679.5151906266079
+Episode ended. Cumulative Reward: 1000.6490887636381
+Episode ended. Cumulative Reward: -18082.077493772573
+Episode ended. Cumulative Reward: -7.842906931413154
+Episode ended. Cumulative Reward: -10.527962510474595
+Episode ended. Cumulative Reward: 29.059963480049987
+Episode ended. Cumulative Reward: 2.5580657289642943
+Episode ended. Cumulative Reward: -18500.50013850409
+Episode ended. Cumulative Reward: 16.146773018985527
+Episode ended. Cumulative Reward: 28.40614734738483
+Episode ended. Cumulative Reward: -17627.060171070072
+Episode ended. Cumulative Reward: -6.9609084065600655
+Episode ended. Cumulative Reward: 9.71176894457733
+Episode ended. Cumulative Reward: 16.166432192789443
+Episode ended. Cumulative Reward: -15.585718255119104
+Episode ended. Cumulative Reward: -19.93781188524204
+Episode ended. Cumulative Reward: -8.191354354484758
+Episode ended. Cumulative Reward: 0.9412151674200686
+Episode ended. Cumulative Reward: 28.999901085154747
+Episode ended. Cumulative Reward: 18.28627515900257
+Episode ended. Cumulative Reward: 16.5987030456522
+Episode ended. Cumulative Reward: 35.6935236747197
+Episode ended. Cumulative Reward: -6.996440276216504
+Episode ended. Cumulative Reward: 23.537714221147212
+Episode ended. Cumulative Reward: 29.136279841370538
+Episode ended. Cumulative Reward: 39.9958934430465
+Episode ended. Cumulative Reward: 24.057237240924337
+Episode ended. Cumulative Reward: 73.5570019543029
+Episode ended. Cumulative Reward: -0.6585083265425737
+Episode ended. Cumulative Reward: 39.38474511958225
+Episode ended. Cumulative Reward: 11.269722583321595
+Episode ended. Cumulative Reward: 78.15841419634899
+Episode ended. Cumulative Reward: 45.39621307523805
+Episode ended. Cumulative Reward: 6.665069482170793
+Episode ended. Cumulative Reward: -65807.2812749018
+Episode ended. Cumulative Reward: -47320.30625935644
+Episode ended. Cumulative Reward: -16714.708779605473
+Episode ended. Cumulative Reward: -159.50505847787747
+Episode ended. Cumulative Reward: -600.352407056937
+Episode ended. Cumulative Reward: -113.20281949163973
+Episode ended. Cumulative Reward: 270.3159686617886
+Episode ended. Cumulative Reward: 4.832529846697696
+Episode ended. Cumulative Reward: -67.79196133584088
+Episode ended. Cumulative Reward: -439.36316625819734
+Episode ended. Cumulative Reward: -69616.11819656132
+Episode ended. Cumulative Reward: 174.63106502721524
+Episode ended. Cumulative Reward: -281.21308907875164
+Episode ended. Cumulative Reward: -276.04568160641156
+Episode ended. Cumulative Reward: 450.922374665417
+Episode ended. Cumulative Reward: 37.88884825052719
+Episode ended. Cumulative Reward: 36.27194120753529
+Episode ended. Cumulative Reward: 95.97387311137948
+Episode ended. Cumulative Reward: 53.67537439386763
+Episode ended. Cumulative Reward: -206.76632515624473
+Episode ended. Cumulative Reward: 47.09870098575027
+Episode ended. Cumulative Reward: 109.18987038249497
+Episode ended. Cumulative Reward: 56.61296280713128
+Episode ended. Cumulative Reward: 87.14902997187858
+Episode ended. Cumulative Reward: 82.2331864933808
+Episode ended. Cumulative Reward: 101.80303986002116
+Episode ended. Cumulative Reward: 50.934377234708336
+Episode ended. Cumulative Reward: 65.19348109194567
+Episode ended. Cumulative Reward: 104.65217777121012
+Episode ended. Cumulative Reward: 9.874809089789665
+Episode ended. Cumulative Reward: -4.3057793479458155
+Episode ended. Cumulative Reward: 31.478054006864454
+Episode ended. Cumulative Reward: 304.7009371274713
+Episode ended. Cumulative Reward: 5.7543638507090975
+Episode ended. Cumulative Reward: 0.0
+Episode ended. Cumulative Reward: -48282.71240387052
+Episode ended. Cumulative Reward: 62.19011631570186
+Episode ended. Cumulative Reward: 10.142344246285631
+Episode ended. Cumulative Reward: -28009.672225688373
+Episode ended. Cumulative Reward: 332.79993771943214
+Episode ended. Cumulative Reward: -47846.17980442552
+Episode ended. Cumulative Reward: 40.98450377092297
+Episode ended. Cumulative Reward: 61.61654014292412
+Episode ended. Cumulative Reward: 98.27594146398769
+Episode ended. Cumulative Reward: -45.407368267329616
+Episode ended. Cumulative Reward: -58614.60775421617
+Episode ended. Cumulative Reward: -15620.96564952523
+Episode ended. Cumulative Reward: 158.87185579466438
+Episode ended. Cumulative Reward: 15.695949082818856
+Episode ended. Cumulative Reward: 36.62978479714229
+Episode ended. Cumulative Reward: 82.8517890771501
+Episode ended. Cumulative Reward: 10.520507755740311
+Episode ended. Cumulative Reward: 44.80317681688069
+Episode ended. Cumulative Reward: 1.8422128710885772
+Episode ended. Cumulative Reward: 32.13606789714049
+Episode ended. Cumulative Reward: 31.446398221671927
+Episode ended. Cumulative Reward: 39.92747044777832
+Episode ended. Cumulative Reward: 18.685054163442942
+Episode ended. Cumulative Reward: 47.979340811504926
+Episode ended. Cumulative Reward: 68.03813626280191
+Episode ended. Cumulative Reward: -3.8319151969158725
+Episode ended. Cumulative Reward: -9.337650264558533
+Episode ended. Cumulative Reward: -17.647705755079414
+Episode ended. Cumulative Reward: 21.738573926168385
+Episode ended. Cumulative Reward: 26.30766925806722
+Episode ended. Cumulative Reward: 12.619982144650095
+Episode ended. Cumulative Reward: -31.690104935952377
+Episode ended. Cumulative Reward: 94.72118012561116
+Episode ended. Cumulative Reward: 121.34705051899323
+Episode ended. Cumulative Reward: 42.87438808733884
+Episode ended. Cumulative Reward: 19.20225500231311
+Episode ended. Cumulative Reward: 113.28744527813603
+Episode ended. Cumulative Reward: 73.1554753268054
+Episode ended. Cumulative Reward: 111.60844120839403
+Episode ended. Cumulative Reward: 88.06552200350797
+Episode ended. Cumulative Reward: 58.478227708733925
+Episode ended. Cumulative Reward: 38.5608903086473
+Episode ended. Cumulative Reward: 18.301714424440263
+Episode ended. Cumulative Reward: 104.13329495156165
+Episode ended. Cumulative Reward: 36.1557662073231
+Episode ended. Cumulative Reward: -36686.00662621964
+Episode ended. Cumulative Reward: -46966.37135821555
+Episode ended. Cumulative Reward: -268.93058132355435
+Episode ended. Cumulative Reward: -699.003729298504
+Episode ended. Cumulative Reward: -53868.77769952292
+Episode ended. Cumulative Reward: 29.32898430248366
+Episode ended. Cumulative Reward: 440.20679085316965
+Episode ended. Cumulative Reward: -60494.13636826365
+Episode ended. Cumulative Reward: -145.74686247062107
+Episode ended. Cumulative Reward: -20.737449071582205
+Episode ended. Cumulative Reward: -52557.816186674405
+Episode ended. Cumulative Reward: -116417.1534870408
+Episode ended. Cumulative Reward: 27.71478861182402
+Episode ended. Cumulative Reward: 604.5738041967877
+Episode ended. Cumulative Reward: -49830.201413909
+Episode ended. Cumulative Reward: 191.21810617299343
+Episode ended. Cumulative Reward: 1174.1947370251955
+Episode ended. Cumulative Reward: 100.9322340023864
+Episode ended. Cumulative Reward: -0.4558083716357544
+Episode ended. Cumulative Reward: -3490.3672254437897
+Episode ended. Cumulative Reward: 21.894430333423543
+Episode ended. Cumulative Reward: -59.72387085761267
+Episode ended. Cumulative Reward: 162.52355014608634
+Episode ended. Cumulative Reward: 97.50407342742255
+Episode ended. Cumulative Reward: 121.56109286650621
+Episode ended. Cumulative Reward: -60.93443708998882
+Episode ended. Cumulative Reward: 10.660065147991418
+Episode ended. Cumulative Reward: -26.22505622189226
+Episode ended. Cumulative Reward: -79.89564433278929
+Episode ended. Cumulative Reward: 7.627115715154559
+Episode ended. Cumulative Reward: 18.040651507246025
+Episode ended. Cumulative Reward: 62.52848648015433
+Episode ended. Cumulative Reward: -3.992871597935732
+Episode ended. Cumulative Reward: -16189.748221748998
+Episode ended. Cumulative Reward: 0.0
+Episode ended. Cumulative Reward: -9898.513112981404
+Episode ended. Cumulative Reward: -6705.953357758734
+Episode ended. Cumulative Reward: -6374.31327674772
+Episode ended. Cumulative Reward: -343.40685418721296
+Episode ended. Cumulative Reward: -28241.134803707428
+Episode ended. Cumulative Reward: -21035.979543841455
+Episode ended. Cumulative Reward: -188.38594283737513
+Episode ended. Cumulative Reward: 0.0
+Episode ended. Cumulative Reward: 183.01953024644519
+Episode ended. Cumulative Reward: -52208.15147004754
+Episode ended. Cumulative Reward: 56.996345453271715
+Episode ended. Cumulative Reward: 76.39993455957222
+Episode ended. Cumulative Reward: -43138.979153176326
+Episode ended. Cumulative Reward: -59140.71544496644
+Episode ended. Cumulative Reward: -25.523487569217423
+Episode ended. Cumulative Reward: 13.580633939985375
+Episode ended. Cumulative Reward: 40.73947845898897
+Episode ended. Cumulative Reward: -5769.530377325393
+Episode ended. Cumulative Reward: 24.59085195203386
+Episode ended. Cumulative Reward: 61.56322092452342
+Episode ended. Cumulative Reward: 5.072405180151804
+Episode ended. Cumulative Reward: 23.853032390066687
+Episode ended. Cumulative Reward: 51.48617996962912
+Episode ended. Cumulative Reward: 23.357139440972674
+Episode ended. Cumulative Reward: 5.748625575427411
+Episode ended. Cumulative Reward: 31.827610613889192
+Episode ended. Cumulative Reward: -43.312099537833205
+Episode ended. Cumulative Reward: 32.2722353627085
+Episode ended. Cumulative Reward: -15.598183706425061
+Episode ended. Cumulative Reward: 5.500637468397997
+Episode ended. Cumulative Reward: 38.354153787702636
+Episode ended. Cumulative Reward: 66.32422672997825
+Episode ended. Cumulative Reward: 37.9169168800272
+Episode ended. Cumulative Reward: 72.57924606144593
+Episode ended. Cumulative Reward: 87.94344922559583
+Episode ended. Cumulative Reward: 43.543785497491
+Episode ended. Cumulative Reward: 7.596335728523741
+Episode ended. Cumulative Reward: 158.0586771096655
+Episode ended. Cumulative Reward: -3.853561195464181
+Episode ended. Cumulative Reward: -36.28259552292178
+Episode ended. Cumulative Reward: 86.81970069641761
+Episode ended. Cumulative Reward: 90.72912923859519
+Episode ended. Cumulative Reward: 17.819420593116547
+Episode ended. Cumulative Reward: 83.02203135143077
+Episode ended. Cumulative Reward: -15.429264079554628
+Episode ended. Cumulative Reward: 39.830871805844026
+Episode ended. Cumulative Reward: -45796.16720476483
+Episode ended. Cumulative Reward: 0.0
+Episode ended. Cumulative Reward: 342.9924118232867
+Episode ended. Cumulative Reward: 233.51757464078338
+Episode ended. Cumulative Reward: -88.19485572140181
+Episode ended. Cumulative Reward: -53223.22925162829
+Episode ended. Cumulative Reward: -48872.282789489545
+Episode ended. Cumulative Reward: 12.705356405928569
+Episode ended. Cumulative Reward: 624.5926763820923
+Episode ended. Cumulative Reward: -36006.29146726362
+Episode ended. Cumulative Reward: 306.2352663400663
+Episode ended. Cumulative Reward: -360.32094285546054
+Episode ended. Cumulative Reward: -18195.019274818707
+Episode ended. Cumulative Reward: -44496.28266916684
+Episode ended. Cumulative Reward: -56715.0135763618
+Episode ended. Cumulative Reward: -81.85748120918629
+Episode ended. Cumulative Reward: 32.58242585601147
+Episode ended. Cumulative Reward: -24.00298975545479
+Episode ended. Cumulative Reward: 23.391896025337132
+Episode ended. Cumulative Reward: -23.105674397504572
+Episode ended. Cumulative Reward: -66349.09264104225
+Episode ended. Cumulative Reward: 150.70224493085146
+Episode ended. Cumulative Reward: 170.85775620348247
+Episode ended. Cumulative Reward: 94.2830290769374
+Episode ended. Cumulative Reward: 146.32368485565576
+Episode ended. Cumulative Reward: -117.9572407616912
+Episode ended. Cumulative Reward: -39.95366969516698
+Episode ended. Cumulative Reward: 128.0102120055218
+Episode ended. Cumulative Reward: 6.652034356743798
+Episode ended. Cumulative Reward: 102.02295783690309
+Episode ended. Cumulative Reward: 68.94445727048901
+Episode ended. Cumulative Reward: 54.83879485101727
+Episode ended. Cumulative Reward: -247.76259646378122
+Episode ended. Cumulative Reward: 0.0
+Episode ended. Cumulative Reward: -11759.332843345086
+Episode ended. Cumulative Reward: -149.31992796076327
+Episode ended. Cumulative Reward: 660.8639262434982
+Episode ended. Cumulative Reward: -16052.912662837822
+Episode ended. Cumulative Reward: -53693.50431597758
+Episode ended. Cumulative Reward: 21.39683923964165
+Episode ended. Cumulative Reward: -22045.484124529565
+Episode ended. Cumulative Reward: 858.4801474517311
+Episode ended. Cumulative Reward: 873.4635663392378
+Episode ended. Cumulative Reward: -261.9919100475615
+Episode ended. Cumulative Reward: 341.89674555370215
+Episode ended. Cumulative Reward: -367.81278797223433
+Episode ended. Cumulative Reward: 0.0
+Episode ended. Cumulative Reward: -49.41925607962588
+Episode ended. Cumulative Reward: -15.64475768480213
+Episode ended. Cumulative Reward: -1.710485179628904
+Episode ended. Cumulative Reward: -2.483418692408577
+Episode ended. Cumulative Reward: 63.596522451785575
+Episode ended. Cumulative Reward: 8.126929787553536
+Episode ended. Cumulative Reward: 63.27990044182616
+Episode ended. Cumulative Reward: 27.74736309883326
+Episode ended. Cumulative Reward: 18.345135854004184
+Episode ended. Cumulative Reward: 138.98280938089397
+Episode ended. Cumulative Reward: 104.77727290445858
+Episode ended. Cumulative Reward: 30.779370643567972
+Episode ended. Cumulative Reward: -37.40232061901162
+Episode ended. Cumulative Reward: -2.406573870722127
+Episode ended. Cumulative Reward: 57.27670161804531
+Episode ended. Cumulative Reward: 59.637696467003366
+Episode ended. Cumulative Reward: 43.06274274919292
+Episode ended. Cumulative Reward: 35.48085485039587
+Episode ended. Cumulative Reward: -56.676155871529886
+Episode ended. Cumulative Reward: 163.48414512519628
+Episode ended. Cumulative Reward: -37258.02866143681
+Episode ended. Cumulative Reward: 68.59832498423708
+Episode ended. Cumulative Reward: 73.3403537766701
+Episode ended. Cumulative Reward: 5.2650519254521555
+Episode ended. Cumulative Reward: 162.2933573370227
+Episode ended. Cumulative Reward: 108.95306547371752
+Episode ended. Cumulative Reward: 85.83298132829805
+Episode ended. Cumulative Reward: 136.98079022455067
+Episode ended. Cumulative Reward: 109.61129829159722
+Episode ended. Cumulative Reward: 59.199233251403484
+Episode ended. Cumulative Reward: 38.25328365753012
+Episode ended. Cumulative Reward: 1.534088057706981
+Episode ended. Cumulative Reward: 96.52911541034075
+Episode ended. Cumulative Reward: 1979.0015215690619
+Episode ended. Cumulative Reward: 0.0
+Episode ended. Cumulative Reward: 341.4661703114916
+Episode ended. Cumulative Reward: 690.4552095315562
+Episode ended. Cumulative Reward: -5801.795038345816
+Episode ended. Cumulative Reward: 887.1130807753798
+Episode ended. Cumulative Reward: -419.77107163484675
+Episode ended. Cumulative Reward: 4.892400522393274
+Episode ended. Cumulative Reward: 214.49689493737503
+Episode ended. Cumulative Reward: -561.6238932764103
+Episode ended. Cumulative Reward: 712.6488750884382
+Episode ended. Cumulative Reward: -154.6614359967068
+Episode ended. Cumulative Reward: -56043.937401073235
+Episode ended. Cumulative Reward: 370.6470986553305
+Episode ended. Cumulative Reward: -72724.1228123223
+Episode ended. Cumulative Reward: 122.1678201707698
+Episode ended. Cumulative Reward: -93.02614331518949
+Episode ended. Cumulative Reward: 245.88769059613458
+Episode ended. Cumulative Reward: 138.58115843617622
+Episode ended. Cumulative Reward: 206.31388920929066
+Episode ended. Cumulative Reward: -19399.834115624264
+Episode ended. Cumulative Reward: 155.98852849971865
+Episode ended. Cumulative Reward: 118.21702464617005
+Episode ended. Cumulative Reward: 94.462516710187
+Episode ended. Cumulative Reward: -17646.33296148406
+Episode ended. Cumulative Reward: 223.57981655592113
+Episode ended. Cumulative Reward: 212.87377312447745
+Episode ended. Cumulative Reward: 38.68415174466054
+Episode ended. Cumulative Reward: 3.9495419799449962
+Episode ended. Cumulative Reward: 25.62407265047227
+Episode ended. Cumulative Reward: 55.3888729622102
+Episode ended. Cumulative Reward: 160.70356985892874
+Episode ended. Cumulative Reward: 84.4464920931751
+Episode ended. Cumulative Reward: 1571.445741535474
+Episode ended. Cumulative Reward: -241.5063436822241
+Episode ended. Cumulative Reward: 133.00153850303786
+Episode ended. Cumulative Reward: -2.574059664650804
+Episode ended. Cumulative Reward: 389.92204113260715
+Episode ended. Cumulative Reward: 514.550738297142
+Episode ended. Cumulative Reward: 97.90904178930558
+Episode ended. Cumulative Reward: -40193.13983724926
+Episode ended. Cumulative Reward: -15245.134450511285
+Episode ended. Cumulative Reward: -430.6234987211255
+Episode ended. Cumulative Reward: 636.9886746392212
+Episode ended. Cumulative Reward: -150.35508471398407
+Episode ended. Cumulative Reward: -10.178572150157379
+Episode ended. Cumulative Reward: -404.38253901524183
+Episode ended. Cumulative Reward: -506.62070028587016
+Episode ended. Cumulative Reward: -2914.2843505143087
+Episode ended. Cumulative Reward: -27.58712951291011
+Episode ended. Cumulative Reward: 99.92855458945041
+Episode ended. Cumulative Reward: 121.54214292737919
+Episode ended. Cumulative Reward: -30.97937664036678
+Episode ended. Cumulative Reward: 111.45374498232627
+Episode ended. Cumulative Reward: 83.14562668395104
+Episode ended. Cumulative Reward: 46.03044340764123
+Episode ended. Cumulative Reward: 104.97114381277686
+Episode ended. Cumulative Reward: -90.53458796555446
+Episode ended. Cumulative Reward: 105.9818985465622
+Episode ended. Cumulative Reward: 108.2679097591336
+Episode ended. Cumulative Reward: -9.847805777411395
+Episode ended. Cumulative Reward: 4.579201538937269
+Episode ended. Cumulative Reward: 3.9847616421082535
+Episode ended. Cumulative Reward: 67.2377017635705
+Episode ended. Cumulative Reward: 112.34209558175223
+Episode ended. Cumulative Reward: 209.6085070304581
+Episode ended. Cumulative Reward: 27.607060897040355
+Episode ended. Cumulative Reward: 113.13561232454958
+Episode ended. Cumulative Reward: 55.66588738159285
+Episode ended. Cumulative Reward: 38.20221554512358
+Episode ended. Cumulative Reward: 80.39126433246042
+Episode ended. Cumulative Reward: 59.556442620711636
+Episode ended. Cumulative Reward: 42.21449356424682
+Episode ended. Cumulative Reward: -8.34947269342797
+Episode ended. Cumulative Reward: 55.32669159403903
+Episode ended. Cumulative Reward: -5.393563811845752
+Episode ended. Cumulative Reward: 9.273458513146181
+Episode ended. Cumulative Reward: 39.20976643385177
+Episode ended. Cumulative Reward: 51.41522860451934
+Episode ended. Cumulative Reward: -60.06594733707175
+Episode ended. Cumulative Reward: 39.1715149278142
+Episode ended. Cumulative Reward: 1486.8524206078678
+Episode ended. Cumulative Reward: 57.51385843981063
+Episode ended. Cumulative Reward: 354.511152838895
+Episode ended. Cumulative Reward: 399.0870312339741
+Episode ended. Cumulative Reward: -249.05933001391895
+Episode ended. Cumulative Reward: -95.32902408871098
+Episode ended. Cumulative Reward: 343.1986276938929
+Episode ended. Cumulative Reward: 492.1333141988726
+Episode ended. Cumulative Reward: 0.0
+Episode ended. Cumulative Reward: -64947.860678197554
+Episode ended. Cumulative Reward: -62377.511706159145
+Episode ended. Cumulative Reward: -99.76314252297698
+Episode ended. Cumulative Reward: 312.51220943892093
+Episode ended. Cumulative Reward: -92083.24258479748
+Episode ended. Cumulative Reward: 123.32349854277481
+Episode ended. Cumulative Reward: 275.23982908295693
+Episode ended. Cumulative Reward: 253.63256340933168
+Episode ended. Cumulative Reward: -63.92398816791985
+Episode ended. Cumulative Reward: 170.79328514538963
+Episode ended. Cumulative Reward: 200.55908887916274
+Episode ended. Cumulative Reward: 211.2763172724654
+Episode ended. Cumulative Reward: 151.54036459802617
+Episode ended. Cumulative Reward: 182.0186482175751
+Episode ended. Cumulative Reward: -5101.054995144314
+Episode ended. Cumulative Reward: 217.16241825019438
+Episode ended. Cumulative Reward: 78.53426890275216
+Episode ended. Cumulative Reward: 240.03320672373204
+Episode ended. Cumulative Reward: 24.49283826408987
+Episode ended. Cumulative Reward: 93.12496499718861
+Episode ended. Cumulative Reward: 82.73435761126075
+Episode ended. Cumulative Reward: 64.11429063882531
+Episode ended. Cumulative Reward: -95.17810188956594
+Episode ended. Cumulative Reward: 135.38056170277468
+Episode ended. Cumulative Reward: 1124.0431810345497
+Episode ended. Cumulative Reward: 2.2185382753491467
+Episode ended. Cumulative Reward: 241.7844459165247
+Episode ended. Cumulative Reward: 231.23264750397615
+Episode ended. Cumulative Reward: -41923.82123546957
+Episode ended. Cumulative Reward: -29.664781801783704
+Episode ended. Cumulative Reward: 786.0030914495335
+Episode ended. Cumulative Reward: -47954.338658312656
+Episode ended. Cumulative Reward: 43.35826708370996
+Episode ended. Cumulative Reward: -60070.604132557884
+Episode ended. Cumulative Reward: -434.6664422103598
+Episode ended. Cumulative Reward: -24403.335815124654
+Episode ended. Cumulative Reward: -475.32629784182075
+Episode ended. Cumulative Reward: 20.68661908085639
+Episode ended. Cumulative Reward: 143.88664781579052
+Episode ended. Cumulative Reward: 292.00126807194977
+Episode ended. Cumulative Reward: -40827.54748457044

@@ -8,6 +8,9 @@ __pycache__/
 *.csv
 logs/
 data/
+scripts/full_ai/ppo_minecraft_tensorboard/
+*.tfevents.*
+
 
 # Ignore virtual environments
 .venv/

@@ -1,0 +1,9 @@
+path: C:/Users/odezz/source/MinecraftAI2/yolov8/data
+train: images/train
+val: images/val
+
+names:
+  0: valuable block
+  1: torch
+  2: lava
+  3: water

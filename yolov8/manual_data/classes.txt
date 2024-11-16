@@ -1,0 +1,4 @@
+valuable block
+torch
+lava
+water
