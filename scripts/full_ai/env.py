@@ -9,18 +9,28 @@ import os
 import datetime
 import torch
 
+# -------------------- Configuration --------------------
 
+# Constants
+ACTION_DELAY = 0.3
+MAX_EPISODE_LENGTH = 250
+TASK_SIZE = 20
+REWARD_MODEL = "constant_x"  # or "random_task"
+TRAINING_LOGS_DIR = "training_logs"
+os.makedirs(TRAINING_LOGS_DIR, exist_ok=True)
 
+# -------------------- Environment Definition --------------------
 
 class MinecraftEnv(gym.Env):
-    def __init__(self, action_delay=0.3, max_episode_length=250, task_size=20):
+    def __init__(self, action_delay=ACTION_DELAY, max_episode_length=MAX_EPISODE_LENGTH, task_size=TASK_SIZE, reward_model=REWARD_MODEL):
         super(MinecraftEnv, self).__init__()
         self.agent = MinecraftAgent()
-        self.action_space = spaces.Discrete(25)  # 12 actions plus toggle walk
+        self.action_space = spaces.Discrete(25)
         self.log_file = None
-        os.makedirs("training_logs", exist_ok=True)
 
-        # Define the observation space with both numeric values and image data
+        self.task_size = task_size
+
+        # Define the observation space
         self.observation_space = spaces.Dict({
             "position": spaces.Box(
                 low=np.array([-20000, -256, -20000, -180, -90]),
@@ -31,14 +41,15 @@ class MinecraftEnv(gym.Env):
                 low=-1.0, high=1.0, shape=(224, 224), dtype=np.float32
             ),
             "task": spaces.Box(
-                low=-256,  # Allow all values down to -256
-                high=256,  # Allow all values up to 256
-                shape=(20,),  # Array of length 20
+                low=-256,
+                high=256,
+                shape=(self.task_size,),
                 dtype=np.int32
             ),
             "health": spaces.Box(low=0.0, high=10.0, shape=(), dtype=np.float32),
             "hunger": spaces.Box(low=0.0, high=10.0, shape=(), dtype=np.float32),
-            "alive": spaces.Box(low=0.0, high=1.0, shape=(), dtype=np.float32)
+            "alive": spaces.Box(low=0.0, high=1.0, shape=(), dtype=np.float32),
+            "action_mask": spaces.Box(low=0, high=1, shape=(25,), dtype=np.float32)
         })
 
         # Action mapping 
@@ -70,59 +81,95 @@ class MinecraftEnv(gym.Env):
             24: 'big_turn_right'
         }
 
+        self.full_action_space = list(range(len(self.action_map)))
+        self.current_mask = np.ones(len(self.full_action_space), dtype=np.float32)
+
         self.max_episode_length = max_episode_length
         self.step_counter = 0
         self.action_delay = action_delay
         self.prev_x = 0
         self.prev_z = 0
         self.cumulative_reward = 0
-        
-        # Set a default task array with zero values
+        self.reward_model = reward_model
+
         self.current_task = np.zeros(task_size, dtype=np.int32)
 
-    def set_task(self, task_array):
-        """Update the task array for different behavior."""
-        assert len(task_array) == len(self.current_task), "Task array length mismatch"
-        self.current_task = np.array(task_array)
-        
+        # Define reward models
+        self.reward_models = {
+            "constant_x": self._reward_constant_x,
+            "random_task": self._reward_random_task
+        }
 
+    # -------------------- Reward Functions --------------------
+
+    def _reward_constant_x(self, x, z, delta_x, delta_z, yaw):
+        desired_dx = 1  # Always positive X direction
+        desired_dz = 0
+        desired_yaw = 0
+
+        yaw_diff = abs(yaw - desired_yaw)
+        yaw_diff = min(yaw_diff, 360 - yaw_diff)
+
+        progress = desired_dx * delta_x + desired_dz * delta_z
+        reward = progress
+        reward += 0.1 * np.cos(np.radians(yaw_diff))
+
+        if progress <= 0:
+            reward -= 1.0
+
+        return np.clip(reward, -10.0, 10.0)
+    
+    def _reward_random_task(self, x, z, delta_x, delta_z, yaw):
+        desired_dx, desired_dz = self.current_task[:2]
+        if desired_dx != 0 or desired_dz != 0:
+            desired_yaw = np.arctan2(desired_dz, desired_dx) * (180 / np.pi)
+            if desired_yaw < 0:
+                desired_yaw += 360
+        else:
+            desired_yaw = yaw
+
+        yaw_diff = abs(yaw - desired_yaw)
+        yaw_diff = min(yaw_diff, 360 - yaw_diff)
+
+        distance_to_target = np.sqrt(delta_x**2 + delta_z**2)
+        reward = -distance_to_target
+        reward += 0.1 * np.cos(np.radians(yaw_diff))
+
+        if abs(delta_x) < 0.01 and abs(delta_z) < 0.01:
+            reward -= 1.0
+
+        return np.clip(reward, -10.0, 10.0)
+
+    # -------------------- Action Masking --------------------
+
+    def set_action_mask(self, mask):
+        assert len(mask) == len(self.full_action_space), "Mask size must match action space size"
+        self.current_mask = np.array(mask, dtype=np.float32)
+
+    def get_action_mask(self):
+        return self.current_mask
+
+    # -------------------- Gym Methods --------------------
 
     def step(self, action):
+        if not self.current_mask[action]:
+            raise ValueError(f"Action {action} is not allowed under the current mask.")
+
         if isinstance(action, np.ndarray):
-            print(action)
             action = int(action.item())
 
-        if not hasattr(self, "stuck_action_counter"):
-            self.stuck_action_counter = {}
-        if not hasattr(self, "stuck_action_threshold"):
-            self.stuck_action_threshold = 300  # Adjust this as needed
-        
-        
         action_str = self.action_map.get(action, None)
         if action_str and hasattr(self.agent, action_str):
             getattr(self.agent, action_str)()
-            print(f"action: {action}")
             time.sleep(self.action_delay)
             if 'move' in action_str or 'strafe' in action_str:
                 self.agent.stop_all_movements()
-
-        if action not in self.stuck_action_counter:
-            self.stuck_action_counter[action] = 0
-        self.stuck_action_counter[action] += 1
-
-        if self.stuck_action_counter[action] > self.stuck_action_threshold:
-            print(f"Stuck on action {action} for {self.stuck_action_threshold} steps. Resetting environment...")
-            obs, _ = self.reset()
-            self.stuck_action_counter = {}  # Reset the counter
-            return obs, 0.0, True, True, {}
-
 
         # Get the agent's state
         self.agent.get_state()
         x, y, z, yaw, pitch = self.agent.state[:5]
 
-        
-        # Calculate reward based on task array
+        # Calculate deltas
         delta_x = x - self.prev_x
         delta_z = z - self.prev_z
 
@@ -130,33 +177,8 @@ class MinecraftEnv(gym.Env):
         self.prev_x = x
         self.prev_z = z
 
-        # Get task array values
-        desired_dx, desired_dz = self.current_task[:2]  # X and Z directions from the task array
-        if desired_dx != 0 or desired_dz != 0:  # Ensure there's a valid direction
-            desired_yaw = np.arctan2(desired_dz, desired_dx) * (180 / np.pi)
-            if desired_yaw < 0:
-                desired_yaw += 360
-        else:
-            desired_yaw = yaw  # Default to current yaw if no direction is set
-
-        yaw_diff = abs(yaw - desired_yaw)
-        yaw_diff = min(yaw_diff, 360 - yaw_diff)  # Shortest angular distance
-
-        # Calculate distance moved and raw reward
-        distance_to_target = np.sqrt(delta_x**2 + delta_z**2)
-
-        # Reward calculation
-        raw_reward = -distance_to_target  # Penalize for distance
-        raw_reward += 0.1 * np.cos(np.radians(yaw_diff))  # Reward for alignment with desired yaw
-
-        # Penalize for staying idle
-        if abs(delta_x) < 0.01 and abs(delta_z) < 0.01:
-            raw_reward -= 1.0
-
-        # Clamp the reward to a safe range
-        reward = np.clip(raw_reward, -10.0, 10.0)
-
-        
+        # Calculate reward using the current reward model
+        reward = self.reward_models[self.reward_model](x, z, delta_x, delta_z, yaw)
 
         captured_image = self.agent.state[5]
 
@@ -164,43 +186,18 @@ class MinecraftEnv(gym.Env):
         if captured_image is None:
             captured_image = np.zeros((224, 224), dtype=np.float32)
         else:
-            captured_image = captured_image.squeeze().cpu().numpy() 
+            captured_image = captured_image.squeeze().cpu().numpy()
 
         # Observation for the model
         obs = {
             "position": np.array([x, y, z, yaw, pitch], dtype=np.float32),
             "image": captured_image,
             "task": self.current_task,
-            "health": 10.0,  # Hardcoded health
-            "hunger": 10.0,  # Hardcoded hunger
-            "alive": 1       # Hardcoded alive
+            "health": 10.0,
+            "hunger": 10.0,
+            "alive": 1,
+            "action_mask": self.current_mask,
         }
-        #print(f"Captured Image Min: {captured_image.min()}, Max: {captured_image.max()}, Type: {captured_image.dtype}")
-
-
-        """
-        if display_image is None:
-            display_image = np.zeros((224, 224), dtype=np.uint8)
-        else:
-            display_image = display_image.squeeze().cpu().numpy()
-        # Create a processed copy for visualization
-        display_image2 = cv2.cvtColor((display_image * 255).astype(np.uint8), cv2.COLOR_GRAY2BGR)
-
-        display_image2 = cv2.resize(display_image2, (896, 896), interpolation=cv2.INTER_NEAREST)
-
-        # Add annotations
-        cv2.putText(display_image2, f"X: {x:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (160, 18, 220), 2)
-        cv2.putText(display_image2, f"Y: {y:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (160, 18, 220), 2)
-        cv2.putText(display_image2, f"Z: {z:.2f}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (160, 18, 220), 2)
-        cv2.putText(display_image2, f"Yaw: {yaw:.2f}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (160, 18, 220), 2)
-        cv2.putText(display_image2, f"Pitch: {pitch:.2f}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (160, 18, 220), 2)
-
-        # Display the scaled image
-        cv2.imshow("Agent State Display", display_image2)
-        if cv2.waitKey(10) & 0xFF == ord('q'):
-            cv2.destroyAllWindows()
-        
-        """
 
         # Completion checks
         done = self.step_counter >= self.max_episode_length
@@ -220,7 +217,7 @@ class MinecraftEnv(gym.Env):
             f"{Fore.RED}Reward = {reward:.4f}{Style.RESET_ALL} | "
             f"{Fore.LIGHTGREEN_EX}Cumulative Reward = {self.cumulative_reward:.2f}{Style.RESET_ALL}"
         )
-        #print(f"Observation = {obs}")
+
         log_line = (
             f"Step {self.step_counter}: "
             f"X = {x:.2f}, Y = {y:.2f}, Z = {z:.2f}, "
@@ -233,45 +230,52 @@ class MinecraftEnv(gym.Env):
         if done:
             self.log_file.close()
 
-
         return obs, reward, done, truncated, {}
-
-            
-
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
 
-        # Call get_state to obtain the current position at the start of the episode
+        # Get initial state
         self.agent.get_state()
         x, y, z, yaw, pitch = self.agent.state[:5]
         self.prev_x = x
         self.prev_z = z
         self.cumulative_reward = 0
 
-        while True:
-            task_values = np.random.randint(-1, 2, size=2, dtype=np.int32)
-            if task_values[0] != 0 or task_values[1] != 0:  # Ensure at least one is -1 or 1
-                break
+        # Set a new task
+        if self.reward_model == "constant_x":
+            self.current_task = np.array([1, 0] + [0] * (self.task_size - 2), dtype=np.int32)
+        elif self.reward_model == "random_task":
+            while True:
+                task_values = np.random.randint(-1, 2, size=2, dtype=np.int32)
+                if task_values[0] != 0 or task_values[1] != 0:
+                    break
+            self.current_task = np.concatenate([task_values, np.zeros(self.task_size - 2, dtype=np.int32)])
 
-        print(f"new task values: {task_values}")
-        task_array = np.concatenate([task_values, np.zeros(18, dtype=np.int32)])
-        self.current_task = task_array
+        print(f"New task values: {self.current_task}")
 
+        # Open a new log file for the episode
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.log_file = open(f"training_logs/log_{timestamp}.txt", "w")
+        self.log_file = open(os.path.join(TRAINING_LOGS_DIR, f"log_{timestamp}.txt"), "w")
 
         # Get the current screen image or use a blank fallback
         captured_image = self.agent.state[5]
-        
         if captured_image is None:
             captured_image = np.zeros((224, 224), dtype=np.float32)
         else:
-            captured_image = captured_image.squeeze().cpu().numpy() 
-        
+            captured_image = captured_image.squeeze().cpu().numpy()
 
-        # Reset step counter and other state-tracking variables
+        # Reset step counter
         self.step_counter = 0
+
+        # Set action mask to allow only specific actions
+        allowed_actions = ['move_forward', 'turn_left', 'turn_right']
+        self.current_mask = np.zeros(len(self.action_map), dtype=np.float32)
+        for action_id, action_name in self.action_map.items():
+            if action_name in allowed_actions:
+                self.current_mask[action_id] = 1
+
+        print(f"Action mask set to allow: {allowed_actions}")
 
         # Construct and return the initial observation
         obs = {
@@ -280,9 +284,11 @@ class MinecraftEnv(gym.Env):
             "task": self.current_task,
             "health": 10.0,
             "hunger": 10.0,
-            "alive": 1
+            "alive": 1,
+            "action_mask": self.current_mask,
         }
 
+        # Log the reset event
         print(
             f"{Style.BRIGHT}RESET {self.step_counter}: "
             f"{Fore.CYAN}X = {x:.2f}{Style.RESET_ALL} | "
@@ -301,3 +307,4 @@ class MinecraftEnv(gym.Env):
     def close(self):
         if self.log_file:
             self.log_file.close()
+

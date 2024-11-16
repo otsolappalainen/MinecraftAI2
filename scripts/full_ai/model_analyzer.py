@@ -44,8 +44,8 @@ def analyze_saved_model(model_path):
 
         # Print model parameters
         print("\nPolicy Network Parameters:")
-        #for name, param in policy.named_parameters():
-            #print(f"{name}: {param.shape}")
+        for name, param in policy.named_parameters():
+            print(f"{name}: {param.shape}")
 
         # Analyze the action distribution
         # Since we need observations to get the action distribution, we'll generate some random observations
@@ -72,9 +72,9 @@ def analyze_saved_model(model_path):
         unique_actions, counts = np.unique(actions, return_counts=True)
         action_probabilities = counts / n_samples
 
-        #print("\nAction Probabilities from Random Observations:")
-        #for action, prob in zip(unique_actions, action_probabilities):
-            #print(f"Action {action}: Probability {prob}")
+        print("\nAction Probabilities from Random Observations:")
+        for action, prob in zip(unique_actions, action_probabilities):
+            print(f"Action {action}: Probability {prob}")
 
         # Analyze the entropy
         avg_entropy = entropies.mean().item()

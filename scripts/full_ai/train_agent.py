@@ -11,25 +11,82 @@ from pynput import keyboard
 import traceback
 import logging
 import time
+from datetime import datetime
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.utils import check_for_correct_spaces
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.callbacks import EvalCallback, BaseCallback, CallbackList
-from stable_baselines3.common.callbacks import CheckpointCallback
-from logging_callback import LoggingCallback  # Ensure this is in your project
-from datetime import datetime
+from stable_baselines3.common.policies import MultiInputPolicy
 
-
+from logging_callback import LoggingCallback
 from env import MinecraftEnv  # Import your environment
 
-# Set up logging
-logger = logging.getLogger(__name__)
+# -------------------- Configuration --------------------
 
-# Flags to control training
+# Learning rate schedule parameters
+INITIAL_LR = 0.0005
+DECAY_RATE = 0.99
+
+# Directories
+MODELS_DIR = r'C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models'
+LOGS_DIR = "./logs/"
+LOGS_EVAL_DIR = "./logs_eval/"
+TENSORBOARD_LOG_DIR = "./ppo_minecraft_tensorboard/"
+BEST_MODEL_DIR = os.path.join(LOGS_DIR, "best_model")
+TIMESTAMPED_BEST_MODELS_DIR = os.path.join(LOGS_DIR, "timestamped_best_models")
+
+# Training parameters (default settings)
+TRAINING_PARAMS = {
+    'n_steps': 1024,
+    'batch_size': 64,
+    'n_epochs': 10,
+    'total_timesteps': 100000,
+    'timesteps_per_iteration': 20000,
+    'reset_interval': 20000,
+    'backup_reset_time': 3600,  # in seconds
+    'learning_rate': INITIAL_LR,
+    'decay_rate': DECAY_RATE,
+    'verbose': 1  # Set to 1 for verbose output, 0 for minimal output
+}
+
+# Alternative training parameters for different scenarios
+# Example: Debugging scenario
+DEBUG_TRAINING_PARAMS = {
+    'n_steps': 256,
+    'batch_size': 32,
+    'n_epochs': 5,
+    'total_timesteps': 50000,
+    'timesteps_per_iteration': 10000,
+    'reset_interval': 10000,
+    'backup_reset_time': 1800,  # in seconds
+    'learning_rate': 0.0003,
+    'decay_rate': 0.95,
+    'verbose': 1
+}
+
+# Reward model
+REWARD_MODEL = "constant_x"  # or "random_task"
+
+# Other configurations
+DEBUG = False  # Set to True for debug logging
+
+# -------------------- Logging Setup --------------------
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.DEBUG if DEBUG else logging.INFO,
+    format='[%(asctime)s] %(levelname)s:%(name)s: %(message)s',
+    datefmt='%H:%M:%S'
+)
+
+# -------------------- Global Flags --------------------
+
 start_training = False
 stop_training = False
+
+# -------------------- Exception Handling --------------------
 
 def handle_thread_exception(args):
     """Log uncaught exceptions in threads."""
@@ -40,22 +97,22 @@ def handle_thread_exception(args):
 
 threading.excepthook = handle_thread_exception
 
+# -------------------- Custom Learning Rate Schedule --------------------
+
 class CustomLRSchedule:
     """
     Custom learning rate schedule that starts with a high learning rate and decays it over time.
     """
-    def __init__(self, initial_lr=0.001, decay_rate=0.99):
+    def __init__(self, initial_lr=INITIAL_LR, decay_rate=DECAY_RATE):
         self.initial_lr = initial_lr
         self.decay_rate = decay_rate
 
     def __call__(self, progress_remaining):
-        """
-        Calculate the learning rate based on the remaining training progress.
-        progress_remaining: Fraction of training left (1.0 at the start, 0.0 at the end).
-        """
         return self.initial_lr * (self.decay_rate ** (1 - progress_remaining))
 
-lr_schedule = CustomLRSchedule(initial_lr=0.001, decay_rate=0.99)
+# lr_schedule will be initialized later based on selected training parameters
+
+# -------------------- Custom Callbacks --------------------
 
 class TimestampedEvalCallback(EvalCallback):
     def __init__(self, *args, save_path, **kwargs):
@@ -64,24 +121,30 @@ class TimestampedEvalCallback(EvalCallback):
 
     def _on_step(self) -> bool:
         result = super(TimestampedEvalCallback, self)._on_step()
-        if self.best_model_save_path is not None and self.best_model_updated:
-            # Save the best model with a timestamp
+        if self.best_model_save_path is not None and os.path.exists(
+            os.path.join(self.best_model_save_path, "best_model.zip")
+        ):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            best_model_path = os.path.join(self.best_model_save_path, f"best_model_{timestamp}.zip")
+            best_model_path = os.path.join(self.save_path, f"best_model_{timestamp}.zip")
             self.model.save(best_model_path)
-            self.logger.info(f"Best model saved as: {best_model_path}")
+            if self.verbose > 0:
+                logger.info(f"Best model saved as: {best_model_path}")
         return result
 
 class LogLrCallback(BaseCallback):
+    """
+    Custom callback for logging the learning rate during training.
+    """
     def __init__(self, verbose=0):
         super(LogLrCallback, self).__init__(verbose)
 
-    def _on_step(self):
-        current_lr = self.model.lr_schedule(self.locals["progress_remaining"])
-        self.logger.record("train/learning_rate", current_lr)
+    def _on_step(self) -> bool:
+        if 'lr_scheduler' in self.locals:
+            lr = self.locals['lr_scheduler']._last_lr[0]
+            self.logger.record("train/learning_rate", lr)
+            if self.verbose > 0:
+                logger.debug(f"Learning rate: {lr}")
         return True
-
-
 
 class TimestampedCheckpointCallback(BaseCallback):
     """
@@ -94,19 +157,25 @@ class TimestampedCheckpointCallback(BaseCallback):
 
     def _on_step(self) -> bool:
         if self.n_calls % self.save_freq == 0:
-            # Generate a unique filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             model_path = os.path.join(self.save_path, f"ppo_minecraft_{timestamp}.zip")
             self.model.save(model_path)
             if self.verbose > 0:
-                print(f"Saving model checkpoint to {model_path}")
+                logger.info(f"Saving model checkpoint to {model_path}")
         return True
 
+class StopTrainingCallback(BaseCallback):
+    def __init__(self, verbose=0):
+        super(StopTrainingCallback, self).__init__(verbose)
 
+    def _on_step(self) -> bool:
+        if stop_training:
+            logger.info("Training stopped by user.")
+            return False  # Returning False will stop training
+        return True
 
+# -------------------- Custom Feature Extractor --------------------
 
-
-# Define custom feature extractor
 class CustomCombinedExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space, features_dim=512):
         super(CustomCombinedExtractor, self).__init__(observation_space, features_dim)
@@ -115,11 +184,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
 
         image_shape = observation_space.spaces['image'].shape
         position_shape = observation_space.spaces['position'].shape
-        task_shape = observation_space.spaces['task'].shape[0]  # Task array length
-
-        logger.debug(f"Image shape: {image_shape}")
-        logger.debug(f"Position shape: {position_shape}")
-        logger.debug(f"Task shape: {task_shape}")
+        task_shape = observation_space.spaces['task'].shape[0]
 
         # Build CNN for image
         n_input_channels = 1  # Grayscale images
@@ -136,7 +201,6 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         with torch.no_grad():
             sample_image = torch.zeros((1, n_input_channels, *image_shape))
             n_flatten = self.image_cnn(sample_image).shape[1]
-            logger.debug(f"Flattened image feature size: {n_flatten}")
 
         # Build feedforward network for position
         self.position_net = nn.Sequential(
@@ -154,21 +218,21 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         )
 
         self.scalar_net = nn.Sequential(
-            nn.Linear(3, 32),  # Three inputs: health, hunger, alive
+            nn.Linear(3, 32),  # Inputs: health, hunger, alive
             nn.ReLU(),
             nn.Linear(32, 32),
             nn.ReLU(),
         )
 
         self._features_dim = n_flatten + 64 + 32 + 32  # Image + position + task + scalar
-        logger.debug(f"Total features dimension: {self._features_dim}")
 
     def forward(self, observations):
-        logger.debug("Extracting features from observations.")
         # Process image
         image_obs = observations['image'].float()
-        if len(image_obs.shape) == 3:  # If no batch dimension
-            image_obs = image_obs.unsqueeze(1)  # Add channel dimension
+        if len(image_obs.shape) == 3:
+            image_obs = image_obs.unsqueeze(1)
+        else:
+            image_obs = image_obs.unsqueeze(1)
         image_features = self.image_cnn(image_obs)
 
         # Process position
@@ -180,7 +244,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         task_features = self.task_net(task_obs)
 
         # Process scalar states
-        health = observations['health'].view(-1, 1).float()  # Ensure shape [batch_size, 1]
+        health = observations['health'].view(-1, 1).float()
         hunger = observations['hunger'].view(-1, 1).float()
         alive = observations['alive'].view(-1, 1).float()
 
@@ -189,14 +253,40 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
 
         # Concatenate all features
         features = torch.cat((image_features, position_features, task_features, scalar_features), dim=1)
-        logger.debug("Features extracted successfully.")
         return features
 
-# Keyboard listener to stop training
+# -------------------- Custom Policy --------------------
+
+class MaskedPolicy(MultiInputPolicy):
+    """
+    Custom policy that handles action masking.
+    """
+    def forward(self, obs, deterministic=False):
+        # Extract features using the custom extractor
+        features = self.extract_features(obs)
+
+        # Get policy logits and value predictions
+        distribution = self._get_action_dist_from_latent(features)
+        value = self.value_net(features)
+
+        # Apply the action mask to the logits
+        if "action_mask" in obs:
+            action_mask = obs["action_mask"]
+            # Set logits of invalid actions to a large negative value
+            masked_logits = distribution.distribution.logits + (1 - action_mask) * (-1e8)
+            distribution.distribution.logits = masked_logits
+
+        # Sample an action
+        actions = distribution.get_actions(deterministic=deterministic)
+        log_prob = distribution.log_prob(actions)
+
+        return actions, log_prob, value
+
+# -------------------- Keyboard Control --------------------
+
 def on_press_stop(key):
     global stop_training
     try:
-        logger.debug(f"Key pressed: {key}")
         if hasattr(key, 'char') and key.char == 'i':
             logger.info("Stopping training: 'I' key pressed.")
             stop_training = True
@@ -212,7 +302,6 @@ def start_keyboard_listener():
 def on_press_start(key):
     global start_training
     try:
-        logger.debug(f"Key pressed: {key}")
         if hasattr(key, 'char') and key.char == 'o':
             logger.info("Starting training: 'o' key pressed.")
             start_training = True
@@ -229,36 +318,9 @@ def wait_for_start_key():
         logger.error(f"Exception in wait_for_start_key: {e}")
     logger.info("'o' key pressed. Proceeding with training...")
 
-# Custom callback to stop training
-class StopTrainingCallback(BaseCallback):
-    def __init__(self, verbose=0):
-        super(StopTrainingCallback, self).__init__(verbose)
+# -------------------- Model Loading --------------------
 
-    def _on_step(self) -> bool:
-        if stop_training:
-            logger.info("Training stopped by user.")
-            return False  # Returning False will stop training
-        return True
-
-# Modify environment to remove position setting
-class ModifiedMinecraftEnv(MinecraftEnv):
-    def __init__(self, *args, action_delay=0.3, **kwargs):
-        super(ModifiedMinecraftEnv, self).__init__(*args, **kwargs)
-        self.action_delay = action_delay  # Action delay in seconds
-        logger.debug("ModifiedMinecraftEnv initialized.")
-
-    def reset(self, seed=None, options=None):
-        logger.debug("Environment reset called.")
-        obs, info = super().reset(seed=seed, options=options)
-        return obs, info
-
-    def step(self, action):
-        logger.debug(f"Environment step called with action: {action}")
-        obs, reward, done, truncated, info = super().step(action)
-        logger.debug(f"Step result - Reward: {reward}, Done: {done}")
-        return obs, reward, done, truncated, info
-
-def choose_model_to_load(env, policy_kwargs, models_dir, args):
+def choose_model_to_load(env, policy_kwargs, models_dir, training_params):
     models = [f for f in os.listdir(models_dir) if f.endswith(".zip")]
     
     if not models:
@@ -278,7 +340,6 @@ def choose_model_to_load(env, policy_kwargs, models_dir, args):
     if choice.lower() == 'n':
         return None
     elif choice == '':
-        # Load default model
         model_path = os.path.join(models_dir, default_model)
     else:
         try:
@@ -302,42 +363,61 @@ def choose_model_to_load(env, policy_kwargs, models_dir, args):
     except ValueError:
         logger.warning("Loaded model has incompatible observation space. Reinitializing model.")
         model = PPO(
-            policy="MultiInputPolicy",
+            policy=MaskedPolicy,
             env=env,
-            verbose=1 if args.debug else 0,
-            learning_rate=lr_schedule,
-            n_steps=512,
-            batch_size=64,
-            n_epochs=20,
-            tensorboard_log="./ppo_minecraft_tensorboard/",
+            verbose=training_params['verbose'],
+            learning_rate=CustomLRSchedule(
+                initial_lr=training_params['learning_rate'],
+                decay_rate=training_params['decay_rate']
+            ),
+            n_steps=training_params['n_steps'],
+            batch_size=training_params['batch_size'],
+            n_epochs=training_params['n_epochs'],
+            tensorboard_log=TENSORBOARD_LOG_DIR,
             policy_kwargs=policy_kwargs,
         )
     return model
 
+# -------------------- Main Training Function --------------------
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--visualize", action="store_true", help="Removed visualization from this script")
+    parser.add_argument("--visualize", action="store_true", help="Visualization is not implemented in this script")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument("--scenario", type=str, default="default", help="Select training scenario: default or debug")
     args = parser.parse_args()
 
-    # Configure logging level
-    logging.basicConfig(
-        level=logging.DEBUG if args.debug else logging.INFO,
-        format='[%(asctime)s] %(levelname)s:%(name)s: %(message)s',
-        datefmt='%H:%M:%S'
+    # Update logging level if debug flag is set
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
+        global DEBUG
+        DEBUG = True
+
+    # Select training parameters based on scenario
+    if args.scenario == "debug":
+        training_params = DEBUG_TRAINING_PARAMS
+        logger.info("Using DEBUG training parameters.")
+    else:
+        training_params = TRAINING_PARAMS
+        logger.info("Using DEFAULT training parameters.")
+
+    # Initialize the learning rate schedule with selected parameters
+    lr_schedule = CustomLRSchedule(
+        initial_lr=training_params['learning_rate'],
+        decay_rate=training_params['decay_rate']
     )
 
     logger.info("Initializing environment...")
     try:
         # Ensure required directories exist
-        for dir_path in ['./models/', './logs/', './logs_eval/']:
+        for dir_path in [MODELS_DIR, LOGS_DIR, LOGS_EVAL_DIR]:
             os.makedirs(dir_path, exist_ok=True)
             logger.debug(f"Directory checked/created: {dir_path}")
 
-        env = ModifiedMinecraftEnv()
-        env = Monitor(env, filename="./logs/")
-        eval_env = ModifiedMinecraftEnv()
-        eval_env = Monitor(eval_env, filename="./logs_eval/")
+        env = MinecraftEnv(reward_model=REWARD_MODEL)
+        env = Monitor(env, filename=LOGS_DIR)
+        eval_env = MinecraftEnv(reward_model=REWARD_MODEL)
+        eval_env = Monitor(eval_env, filename=LOGS_EVAL_DIR)
     except Exception as e:
         logger.error(f"Error initializing environment: {e}")
         traceback.print_exc()
@@ -349,24 +429,21 @@ def main():
         features_extractor_kwargs=dict(features_dim=512),
     )
 
-    # Directory where models are saved
-    models_dir = r'C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models'
-
     # Allow user to choose model to load or start fresh
-    model = choose_model_to_load(env, policy_kwargs, models_dir, args)
+    model = choose_model_to_load(env, policy_kwargs, MODELS_DIR, training_params)
 
     # If model is None, initialize a new model
     if model is None:
         logger.info("Starting new model...")
         model = PPO(
-            policy="MultiInputPolicy",
+            policy=MaskedPolicy,
             env=env,
-            verbose=1 if args.debug else 0,
+            verbose=training_params['verbose'],
             learning_rate=lr_schedule,
-            n_steps=512,
-            batch_size=64,
-            n_epochs=20,
-            tensorboard_log="./ppo_minecraft_tensorboard/",
+            n_steps=training_params['n_steps'],
+            batch_size=training_params['batch_size'],
+            n_epochs=training_params['n_epochs'],
+            tensorboard_log=TENSORBOARD_LOG_DIR,
             policy_kwargs=policy_kwargs,
         )
 
@@ -376,35 +453,33 @@ def main():
     logger.info("Starting keyboard listener for stopping training...")
     listener = start_keyboard_listener()
 
-    log_lr_callback = LogLrCallback()
-
     # Callbacks
+    log_lr_callback = LogLrCallback()
     eval_callback = TimestampedEvalCallback(
         eval_env,
-        best_model_save_path="./logs/best_model",  # Directory to save the best model
-        log_path="./logs/",
-        eval_freq=500,  # Evaluate every 500 steps
+        best_model_save_path=BEST_MODEL_DIR,
+        save_path=TIMESTAMPED_BEST_MODELS_DIR,
+        log_path=LOGS_DIR,
+        eval_freq=500,
         deterministic=True,
         render=False
     )
 
     checkpoint_callback = TimestampedCheckpointCallback(
-        save_freq=500,  # Save every 500 steps
-        save_path=models_dir,  # Directory to save models
-        verbose=1  # Print logs when saving
+        save_freq=200,
+        save_path=MODELS_DIR,
+        verbose=1
     )
     stop_training_callback = StopTrainingCallback()
-    log_dir = r'E:\training data\fullAIlogs'
-    logging_callback = LoggingCallback(log_dir=log_dir)
+    logging_callback = LoggingCallback(log_dir=r'E:\training data\fullAIlogs')
 
     callback = CallbackList([eval_callback, stop_training_callback, checkpoint_callback, logging_callback, log_lr_callback])
 
     # Training variables
-    total_timesteps = 100000
-    timesteps_per_iteration = 20000
+    total_timesteps = training_params['total_timesteps']
+    timesteps_per_iteration = training_params['timesteps_per_iteration']
     timesteps_trained = 0
-    reset_interval = 20000
-    backup_reset_time = 3600
+    backup_reset_time = training_params['backup_reset_time']
     last_progress_time = time.time()
 
     def backup_timer():
@@ -419,12 +494,11 @@ def main():
                     logger.info(f"Backup timer triggered after {elapsed_time / 60:.1f} minutes. Resetting training...")
 
                     # Find the latest saved model in the models folder
-                    if os.path.exists(models_dir):
-                        model_files = [f for f in os.listdir(models_dir) if f.endswith('.zip')]
+                    if os.path.exists(MODELS_DIR):
+                        model_files = [f for f in os.listdir(MODELS_DIR) if f.endswith('.zip')]
                         if model_files:
-                            # Sort by modification time to get the latest file
                             latest_model_path = max(
-                                [os.path.join(models_dir, f) for f in model_files],
+                                [os.path.join(MODELS_DIR, f) for f in model_files],
                                 key=os.path.getmtime
                             )
                             logger.info(f"Loading the latest model: {latest_model_path}")
@@ -432,27 +506,27 @@ def main():
                         else:
                             logger.info("No saved models found. Starting fresh training...")
                             model = PPO(
-                                policy="MultiInputPolicy",
+                                policy=MaskedPolicy,
                                 env=env,
-                                verbose=1 if args.debug else 0,
+                                verbose=training_params['verbose'],
                                 learning_rate=lr_schedule,
-                                n_steps=512,
-                                batch_size=64,
-                                n_epochs=20,
-                                tensorboard_log="./ppo_minecraft_tensorboard/",
+                                n_steps=training_params['n_steps'],
+                                batch_size=training_params['batch_size'],
+                                n_epochs=training_params['n_epochs'],
+                                tensorboard_log=TENSORBOARD_LOG_DIR,
                                 policy_kwargs=policy_kwargs,
                             )
                     else:
                         logger.info("Models directory does not exist. Starting fresh training...")
                         model = PPO(
-                            policy="MultiInputPolicy",
+                            policy=MaskedPolicy,
                             env=env,
-                            verbose=1 if args.debug else 0,
+                            verbose=training_params['verbose'],
                             learning_rate=lr_schedule,
-                            n_steps=512,
-                            batch_size=64,
-                            n_epochs=20,
-                            tensorboard_log="./ppo_minecraft_tensorboard/",
+                            n_steps=training_params['n_steps'],
+                            batch_size=training_params['batch_size'],
+                            n_epochs=training_params['n_epochs'],
+                            tensorboard_log=TENSORBOARD_LOG_DIR,
                             policy_kwargs=policy_kwargs,
                         )
                     last_progress_time = time.time()
@@ -494,7 +568,7 @@ def main():
         traceback.print_exc()
 
     logger.info("Saving final model...")
-    final_model_path = os.path.join(models_dir, "ppo_minecraft_final")
+    final_model_path = os.path.join(MODELS_DIR, "ppo_minecraft_final")
     model.save(final_model_path)
 
     logger.info("Closing environments and stopping listener...")
@@ -507,4 +581,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

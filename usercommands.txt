@@ -13,3 +13,30 @@ python train_model.py --simulate --num_envs 10
 
  {'learning_rate': 0.0002646179412902057}
 
+
+
+ 
+        """
+        if display_image is None:
+            display_image = np.zeros((224, 224), dtype=np.uint8)
+        else:
+            display_image = display_image.squeeze().cpu().numpy()
+        # Create a processed copy for visualization
+        display_image2 = cv2.cvtColor((display_image * 255).astype(np.uint8), cv2.COLOR_GRAY2BGR)
+
+        display_image2 = cv2.resize(display_image2, (896, 896), interpolation=cv2.INTER_NEAREST)
+
+        # Add annotations
+        cv2.putText(display_image2, f"X: {x:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (160, 18, 220), 2)
+        cv2.putText(display_image2, f"Y: {y:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (160, 18, 220), 2)
+        cv2.putText(display_image2, f"Z: {z:.2f}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (160, 18, 220), 2)
+        cv2.putText(display_image2, f"Yaw: {yaw:.2f}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (160, 18, 220), 2)
+        cv2.putText(display_image2, f"Pitch: {pitch:.2f}", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (160, 18, 220), 2)
+
+        # Display the scaled image
+        cv2.imshow("Agent State Display", display_image2)
+        if cv2.waitKey(10) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+        
+        """
+
