@@ -27,7 +27,7 @@ from env import MinecraftEnv  # Import your environment
 # -------------------- Configuration --------------------
 
 # Learning rate schedule parameters
-INITIAL_LR = 0.0005
+INITIAL_LR = 0.0003
 DECAY_RATE = 0.99
 
 # Directories
@@ -40,7 +40,7 @@ TIMESTAMPED_BEST_MODELS_DIR = os.path.join(LOGS_DIR, "timestamped_best_models")
 
 # Training parameters (default settings)
 TRAINING_PARAMS = {
-    'n_steps': 1024,
+    'n_steps': 512,
     'batch_size': 64,
     'n_epochs': 10,
     'total_timesteps': 100000,
@@ -285,8 +285,22 @@ class MaskedPolicy(ActorCriticPolicy):
 
         # Policy
         action_logits = self.action_net(latent_pi)
-        action_mask = obs["action_mask"]
-        masked_logits = action_logits + (1 - action_mask) * -1e9
+
+        # Handle missing action_mask
+        action_mask = obs.get("action_mask", None)
+        if action_mask is not None:
+            # Apply the mask to the logits.
+            masked_logits = action_logits + (1 - action_mask) * -1e9
+        else:
+            # Backup: Create a custom action_mask if missing.
+            # Assuming we have 6 possible actions (indexed 0 through 5)
+            custom_action_mask = np.zeros(action_logits.shape)  # All actions invalid by default
+            custom_action_mask[[0, 4, 5]] = 1  # Set actions 0, 4, and 5 as valid
+            
+            # Apply the custom action_mask to the logits
+            masked_logits = action_logits + (1 - custom_action_mask) * -1e9
+
+
         distribution = self.action_dist.proba_distribution(action_logits=masked_logits)
         actions = distribution.get_actions(deterministic=deterministic)
 
@@ -439,7 +453,7 @@ def main():
     logger.info("Setting policy parameters...")
     policy_kwargs = dict(
         features_extractor_class=CustomCombinedExtractor,
-        net_arch=[dict(pi=[128, 64], vf=[128, 64])],
+        net_arch=dict(pi=[128, 64], vf=[128, 64]),
     )
 
     # Allow user to choose model to load or start fresh

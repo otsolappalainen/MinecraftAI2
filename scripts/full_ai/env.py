@@ -12,8 +12,8 @@ import torch
 # -------------------- Configuration --------------------
 
 # Constants
-ACTION_DELAY = 0.3
-MAX_EPISODE_LENGTH = 250
+ACTION_DELAY = 0.2
+MAX_EPISODE_LENGTH = 500
 TASK_SIZE = 20
 REWARD_MODEL = "constant_x"  # or "random_task"
 TRAINING_LOGS_DIR = "training_logs"
@@ -115,7 +115,7 @@ class MinecraftEnv(gym.Env):
         reward += 0.1 * np.cos(np.radians(yaw_diff))
 
         if progress <= 0:
-            reward -= 1.0
+            reward -= 0.1
 
         return np.clip(reward, -10.0, 10.0)
     
