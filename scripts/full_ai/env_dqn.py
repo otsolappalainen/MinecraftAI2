@@ -103,7 +103,7 @@ class MinecraftEnv(gym.Env):
         yaw_diff = min(yaw_diff, 360 - yaw_diff)
 
         progress = (desired_dx * delta_x + desired_dz * delta_z)
-        reward = (progress ** 2)
+        reward = (progress * 3)
         reward += 0.1 * np.cos(np.radians(yaw_diff))
 
         if progress <= 0:
@@ -219,6 +219,8 @@ class MinecraftEnv(gym.Env):
         
         allowed_actions = {0, 1, 2, 3, 4, 5, 8, 9, 10, 12, 23, 24}
         penalty_actions = {action: -0.2 for action in range(25) if action not in allowed_actions}
+        penalty_actions.update({22: -10})
+
         reward += penalty_actions.get(action, 0.0)
         
 
@@ -253,6 +255,7 @@ class MinecraftEnv(gym.Env):
         # Logging
         self.step_counter += 1
 
+        """
         print(
             f"{Style.BRIGHT}Step {self.step_counter}: "
             f"{Fore.CYAN}X = {x:.2f}{Style.RESET_ALL} | "
@@ -264,7 +267,10 @@ class MinecraftEnv(gym.Env):
             f"{Fore.LIGHTGREEN_EX}Cumulative Reward = {self.cumulative_reward:.2f}{Style.RESET_ALL}",
             end="\r"  # Overwrite the line
         )
+        sys.stdout.flush()
+        """
 
+        print(f"Step {self.step_counter}: Reward = {reward:.4f}", end='\r')
         sys.stdout.flush()
 
 

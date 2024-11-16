@@ -19,14 +19,12 @@ from stable_baselines3.common.utils import check_for_correct_spaces
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.callbacks import EvalCallback, BaseCallback, CallbackList
 
-
-
 from env_dqn import MinecraftEnv  # Import the updated environment
 
 # -------------------- Configuration --------------------
 
 # Learning rate
-LEARNING_RATE = 2e-4  # Reduced learning rate for stability
+LEARNING_RATE = 0.0001  # Reduced learning rate for stability
 
 # Directories
 MODELS_DIR = r'C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn'
@@ -41,14 +39,14 @@ TRAINING_PARAMS = {
     'total_timesteps': 500000,  # Increased total timesteps for better learning
     'learning_rate': LEARNING_RATE,
     'buffer_size': 30000,  # Reduced buffer size to manage memory usage
-    'learning_starts': 1000,
-    'batch_size': 128,  # Increased batch size for stability
+    'learning_starts': 500,
+    'batch_size': 256,  # Increased batch size for stability
     'gamma': 0.99,
-    'train_freq': (1, 'step'),  # Train every 4 steps
-    'target_update_interval': 1000,
-    'exploration_fraction': 0.3,  # Increased exploration
+    'train_freq': (1, 'step'),  # Train every step
+    'target_update_interval': 500,
+    'exploration_fraction': 0.25,  # Increased exploration
     'exploration_final_eps': 0.1,
-    'verbose': 1
+    'verbose': 2
 }
 
 # Reward model
@@ -59,12 +57,33 @@ DEBUG = False  # Set to True for debug logging
 
 # -------------------- Logging Setup --------------------
 
+import logging
+
+# Create custom logger
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.DEBUG if DEBUG else logging.INFO,
-    format='[%(asctime)s] %(levelname)s:%(name)s: %(message)s',
-    datefmt='%H:%M:%S'
-)
+logger.setLevel(logging.INFO)  # Set your own code's logging level
+
+# Create handlers
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.INFO)  # Console shows INFO level
+
+file_handler = logging.FileHandler('training.log')
+file_handler.setLevel(logging.DEBUG)  # File logs DEBUG level
+
+# Create formatters and add them to handlers
+console_format = logging.Formatter('[%(asctime)s] %(levelname)s:%(name)s: %(message)s', datefmt='%H:%M:%S')
+file_format = logging.Formatter('[%(asctime)s] %(levelname)s:%(name)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
+console_handler.setFormatter(console_format)
+file_handler.setFormatter(file_format)
+
+# Add handlers to the logger
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
+
+# Configure logging for external libraries
+logging.getLogger('stable_baselines3').setLevel(logging.DEBUG)  # Detailed logs from SB3
+logging.getLogger('gym').setLevel(logging.WARNING)  # Suppress gym warnings
 
 # -------------------- Global Flags --------------------
 
@@ -102,11 +121,6 @@ class TimestampedCheckpointCallback(BaseCallback):
                 logger.info(f"Model checkpoint saved at: {model_path}")
         return True
 
-
-
-
-
-
 class TimestampedEvalCallback(EvalCallback):
     def __init__(self, *args, save_path, **kwargs):
         super(TimestampedEvalCallback, self).__init__(*args, **kwargs)
@@ -114,6 +128,12 @@ class TimestampedEvalCallback(EvalCallback):
 
     def _on_step(self) -> bool:
         result = super(TimestampedEvalCallback, self)._on_step()
+        if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
+            logger.info(f"Evaluation at step {self.num_timesteps}:")
+            logger.info(f" - Mean reward: {self.last_mean_reward:.2f}")
+            logger.info(f" - Best mean reward: {self.best_mean_reward:.2f}")
+            logger.info(f" - Evaluation episodes: {len(self.evaluations_rewards[-1])}")
+
         if self.best_model_save_path is not None and os.path.exists(
             os.path.join(self.best_model_save_path, "best_model.zip")
         ):
@@ -152,11 +172,11 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         n_input_channels = 1  # Grayscale images
         self.image_cnn = nn.Sequential(
             nn.Conv2d(n_input_channels, 16, kernel_size=8, stride=4),
-            nn.ReLU(),
+            nn.ReLU(inplace=False),
             nn.Conv2d(16, 32, kernel_size=4, stride=2),
-            nn.ReLU(),
+            nn.ReLU(inplace=False),
             nn.Conv2d(32, 32, kernel_size=3, stride=1),
-            nn.ReLU(),
+            nn.ReLU(inplace=False),
             nn.Flatten(),
         )
 
@@ -169,17 +189,17 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         # Fully connected layers for position and task
         self.position_task_net = nn.Sequential(
             nn.Linear(self.position_size + self.task_size, 64),
-            nn.ReLU(),
+            nn.ReLU(inplace=False),
             nn.Linear(64, 32),
-            nn.ReLU(),
+            nn.ReLU(inplace=False),
         )
 
         # Fully connected layers for scalar inputs
         self.scalar_net = nn.Sequential(
             nn.Linear(self.scalar_size, 16),  # Health, hunger, alive
-            nn.ReLU(),
+            nn.ReLU(inplace=False),
             nn.Linear(16, 16),
-            nn.ReLU(),
+            nn.ReLU(inplace=False),
         )
 
         # Compute total feature dimension
@@ -356,6 +376,8 @@ def main():
         net_arch=[256, 256],  # Increased from [128, 128]
     )
 
+    torch.autograd.set_detect_anomaly(True)
+
     # Allow user to choose model to load or start fresh
     model = choose_model_to_load(env, policy_kwargs, MODELS_DIR, training_params)
 
@@ -384,22 +406,20 @@ def main():
 
     logger.info("Starting keyboard listener for stopping training...")
     listener = start_keyboard_listener()
-    
+
+    # Callbacks
     checkpoint_callback = TimestampedCheckpointCallback(
-        save_freq=400,  # Save model every 400 steps
+        save_freq=500,  # Save model every 500 steps
         save_path=MODELS_DIR,
         verbose=1
     )
 
-
-
-    # Callbacks
     eval_callback = TimestampedEvalCallback(
         eval_env,
         best_model_save_path=BEST_MODEL_DIR,
         save_path=TIMESTAMPED_BEST_MODELS_DIR,
         log_path=LOGS_DIR,
-        eval_freq=5000,  # Adjusted evaluation frequency
+        eval_freq=550,  # Adjusted evaluation frequency
         deterministic=True,
         render=False
     )
@@ -411,11 +431,26 @@ def main():
     total_timesteps = training_params['total_timesteps']
 
     logger.info("Starting training...")
+    start_time = time.time()
+
     try:
-        model.learn(total_timesteps=total_timesteps, log_interval=1000, callback=callback)
+        with torch.profiler.profile(
+            activities=[
+                torch.profiler.ProfilerActivity.CPU,
+                torch.profiler.ProfilerActivity.CUDA],
+            record_shapes=True,
+            with_stack=True
+        ) as prof:
+            model.learn(total_timesteps=total_timesteps, log_interval=250, callback=callback)
     except Exception as e:
         logger.error(f"Error during training: {e}")
         traceback.print_exc()
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    logger.info(f"Training completed in {elapsed_time:.2f} seconds")
+
+    logger.info(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
 
     logger.info("Saving final model...")
     final_model_path = os.path.join(MODELS_DIR, "dqn_minecraft_final")

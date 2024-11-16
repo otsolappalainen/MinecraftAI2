@@ -1,0 +1,36 @@
+[2024-11-16 21:47:50] INFO:__main__: Using DQN training parameters.
+[2024-11-16 21:47:50] INFO:__main__: Initializing environment...
+[2024-11-16 21:47:50] INFO:__main__: Setting policy parameters...
+[2024-11-16 21:47:54] INFO:__main__: Loading model from C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_final.zip...
+[2024-11-16 21:47:54] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-16 21:47:54] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-16 21:47:54] INFO:__main__: Loaded model is compatible with the new observation space.
+[2024-11-16 21:47:54] INFO:__main__: Waiting for 'o' key to start training...
+[2024-11-16 21:47:54] INFO:__main__: Waiting for the 'o' key to start training...
+[2024-11-16 21:48:00] INFO:__main__: Starting training: 'o' key pressed.
+[2024-11-16 21:48:00] INFO:__main__: 'o' key pressed. Proceeding with training...
+[2024-11-16 21:48:00] INFO:__main__: Starting keyboard listener for stopping training...
+[2024-11-16 21:48:00] INFO:__main__: Starting training...
+[2024-11-16 21:48:13] INFO:__main__: Stopping training: 'I' key pressed.
+[2024-11-16 21:48:13] INFO:__main__: Training stopped by user.
+[2024-11-16 21:48:17] INFO:__main__: Training completed in 16.65 seconds
+[2024-11-16 21:48:18] INFO:__main__: ---------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                             Name    Self CPU %      Self CPU   CPU total %     CPU total  CPU time avg     Self CUDA   Self CUDA %    CUDA total  CUDA time avg    # of Calls  
+---------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+                       aten::item         2.00%       6.302ms         2.02%       6.370ms       3.039us        1.284s        12.45%        2.304s       1.099ms          2096  
+                     aten::unbind         1.16%       3.662ms         2.32%       7.287ms     130.125us     540.625ms         5.24%        2.265s      40.450ms            56  
+                 aten::as_strided         0.38%       1.207ms         0.38%       1.207ms       0.502us        1.818s        17.63%        1.818s     756.427us          2404  
+                     aten::select         1.13%       3.556ms         1.15%       3.625ms       3.459us     796.941ms         7.73%        1.725s       1.646ms          1048  
+                 aten::is_nonzero         1.18%       3.725ms         2.42%       7.613ms       7.264us      17.795ms         0.17%        1.526s       1.456ms          1048  
+                       aten::view         2.29%       7.219ms         2.29%       7.219ms       1.677us        1.203s        11.67%        1.203s     279.580us          4304  
+        aten::_local_scalar_dense         0.02%      68.000us         0.02%      68.000us       0.032us        1.021s         9.90%        1.021s     486.967us          2096  
+                         aten::to         3.40%      10.704ms        15.71%      49.459ms       7.563us      98.815ms         0.96%     953.870ms     145.852us          6540  
+                  aten::unsqueeze         0.13%     411.000us         0.14%     456.000us       8.143us     187.000us         0.00%     875.551ms      15.635ms            56  
+                   aten::_to_copy         9.18%      28.884ms        12.31%      38.755ms      11.903us      68.222ms         0.66%     855.055ms     262.609us          3256  
+---------------------------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  ------------  
+Self CPU time total: 314.747ms
+Self CUDA time total: 10.312s
+
+[2024-11-16 21:48:18] INFO:__main__: Saving final model...
+[2024-11-16 21:48:18] INFO:__main__: Closing environments and stopping listener...
+[2024-11-16 21:48:18] INFO:__main__: Training process has been stopped.
