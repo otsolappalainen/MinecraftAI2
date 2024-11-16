@@ -302,17 +302,17 @@ class MinecraftAgent:
     def left_click(self, hold_duration=0.2):
         if not self.is_left_clicking:
             # Start left click
-            print("Starting left click...")
+            #print("Starting left click...")
             pyautogui.mouseDown(button='left')
             self.is_left_clicking = True
         else:
             # Stop left click
-            print("Stopping left click...")
+            #print("Stopping left click...")
             pyautogui.mouseUp(button='left')
             self.is_left_clicking = False
 
     def right_click(self, hold_duration=0.1):
-        print("Performing right click...")
+        #print("Performing right click...")
         pyautogui.mouseDown(button='right')
         time.sleep(hold_duration)
         pyautogui.mouseUp(button='right')
@@ -447,7 +447,7 @@ class MinecraftAgent:
         if not self.is_walking:
             pyautogui.keyDown('w')
             self.is_walking = True
-            print("walking")
+            #print("walking")
         else:
             pyautogui.keyUp('w')
             self.is_walking = False

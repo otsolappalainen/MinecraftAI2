@@ -24,7 +24,7 @@ from env_dqn import MinecraftEnv  # Import the updated environment
 # -------------------- Configuration --------------------
 
 # Learning rate
-LEARNING_RATE = 0.0001  # Reduced learning rate for stability
+LEARNING_RATE = 0.0005  # Reduced learning rate for stability
 
 # Directories
 MODELS_DIR = r'C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn'
@@ -38,9 +38,9 @@ TIMESTAMPED_BEST_MODELS_DIR = os.path.join(LOGS_DIR, "timestamped_best_models")
 TRAINING_PARAMS = {
     'total_timesteps': 500000,  # Increased total timesteps for better learning
     'learning_rate': LEARNING_RATE,
-    'buffer_size': 30000,  # Reduced buffer size to manage memory usage
+    'buffer_size': 50000,  # Reduced buffer size to manage memory usage
     'learning_starts': 500,
-    'batch_size': 256,  # Increased batch size for stability
+    'batch_size': 64,  # Increased batch size for stability
     'gamma': 0.99,
     'train_freq': (1, 'step'),  # Train every step
     'target_update_interval': 500,
@@ -61,11 +61,11 @@ import logging
 
 # Create custom logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)  # Set your own code's logging level
+logger.setLevel(logging.DEBUG)  # Set your own code's logging level
 
 # Create handlers
 console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setLevel(logging.INFO)  # Console shows INFO level
+console_handler.setLevel(logging.DEBUG)  # Console shows INFO level
 
 file_handler = logging.FileHandler('training.log')
 file_handler.setLevel(logging.DEBUG)  # File logs DEBUG level
@@ -419,7 +419,7 @@ def main():
         best_model_save_path=BEST_MODEL_DIR,
         save_path=TIMESTAMPED_BEST_MODELS_DIR,
         log_path=LOGS_DIR,
-        eval_freq=550,  # Adjusted evaluation frequency
+        eval_freq=5000,  # Adjusted evaluation frequency
         deterministic=True,
         render=False
     )
@@ -433,24 +433,14 @@ def main():
     logger.info("Starting training...")
     start_time = time.time()
 
-    try:
-        with torch.profiler.profile(
-            activities=[
-                torch.profiler.ProfilerActivity.CPU,
-                torch.profiler.ProfilerActivity.CUDA],
-            record_shapes=True,
-            with_stack=True
-        ) as prof:
-            model.learn(total_timesteps=total_timesteps, log_interval=250, callback=callback)
-    except Exception as e:
-        logger.error(f"Error during training: {e}")
-        traceback.print_exc()
+    
+    model.learn(total_timesteps=total_timesteps, log_interval=250, callback=callback)
 
     end_time = time.time()
     elapsed_time = end_time - start_time
     logger.info(f"Training completed in {elapsed_time:.2f} seconds")
 
-    logger.info(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
+    
 
     logger.info("Saving final model...")
     final_model_path = os.path.join(MODELS_DIR, "dqn_minecraft_final")

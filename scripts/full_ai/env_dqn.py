@@ -14,7 +14,7 @@ import sys
 
 # Constants
 ACTION_DELAY = 0.2
-MAX_EPISODE_LENGTH = 1000
+MAX_EPISODE_LENGTH = 2000
 TASK_SIZE = 20
 REWARD_MODEL = "constant_x"  # or "random_task"
 TRAINING_LOGS_DIR = "training_logs"
@@ -270,7 +270,7 @@ class MinecraftEnv(gym.Env):
         sys.stdout.flush()
         """
 
-        print(f"Step {self.step_counter}: Reward = {reward:.4f}", end='\r')
+        print(f"Step {self.step_counter}: Reward = {self.cumulative_reward:.4f}", end='\r')
         sys.stdout.flush()
 
 
