@@ -131,28 +131,32 @@ class MinecraftEnv(gym.Env):
         self.prev_z = z
 
         # Get task array values
-        x_reward_factor = self.current_task[0]  # Task array's first value for X-axis reward
-        z_reward_factor = self.current_task[1]  # Task array's second value for Z-axis reward
+        desired_dx, desired_dz = self.current_task[:2]  # X and Z directions from the task array
+        if desired_dx != 0 or desired_dz != 0:  # Ensure there's a valid direction
+            desired_yaw = np.arctan2(desired_dz, desired_dx) * (180 / np.pi)
+            if desired_yaw < 0:
+                desired_yaw += 360
+        else:
+            desired_yaw = yaw  # Default to current yaw if no direction is set
 
-        # Calculate rewards based on task array factors
-        if x_reward_factor == 1:  # Positive X direction
-            x_reward = min(2 * max(delta_x, 0), 5)
-        elif x_reward_factor == -1 or x_reward_factor == 2:  # Negative X direction
-            x_reward = min(2 * max(-delta_x, 0), 5)
-        else:  # No reward impact from X
-            x_reward = 0
+        yaw_diff = abs(yaw - desired_yaw)
+        yaw_diff = min(yaw_diff, 360 - yaw_diff)  # Shortest angular distance
 
-        if z_reward_factor == 1:  # Positive Z direction
-            z_reward = min(2 * max(delta_z, 0), 5)
-        elif z_reward_factor == -1 or z_reward_factor == 2:  # Negative Z direction
-            z_reward = min(2 * max(-delta_z, 0), 5)
-        else:  # No reward impact from Z
-            z_reward = 0
-        # Add a time penalty
-        time_penalty = -0.1
+        # Calculate distance moved and raw reward
+        distance_to_target = np.sqrt(delta_x**2 + delta_z**2)
 
-        # Total reward calculation
-        reward = x_reward + z_reward + time_penalty
+        # Reward calculation
+        raw_reward = -distance_to_target  # Penalize for distance
+        raw_reward += 0.1 * np.cos(np.radians(yaw_diff))  # Reward for alignment with desired yaw
+
+        # Penalize for staying idle
+        if abs(delta_x) < 0.01 and abs(delta_z) < 0.01:
+            raw_reward -= 1.0
+
+        # Clamp the reward to a safe range
+        reward = np.clip(raw_reward, -10.0, 10.0)
+
+        
 
         captured_image = self.agent.state[5]
 
