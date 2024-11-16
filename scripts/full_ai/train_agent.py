@@ -5,6 +5,7 @@ from gymnasium import spaces
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import threading
 import argparse
 from pynput import keyboard
@@ -18,7 +19,7 @@ from stable_baselines3.common.utils import check_for_correct_spaces
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.callbacks import EvalCallback, BaseCallback, CallbackList
-from stable_baselines3.common.policies import MultiInputPolicy
+from stable_baselines3.common.policies import ActorCriticPolicy
 
 from logging_callback import LoggingCallback
 from env import MinecraftEnv  # Import your environment
@@ -174,20 +175,22 @@ class StopTrainingCallback(BaseCallback):
             return False  # Returning False will stop training
         return True
 
+
 # -------------------- Custom Feature Extractor --------------------
 
 class CustomCombinedExtractor(BaseFeaturesExtractor):
-    def __init__(self, observation_space, features_dim=512):
-        super(CustomCombinedExtractor, self).__init__(observation_space, features_dim)
-        self.extractors = {}
-        logger.debug("Initializing CustomCombinedExtractor.")
+    def __init__(self, observation_space):
+        super(CustomCombinedExtractor, self).__init__(observation_space, features_dim=1)
 
+        # Extract shapes from observation space
         image_shape = observation_space.spaces['image'].shape
         position_shape = observation_space.spaces['position'].shape
         task_shape = observation_space.spaces['task'].shape[0]
+        
 
-        # Build CNN for image
-        n_input_channels = 1  # Grayscale images
+
+        # CNN for image input
+        n_input_channels = 1  # Assuming grayscale images
         self.image_cnn = nn.Sequential(
             nn.Conv2d(n_input_channels, 32, kernel_size=8, stride=4),
             nn.ReLU(),
@@ -198,11 +201,12 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
             nn.Flatten(),
         )
 
+        # Compute the flattened size of image features
         with torch.no_grad():
             sample_image = torch.zeros((1, n_input_channels, *image_shape))
-            n_flatten = self.image_cnn(sample_image).shape[1]
+            self.image_feature_dim = self.image_cnn(sample_image).view(-1).shape[0]
 
-        # Build feedforward network for position
+        # Feedforward networks for other inputs
         self.position_net = nn.Sequential(
             nn.Linear(position_shape[0], 64),
             nn.ReLU(),
@@ -218,69 +222,78 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         )
 
         self.scalar_net = nn.Sequential(
-            nn.Linear(3, 32),  # Inputs: health, hunger, alive
+            nn.Linear(3, 32),  # Health, hunger, alive
             nn.ReLU(),
             nn.Linear(32, 32),
             nn.ReLU(),
         )
 
-        self._features_dim = n_flatten + 64 + 32 + 32  # Image + position + task + scalar
+        # Compute total feature dimension
+        self._features_dim = self.image_feature_dim + 64 + 32 + 32
+        logger.info(f"CustomCombinedExtractor initialized with features_dim={self._features_dim}")
 
     def forward(self, observations):
-        # Process image
         image_obs = observations['image'].float()
-        if len(image_obs.shape) == 3:
+        logger.debug(f"Original image_obs shape: {image_obs.shape}")
+
+        # Ensure image_obs is [batch_size, channels, height, width]
+        if len(image_obs.shape) == 2:
+            # [H, W] -> [1, 1, H, W]
+            image_obs = image_obs.unsqueeze(0).unsqueeze(0)
+        elif len(image_obs.shape) == 3:
+            # [batch_size, H, W] -> [batch_size, 1, H, W]
             image_obs = image_obs.unsqueeze(1)
+        elif len(image_obs.shape) == 4:
+            # Already in [batch_size, channels, height, width], no action needed
+            pass
         else:
-            image_obs = image_obs.unsqueeze(1)
+            raise ValueError(f"Unexpected image_obs shape: {image_obs.shape}")
+
+        logger.debug(f"Processed image_obs shape: {image_obs.shape}")
+
+        # Now pass to CNN
         image_features = self.image_cnn(image_obs)
+        logger.debug(f"Image features shape: {image_features.shape}")
 
-        # Process position
-        position_obs = observations['position'].float()
+        # Process other observations as before...
+        batch_size = image_obs.shape[0]
+        position_obs = observations['position'].float().view(batch_size, -1)
         position_features = self.position_net(position_obs)
-
-        # Process task
-        task_obs = observations['task'].float()
+        task_obs = observations['task'].float().view(batch_size, -1)
         task_features = self.task_net(task_obs)
-
-        # Process scalar states
-        health = observations['health'].view(-1, 1).float()
-        hunger = observations['hunger'].view(-1, 1).float()
-        alive = observations['alive'].view(-1, 1).float()
-
+        health = observations['health'].view(batch_size, 1).float()
+        hunger = observations['hunger'].view(batch_size, 1).float()
+        alive = observations['alive'].view(batch_size, 1).float()
         scalar_obs = torch.cat([health, hunger, alive], dim=1)
         scalar_features = self.scalar_net(scalar_obs)
 
-        # Concatenate all features
+        # Concatenate features
         features = torch.cat((image_features, position_features, task_features, scalar_features), dim=1)
+        logger.debug(f"Concatenated features shape: {features.shape}")
+
         return features
 
 # -------------------- Custom Policy --------------------
 
-class MaskedPolicy(MultiInputPolicy):
-    """
-    Custom policy that handles action masking.
-    """
+class MaskedPolicy(ActorCriticPolicy):
+    def __init__(self, *args, **kwargs):
+        super(MaskedPolicy, self).__init__(*args, **kwargs)
+
     def forward(self, obs, deterministic=False):
-        # Extract features using the custom extractor
         features = self.extract_features(obs)
+        latent_pi, latent_vf = self.mlp_extractor(features)
 
-        # Get policy logits and value predictions
-        distribution = self._get_action_dist_from_latent(features)
-        value = self.value_net(features)
-
-        # Apply the action mask to the logits
-        if "action_mask" in obs:
-            action_mask = obs["action_mask"]
-            # Set logits of invalid actions to a large negative value
-            masked_logits = distribution.distribution.logits + (1 - action_mask) * (-1e8)
-            distribution.distribution.logits = masked_logits
-
-        # Sample an action
+        # Policy
+        action_logits = self.action_net(latent_pi)
+        action_mask = obs["action_mask"]
+        masked_logits = action_logits + (1 - action_mask) * -1e9
+        distribution = self.action_dist.proba_distribution(action_logits=masked_logits)
         actions = distribution.get_actions(deterministic=deterministic)
-        log_prob = distribution.log_prob(actions)
 
-        return actions, log_prob, value
+        # Value function
+        values = self.value_net(latent_vf)
+
+        return actions, values, distribution.log_prob(actions)
 
 # -------------------- Keyboard Control --------------------
 
@@ -426,7 +439,7 @@ def main():
     logger.info("Setting policy parameters...")
     policy_kwargs = dict(
         features_extractor_class=CustomCombinedExtractor,
-        features_extractor_kwargs=dict(features_dim=512),
+        net_arch=[dict(pi=[128, 64], vf=[128, 64])],
     )
 
     # Allow user to choose model to load or start fresh
