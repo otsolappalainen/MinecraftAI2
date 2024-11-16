@@ -1,0 +1,15 @@
+(.venv) C:\Users\odezz\source\MinecraftAI2>.venv\Scripts\activate
+python -m venv .venv
+
+
+.\labelimg_env\Scripts\activate
+cd source
+source>cd "training data classified"
+
+
+python train_model.py --simulate --num_envs 10
+
+
+
+ {'learning_rate': 0.0002646179412902057}
+
