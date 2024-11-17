@@ -182,6 +182,7 @@ class MinecraftEnv(gym.Env):
 
     def step(self, action):
         if isinstance(action, np.ndarray):
+            print(f"action: {action}")
             action = int(action.item())
 
         action_str = self.action_map.get(action, None)

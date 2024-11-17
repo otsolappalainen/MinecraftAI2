@@ -25,7 +25,7 @@ from env_dqn import MinecraftEnv  # Import the updated environment
 # -------------------- Configuration --------------------
 
 # Learning rate
-LEARNING_RATE = 0.005  # Reduced learning rate for stability
+LEARNING_RATE = 0.0005  # Reduced learning rate for stability
 
 # Directories
 MODELS_DIR = r'C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn'
@@ -45,8 +45,8 @@ TRAINING_PARAMS = {
     'gamma': 0.99,
     'train_freq': (1, 'step'),  # Train every step
     'target_update_interval': 1000,
-    'exploration_fraction': 0.15,  # Increased exploration
-    'exploration_final_eps': 0.05,
+    'exploration_fraction': 0.08,  # Increased exploration
+    'exploration_final_eps': 0.02,
     'verbose': 2
 }
 
