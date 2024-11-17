@@ -5,14 +5,15 @@ from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 from stable_baselines3.common.callbacks import BaseCallback
 from env_simulated import SimulatedEnvGraphics  # Import the environment
 import datetime
+import numpy as np
 
 # Hardcoded parameters
-TOTAL_TIMESTEPS = 100000  # Total timesteps for training
+TOTAL_TIMESTEPS = 1000000  # Total timesteps for training
 LEARNING_RATE = 0.0001  # Learning rate for training
 MODEL_PATH = r"E:\model_spam"  # Path to save the trained model
-PARALLEL_ENVS = 8  # Number of parallel environments (set > 1 for parallel mode)
+PARALLEL_ENVS = 1  # Number of parallel environments (set > 1 for parallel mode)
 RENDER_MODE = "none"
-SAVE_EVERY_STEPS = 8000  # Save the model every 2000 steps
+SAVE_EVERY_STEPS = 100000  # Save the model every 100000 steps
 
 # Logging setup
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s')
@@ -40,7 +41,6 @@ class SaveOnStepCallback(BaseCallback):
         return True
 
 
-
 def make_env(render_mode="none"):
     """
     Create a simulated environment instance.
@@ -54,29 +54,44 @@ class SaveBestModelOnEvalCallback(BaseCallback):
     """
     Custom callback to save the best model during evaluation with a unique timestamp.
     """
-    def __init__(self, eval_env, save_path, eval_freq=10000, verbose=1):
+    def __init__(self, eval_env, save_path, verbose=1):
         super(SaveBestModelOnEvalCallback, self).__init__(verbose)
-        self.eval_env = eval_env  # Store the evaluation environment
+        self.eval_env = eval_env
         self.save_path = save_path
-        self.eval_freq = eval_freq  # Add eval_freq to the class
         self.best_mean_reward = -float("inf")
+        self.eval_frequency = 10000  # Define the evaluation frequency internally
         os.makedirs(save_path, exist_ok=True)
 
     def _on_step(self) -> bool:
-        # Perform evaluation every `eval_freq` steps
-        if self.n_calls % self.eval_freq == 0:  # Use self.eval_freq here
+        # Perform evaluation at the specified frequency
+        if self.n_calls % self.eval_frequency == 0:
+            # Evaluate the model
             episode_rewards = []
-            for _ in range(5):  # Evaluate over 5 episodes
-                obs = self.eval_env.reset()
-                done = False
-                total_reward = 0
-                while not done:
-                    action, _ = self.model.predict(obs, deterministic=True)
-                    obs, reward, done, _ = self.eval_env.step(action)
-                    total_reward += reward
-                episode_rewards.append(total_reward)
+            
+            # Reset the evaluation environment
+            obs = self.eval_env.reset()
+            
+            done = False
 
-            mean_reward = sum(episode_rewards) / len(episode_rewards)
+            while not done:
+                action, _states = self.model.predict(obs, deterministic=True)
+                
+                # Ensure action is properly formatted
+                if not isinstance(action, (list, np.ndarray)):
+                    action = np.array([action])
+                elif isinstance(action, np.ndarray) and action.ndim == 0:
+                    action = action.reshape(1)
+                
+                # Now step the environment
+                obs, rewards, dones, infos = self.eval_env.step(action)
+                
+                # Append the reward
+                episode_rewards.append(rewards[0])
+
+                # Update the done flag
+                done = dones[0]
+
+            mean_reward = np.mean(episode_rewards)
             if mean_reward > self.best_mean_reward:
                 self.best_mean_reward = mean_reward
                 timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -85,9 +100,6 @@ class SaveBestModelOnEvalCallback(BaseCallback):
                 if self.verbose > 0:
                     print(f"New best model saved at {save_file} with mean reward: {mean_reward}")
         return True
-
-
-
 
 def train_agent(env, model_path, learning_rate, total_timesteps, parallel_envs):
     """
@@ -108,7 +120,7 @@ def train_agent(env, model_path, learning_rate, total_timesteps, parallel_envs):
         policy="MlpPolicy",
         env=env,
         learning_rate=learning_rate,
-        buffer_size=10000,
+        buffer_size=40000,
         learning_starts=100,
         batch_size=128,
         gamma=0.99,
@@ -120,24 +132,24 @@ def train_agent(env, model_path, learning_rate, total_timesteps, parallel_envs):
         tensorboard_log="./simulated_tensorboard/",
     )
 
-    # Add the callback for saving the model every N episodes
+    # Add the callback for saving the model every N steps
     save_on_step_callback = SaveOnStepCallback(
         save_freq=SAVE_EVERY_STEPS,
         save_path="models/step_checkpoints",
         verbose=1
     )
+
     save_best_model_callback = SaveBestModelOnEvalCallback(
-        eval_env=env,
-        save_path="models/best_models",
-        eval_freq=6000,  # Evaluate every 10000 steps
+        eval_env=DummyVecEnv([make_env(render_mode="none")]),  # Evaluation environment
+        save_path=os.path.join(model_path, "best_models"),
         verbose=1
     )
-
+    
     logger.info("Starting training...")
     # Train the model
 
     model.learn(
-        total_timesteps=100000,
+        total_timesteps=total_timesteps,
         callback=[save_on_step_callback, save_best_model_callback]
     )
 
@@ -156,24 +168,30 @@ def validate_agent(model_path):
     Validate the trained model in graphical mode.
     """
     logger.info("Validating the trained model in graphical mode...")
-    env = DummyVecEnv([make_env(render_mode=RENDER_MODE)])
+    env = DummyVecEnv([make_env(render_mode="human")])  # Set render_mode to 'human' for visualization
 
     # Load the trained model
     model = DQN.load(f"{model_path}/final_model")
 
     # Run a single episode
     obs = env.reset()
-    done = False
+    done = [False]
     total_reward = 0
 
-    while not done:
+    while not done[0]:
         action, _states = model.predict(obs, deterministic=True)
-        obs, reward, done, info = env.step(action)
-        total_reward += reward
+        # Ensure action is properly formatted
+        if not isinstance(action, (list, np.ndarray)):
+            action = np.array([action])
+        elif isinstance(action, np.ndarray) and action.ndim == 0:
+            action = action.reshape(1)
+        obs, rewards, dones, infos = env.step(action)
+        total_reward += rewards[0]
+        done = dones
+        # No need to unbatch obs
 
     logger.info(f"Validation completed. Total reward: {total_reward}")
     env.close()
-
 
 def main():
     logger.info("Starting training with the following hardcoded parameters:")

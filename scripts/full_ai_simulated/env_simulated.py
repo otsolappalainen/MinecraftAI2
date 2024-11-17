@@ -79,8 +79,8 @@ class SimulatedEnvGraphics(gym.Env):
 
 
         # Reset simulation parameters
-        self.x = np.random.uniform(-10, 10)
-        self.z = np.random.uniform(-10, 10)
+        self.x = np.random.uniform(-400, 400)
+        self.z = np.random.uniform(-400, 400)
 
         self.yaw = np.random.uniform(0, 360)  # Random yaw (0 to 360 degrees)
         self.pitch = np.random.uniform(-90, 90)  # Random pitch (-90 to 90 degrees)
@@ -106,11 +106,11 @@ class SimulatedEnvGraphics(gym.Env):
 
         # Actions (only a subset affects the simulation; others are no-ops)
         if action == 0:  # Move forward
-            self.x += np.cos(np.radians(self.yaw))
-            self.z += np.sin(np.radians(self.yaw))
+            self.x += np.sin(np.radians(self.yaw))
+            self.z += np.cos(np.radians(self.yaw))
         elif action == 1:  # Move backward
-            self.x -= np.cos(np.radians(self.yaw))
-            self.z -= np.sin(np.radians(self.yaw))
+            self.x -= np.sin(np.radians(self.yaw))
+            self.z -= np.cos(np.radians(self.yaw))
         elif action == 2:  # Turn left
             self.yaw = (self.yaw - 10) % 360
         elif action == 3:  # Turn right
@@ -129,15 +129,10 @@ class SimulatedEnvGraphics(gym.Env):
         terminated = self.step_count >= self.max_episode_length
         truncated = False
 
-       
-            
-
         # Render if in graphical mode
         if self.render_mode == "human":
             self._render()
             time.sleep(self.time_step)
-        
-        #print(f"x{self.x} z{self.z} reward {self.cumulative_reward}")
 
         # Return the updated observation, reward, and status flags
         return self._get_observation(), reward, terminated, truncated, {}
