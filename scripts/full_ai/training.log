@@ -152,3 +152,446 @@ Self CUDA time total: 402.721s
 [2024-11-16 23:17:37] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241116_231737.zip
 [2024-11-16 23:21:55] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241116_232155.zip
 [2024-11-16 23:29:32] INFO:__main__: Stopping training: 'I' key pressed.
+[2024-11-16 23:33:28] INFO:__main__: Using DQN training parameters.
+[2024-11-16 23:33:28] INFO:__main__: Initializing environment...
+[2024-11-16 23:33:28] DEBUG:__main__: Directory checked/created: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn
+[2024-11-16 23:33:28] DEBUG:__main__: Directory checked/created: ./logs_dqn/
+[2024-11-16 23:33:28] DEBUG:__main__: Directory checked/created: ./logs_eval_dqn/
+[2024-11-16 23:33:28] INFO:__main__: Setting policy parameters...
+[2024-11-16 23:34:20] INFO:__main__: Loading model from C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241116_232155.zip...
+[2024-11-16 23:34:21] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-16 23:34:21] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-16 23:34:21] INFO:__main__: Loaded model is compatible with the new observation space.
+[2024-11-16 23:34:21] INFO:__main__: Waiting for 'o' key to start training...
+[2024-11-16 23:34:21] INFO:__main__: Waiting for the 'o' key to start training...
+[2024-11-16 23:34:30] INFO:__main__: Starting training: 'o' key pressed.
+[2024-11-16 23:34:30] INFO:__main__: 'o' key pressed. Proceeding with training...
+[2024-11-16 23:34:30] INFO:__main__: Starting keyboard listener for stopping training...
+[2024-11-16 23:34:30] INFO:__main__: Starting training...
+[2024-11-16 23:38:25] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241116_233824.zip
+[2024-11-16 23:42:47] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241116_234247.zip
+[2024-11-16 23:47:04] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241116_234704.zip
+[2024-11-16 23:51:23] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241116_235123.zip
+[2024-11-16 23:55:42] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241116_235542.zip
+[2024-11-16 23:59:04] INFO:__main__: Stopping training: 'I' key pressed.
+[2024-11-16 23:59:04] INFO:__main__: Training stopped by user.
+[2024-11-16 23:59:04] INFO:__main__: Training completed in 1474.19 seconds
+[2024-11-16 23:59:04] INFO:__main__: Saving final model...
+[2024-11-16 23:59:04] INFO:__main__: Closing environments and stopping listener...
+[2024-11-16 23:59:04] INFO:__main__: Training process has been stopped.
+[2024-11-17 00:03:19] INFO:__main__: Using DQN training parameters.
+[2024-11-17 00:03:19] INFO:__main__: Initializing environment...
+[2024-11-17 00:03:19] DEBUG:__main__: Directory checked/created: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn
+[2024-11-17 00:03:19] DEBUG:__main__: Directory checked/created: ./logs_dqn/
+[2024-11-17 00:03:19] DEBUG:__main__: Directory checked/created: ./logs_eval_dqn/
+[2024-11-17 00:03:19] INFO:__main__: Setting policy parameters...
+[2024-11-17 00:03:34] INFO:__main__: Loading model from C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_final.zip...
+[2024-11-17 00:03:34] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 00:03:34] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 00:03:34] INFO:__main__: Loaded model is compatible with the new observation space.
+[2024-11-17 00:03:34] INFO:__main__: Waiting for 'o' key to start training...
+[2024-11-17 00:03:34] INFO:__main__: Waiting for the 'o' key to start training...
+[2024-11-17 00:03:37] INFO:__main__: Starting training: 'o' key pressed.
+[2024-11-17 00:03:37] INFO:__main__: 'o' key pressed. Proceeding with training...
+[2024-11-17 00:03:37] INFO:__main__: Starting keyboard listener for stopping training...
+[2024-11-17 00:03:37] INFO:__main__: Starting training...
+[2024-11-17 00:07:36] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_000736_reward_0.00.zip
+[2024-11-17 00:11:54] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_001154_reward_0.00.zip
+[2024-11-17 00:16:09] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_001609_reward_0.00.zip
+[2024-11-17 00:19:39] INFO:__main__: Stopping training: 'I' key pressed.
+[2024-11-17 00:19:40] INFO:__main__: Training stopped by user.
+[2024-11-17 00:19:40] INFO:__main__: Training completed in 962.80 seconds
+[2024-11-17 00:19:40] INFO:__main__: Saving final model...
+[2024-11-17 00:19:40] INFO:__main__: Closing environments and stopping listener...
+[2024-11-17 00:19:40] INFO:__main__: Training process has been stopped.
+[2024-11-17 00:23:26] INFO:__main__: Using DQN training parameters.
+[2024-11-17 00:23:26] INFO:__main__: Initializing environment...
+[2024-11-17 00:23:26] DEBUG:__main__: Directory checked/created: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn
+[2024-11-17 00:23:26] DEBUG:__main__: Directory checked/created: ./logs_dqn/
+[2024-11-17 00:23:26] DEBUG:__main__: Directory checked/created: ./logs_eval_dqn/
+[2024-11-17 00:23:26] INFO:__main__: Setting policy parameters...
+[2024-11-17 00:23:34] INFO:__main__: Loading model from C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_001609_reward_0.00.zip...
+[2024-11-17 00:23:34] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 00:23:34] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 00:23:35] INFO:__main__: Loaded model is compatible with the new observation space.
+[2024-11-17 00:23:35] INFO:__main__: Waiting for 'o' key to start training...
+[2024-11-17 00:23:35] INFO:__main__: Waiting for the 'o' key to start training...
+[2024-11-17 00:23:38] INFO:__main__: Starting training: 'o' key pressed.
+[2024-11-17 00:23:38] INFO:__main__: 'o' key pressed. Proceeding with training...
+[2024-11-17 00:23:38] INFO:__main__: Starting keyboard listener for stopping training...
+[2024-11-17 00:23:38] INFO:__main__: Starting training...
+[2024-11-17 00:27:17] INFO:__main__: Stopping training: 'I' key pressed.
+[2024-11-17 00:27:17] INFO:__main__: Training stopped by user.
+[2024-11-17 00:27:17] INFO:__main__: Training completed in 219.64 seconds
+[2024-11-17 00:27:17] INFO:__main__: Saving final model...
+[2024-11-17 00:27:18] INFO:__main__: Closing environments and stopping listener...
+[2024-11-17 00:27:18] INFO:__main__: Training process has been stopped.
+[2024-11-17 00:29:11] INFO:__main__: Using DQN training parameters.
+[2024-11-17 00:29:11] INFO:__main__: Initializing environment...
+[2024-11-17 00:29:11] DEBUG:__main__: Directory checked/created: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn
+[2024-11-17 00:29:11] DEBUG:__main__: Directory checked/created: ./logs_dqn/
+[2024-11-17 00:29:11] DEBUG:__main__: Directory checked/created: ./logs_eval_dqn/
+[2024-11-17 00:29:11] INFO:__main__: Setting policy parameters...
+[2024-11-17 00:29:19] INFO:__main__: Loading model from C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_001609_reward_0.00.zip...
+[2024-11-17 00:29:19] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 00:29:19] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 00:29:19] INFO:__main__: Loaded model is compatible with the new observation space.
+[2024-11-17 00:29:19] INFO:__main__: Waiting for 'o' key to start training...
+[2024-11-17 00:29:19] INFO:__main__: Waiting for the 'o' key to start training...
+[2024-11-17 00:29:25] INFO:__main__: Starting training: 'o' key pressed.
+[2024-11-17 00:29:25] INFO:__main__: 'o' key pressed. Proceeding with training...
+[2024-11-17 00:29:25] INFO:__main__: Starting keyboard listener for stopping training...
+[2024-11-17 00:29:25] INFO:__main__: Starting training...
+[2024-11-17 00:33:26] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_003326_reward_0.00.zip
+[2024-11-17 00:37:46] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_003746_reward_0.00.zip
+[2024-11-17 00:42:06] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_004206_reward_0.00.zip
+[2024-11-17 00:46:24] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_004624_reward_0.00.zip
+[2024-11-17 00:50:44] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_005044_reward_0.00.zip
+[2024-11-17 00:55:00] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_005500_reward_0.00.zip
+[2024-11-17 00:59:20] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_005920_reward_0.00.zip
+[2024-11-17 01:03:38] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_010338_reward_0.00.zip
+[2024-11-17 01:07:54] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_010754_reward_0.00.zip
+[2024-11-17 01:12:13] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_011213_reward_0.00.zip
+[2024-11-17 01:16:27] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_011627_reward_0.00.zip
+[2024-11-17 01:20:44] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_012044_reward_0.00.zip
+[2024-11-17 01:25:03] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_012502_reward_0.00.zip
+[2024-11-17 01:29:21] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_012921_reward_0.00.zip
+[2024-11-17 01:33:38] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_013338_reward_0.00.zip
+[2024-11-17 01:37:54] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_013754_reward_0.00.zip
+[2024-11-17 01:42:13] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_014213_reward_0.00.zip
+[2024-11-17 01:46:28] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_014628_reward_0.00.zip
+[2024-11-17 01:50:45] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_015045_reward_0.00.zip
+[2024-11-17 01:55:03] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_015503_reward_0.00.zip
+[2024-11-17 01:59:21] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_015921_reward_0.00.zip
+[2024-11-17 02:03:36] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_020336_reward_0.00.zip
+[2024-11-17 02:07:52] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_020752_reward_0.00.zip
+[2024-11-17 02:12:08] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_021208_reward_0.00.zip
+[2024-11-17 02:16:23] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_021623_reward_0.00.zip
+[2024-11-17 02:20:38] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_022038_reward_0.00.zip
+[2024-11-17 02:24:52] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_022452_reward_0.00.zip
+[2024-11-17 02:29:09] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_022909_reward_0.00.zip
+[2024-11-17 02:33:25] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_023325_reward_0.00.zip
+[2024-11-17 02:37:40] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_023740_reward_0.00.zip
+[2024-11-17 02:41:31] INFO:__main__: Stopping training: 'I' key pressed.
+[2024-11-17 02:41:31] INFO:__main__: Training stopped by user.
+[2024-11-17 02:41:31] INFO:__main__: Training completed in 7925.77 seconds
+[2024-11-17 02:41:31] INFO:__main__: Saving final model...
+[2024-11-17 02:41:31] INFO:__main__: Closing environments and stopping listener...
+[2024-11-17 02:41:31] INFO:__main__: Training process has been stopped.
+[2024-11-17 02:48:29] INFO:__main__: Using DQN training parameters.
+[2024-11-17 02:48:29] INFO:__main__: Initializing environment...
+[2024-11-17 02:48:29] DEBUG:__main__: Directory checked/created: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn
+[2024-11-17 02:48:29] DEBUG:__main__: Directory checked/created: ./logs_dqn/
+[2024-11-17 02:48:29] DEBUG:__main__: Directory checked/created: ./logs_eval_dqn/
+[2024-11-17 02:48:29] INFO:__main__: Setting policy parameters...
+[2024-11-17 02:48:59] INFO:__main__: Loading model from C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_final.zip...
+[2024-11-17 02:48:59] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 02:48:59] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 02:48:59] INFO:__main__: Loaded model is compatible with the new observation space.
+[2024-11-17 02:48:59] INFO:__main__: Waiting for 'o' key to start training...
+[2024-11-17 02:48:59] INFO:__main__: Waiting for the 'o' key to start training...
+[2024-11-17 02:49:06] INFO:__main__: Starting training: 'o' key pressed.
+[2024-11-17 02:49:06] INFO:__main__: 'o' key pressed. Proceeding with training...
+[2024-11-17 02:49:06] INFO:__main__: Starting keyboard listener for stopping training...
+[2024-11-17 02:49:06] INFO:__main__: Starting training...
+[2024-11-17 02:50:38] INFO:__main__: Using DQN training parameters.
+[2024-11-17 02:50:38] INFO:__main__: Initializing environment...
+[2024-11-17 02:50:38] DEBUG:__main__: Directory checked/created: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn
+[2024-11-17 02:50:38] DEBUG:__main__: Directory checked/created: ./logs_dqn/
+[2024-11-17 02:50:38] DEBUG:__main__: Directory checked/created: ./logs_eval_dqn/
+[2024-11-17 02:50:38] INFO:__main__: Setting policy parameters...
+[2024-11-17 02:50:43] INFO:__main__: Loading model from C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_final.zip...
+[2024-11-17 02:50:43] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 02:50:43] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 02:50:43] INFO:__main__: Loaded model is compatible with the new observation space.
+[2024-11-17 02:50:43] INFO:__main__: Waiting for 'o' key to start training...
+[2024-11-17 02:50:43] INFO:__main__: Waiting for the 'o' key to start training...
+[2024-11-17 02:50:46] INFO:__main__: Starting training: 'o' key pressed.
+[2024-11-17 02:50:46] INFO:__main__: 'o' key pressed. Proceeding with training...
+[2024-11-17 02:50:46] INFO:__main__: Starting keyboard listener for stopping training...
+[2024-11-17 02:50:46] INFO:__main__: Starting training...
+[2024-11-17 02:50:46] DEBUG:__main__: Cumulative reward at step 1: 0.00
+[2024-11-17 02:50:47] DEBUG:__main__: Cumulative reward at step 2: 0.00
+[2024-11-17 02:50:47] DEBUG:__main__: Cumulative reward at step 3: 0.00
+[2024-11-17 02:50:48] DEBUG:__main__: Cumulative reward at step 4: 0.00
+[2024-11-17 02:50:48] DEBUG:__main__: Cumulative reward at step 5: 0.00
+[2024-11-17 02:50:49] DEBUG:__main__: Cumulative reward at step 6: 0.00
+[2024-11-17 02:50:49] DEBUG:__main__: Cumulative reward at step 7: 0.00
+[2024-11-17 02:50:50] DEBUG:__main__: Cumulative reward at step 8: 0.00
+[2024-11-17 02:50:50] DEBUG:__main__: Cumulative reward at step 9: 0.00
+[2024-11-17 02:50:51] DEBUG:__main__: Cumulative reward at step 10: 0.00
+[2024-11-17 02:50:51] DEBUG:__main__: Cumulative reward at step 11: 0.00
+[2024-11-17 02:50:52] DEBUG:__main__: Cumulative reward at step 12: 0.00
+[2024-11-17 02:50:52] DEBUG:__main__: Cumulative reward at step 13: 0.00
+[2024-11-17 02:50:53] DEBUG:__main__: Cumulative reward at step 14: 0.00
+[2024-11-17 02:50:53] DEBUG:__main__: Cumulative reward at step 15: 0.00
+[2024-11-17 02:50:53] DEBUG:__main__: Cumulative reward at step 16: 0.00
+[2024-11-17 02:50:54] DEBUG:__main__: Cumulative reward at step 17: 0.00
+[2024-11-17 02:50:55] DEBUG:__main__: Cumulative reward at step 18: 0.00
+[2024-11-17 02:50:55] DEBUG:__main__: Cumulative reward at step 19: 0.00
+[2024-11-17 02:50:55] DEBUG:__main__: Cumulative reward at step 20: 0.00
+[2024-11-17 02:50:56] DEBUG:__main__: Cumulative reward at step 21: 0.00
+[2024-11-17 02:50:57] DEBUG:__main__: Cumulative reward at step 22: 0.00
+[2024-11-17 02:50:57] DEBUG:__main__: Cumulative reward at step 23: 0.00
+[2024-11-17 02:50:57] DEBUG:__main__: Cumulative reward at step 24: 0.00
+[2024-11-17 02:50:58] DEBUG:__main__: Cumulative reward at step 25: 0.00
+[2024-11-17 02:50:58] DEBUG:__main__: Cumulative reward at step 26: 0.00
+[2024-11-17 02:50:59] DEBUG:__main__: Cumulative reward at step 27: 0.00
+[2024-11-17 02:50:59] DEBUG:__main__: Cumulative reward at step 28: 0.00
+[2024-11-17 02:51:00] DEBUG:__main__: Cumulative reward at step 29: 0.00
+[2024-11-17 02:51:00] DEBUG:__main__: Cumulative reward at step 30: 0.00
+[2024-11-17 02:51:01] DEBUG:__main__: Cumulative reward at step 31: 0.00
+[2024-11-17 02:51:01] DEBUG:__main__: Cumulative reward at step 32: 0.00
+[2024-11-17 02:51:02] INFO:__main__: Stopping training: 'I' key pressed.
+[2024-11-17 02:51:02] INFO:__main__: Training stopped by user.
+[2024-11-17 02:51:02] DEBUG:__main__: Cumulative reward at step 33: 0.00
+[2024-11-17 02:51:02] INFO:__main__: Training completed in 16.09 seconds
+[2024-11-17 02:51:02] INFO:__main__: Saving final model...
+[2024-11-17 02:51:02] INFO:__main__: Closing environments and stopping listener...
+[2024-11-17 02:51:02] INFO:__main__: Training process has been stopped.
+[2024-11-17 03:24:58] INFO:__main__: Using DQN training parameters.
+[2024-11-17 03:24:58] INFO:__main__: Initializing environment...
+[2024-11-17 03:24:58] DEBUG:__main__: Directory checked/created: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn
+[2024-11-17 03:24:58] DEBUG:__main__: Directory checked/created: ./logs_dqn/
+[2024-11-17 03:24:58] DEBUG:__main__: Directory checked/created: ./logs_eval_dqn/
+[2024-11-17 03:24:58] INFO:__main__: Setting policy parameters...
+[2024-11-17 03:25:03] INFO:__main__: Loading model from C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_final.zip...
+[2024-11-17 03:25:03] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 03:25:03] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 03:25:04] INFO:__main__: Loaded model is compatible with the new observation space.
+[2024-11-17 03:25:04] INFO:__main__: Waiting for 'o' key to start training...
+[2024-11-17 03:25:04] INFO:__main__: Waiting for the 'o' key to start training...
+[2024-11-17 03:25:13] INFO:__main__: Starting training: 'o' key pressed.
+[2024-11-17 03:25:13] INFO:__main__: 'o' key pressed. Proceeding with training...
+[2024-11-17 03:25:13] INFO:__main__: Starting keyboard listener for stopping training...
+[2024-11-17 03:28:38] INFO:__main__: Using DQN training parameters.
+[2024-11-17 03:28:38] INFO:__main__: Initializing environment...
+[2024-11-17 03:28:38] DEBUG:__main__: Directory checked/created: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn
+[2024-11-17 03:28:38] DEBUG:__main__: Directory checked/created: ./logs_dqn/
+[2024-11-17 03:28:38] DEBUG:__main__: Directory checked/created: ./logs_eval_dqn/
+[2024-11-17 03:28:38] INFO:__main__: Setting policy parameters...
+[2024-11-17 03:28:52] INFO:__main__: Loading model from C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_final.zip...
+[2024-11-17 03:28:53] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 03:28:53] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 03:28:53] INFO:__main__: Loaded model is compatible with the new observation space.
+[2024-11-17 03:28:53] INFO:__main__: Waiting for 'o' key to start training...
+[2024-11-17 03:28:53] INFO:__main__: Waiting for the 'o' key to start training...
+[2024-11-17 03:28:56] INFO:__main__: Starting training: 'o' key pressed.
+[2024-11-17 03:28:56] INFO:__main__: 'o' key pressed. Proceeding with training...
+[2024-11-17 03:28:56] INFO:__main__: Starting keyboard listener for stopping training...
+[2024-11-17 03:30:41] INFO:__main__: Using DQN training parameters.
+[2024-11-17 03:30:41] INFO:__main__: Initializing environment...
+[2024-11-17 03:30:41] DEBUG:__main__: Directory checked/created: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn
+[2024-11-17 03:30:41] DEBUG:__main__: Directory checked/created: ./logs_dqn/
+[2024-11-17 03:30:41] DEBUG:__main__: Directory checked/created: ./logs_eval_dqn/
+[2024-11-17 03:30:41] INFO:__main__: Setting policy parameters...
+[2024-11-17 03:30:44] INFO:__main__: Loading model from C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_final.zip...
+[2024-11-17 03:30:44] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 03:30:44] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 03:30:45] INFO:__main__: Loaded model is compatible with the new observation space.
+[2024-11-17 03:30:45] INFO:__main__: Waiting for 'o' key to start training...
+[2024-11-17 03:30:45] INFO:__main__: Waiting for the 'o' key to start training...
+[2024-11-17 03:30:48] INFO:__main__: Starting training: 'o' key pressed.
+[2024-11-17 03:30:48] INFO:__main__: 'o' key pressed. Proceeding with training...
+[2024-11-17 03:30:48] INFO:__main__: Starting keyboard listener for stopping training...
+[2024-11-17 03:30:48] INFO:__main__: Starting training...
+[2024-11-17 03:34:47] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_033447_reward_-23.25.zip
+[2024-11-17 03:39:04] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_033904_reward_-23.25.zip
+[2024-11-17 03:43:22] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_034321_reward_-23.25.zip
+[2024-11-17 03:47:36] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_034736_reward_-23.25.zip
+[2024-11-17 03:51:52] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_035152_reward_-23.25.zip
+[2024-11-17 03:56:09] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_035608_reward_-23.25.zip
+[2024-11-17 04:00:23] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_040023_reward_-23.25.zip
+[2024-11-17 04:04:37] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_040437_reward_-23.25.zip
+[2024-11-17 04:08:53] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_040852_reward_-23.25.zip
+[2024-11-17 04:13:09] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_041308_reward_-23.25.zip
+[2024-11-17 04:17:27] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_041727_reward_-23.25.zip
+[2024-11-17 04:21:41] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_042140_reward_-23.25.zip
+[2024-11-17 04:25:55] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_042555_reward_-23.25.zip
+[2024-11-17 04:30:10] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_043010_reward_-23.25.zip
+[2024-11-17 04:34:27] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_043427_reward_-23.25.zip
+[2024-11-17 04:38:43] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_043842_reward_-23.25.zip
+[2024-11-17 04:42:59] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_044259_reward_-23.25.zip
+[2024-11-17 04:47:14] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_044714_reward_-23.25.zip
+[2024-11-17 04:51:29] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_045129_reward_-23.25.zip
+[2024-11-17 04:55:44] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_045544_reward_-23.25.zip
+[2024-11-17 04:59:58] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_045958_reward_-23.25.zip
+[2024-11-17 05:04:14] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_050414_reward_-23.25.zip
+[2024-11-17 05:08:30] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_050830_reward_-23.25.zip
+[2024-11-17 05:12:46] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_051245_reward_-23.25.zip
+[2024-11-17 05:16:59] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_051659_reward_-23.25.zip
+[2024-11-17 05:21:13] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_052113_reward_-23.25.zip
+[2024-11-17 05:25:27] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_052527_reward_-23.25.zip
+[2024-11-17 05:29:41] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_052941_reward_-23.25.zip
+[2024-11-17 05:33:58] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_053357_reward_-23.25.zip
+[2024-11-17 05:38:11] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_053811_reward_-23.25.zip
+[2024-11-17 05:42:27] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_054227_reward_-23.25.zip
+[2024-11-17 05:46:40] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_054640_reward_-23.25.zip
+[2024-11-17 05:50:58] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_055057_reward_-23.25.zip
+[2024-11-17 05:55:12] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_055512_reward_-23.25.zip
+[2024-11-17 05:59:26] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_055926_reward_-23.25.zip
+[2024-11-17 06:03:38] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_060338_reward_-23.25.zip
+[2024-11-17 06:07:54] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_060754_reward_-23.25.zip
+[2024-11-17 06:12:08] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_061208_reward_-23.25.zip
+[2024-11-17 06:16:23] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_061623_reward_-23.25.zip
+[2024-11-17 06:20:41] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_062040_reward_-23.25.zip
+[2024-11-17 06:24:55] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_062455_reward_-23.25.zip
+[2024-11-17 06:29:08] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_062907_reward_-23.25.zip
+[2024-11-17 06:33:21] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_063321_reward_-23.25.zip
+[2024-11-17 06:37:31] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_063731_reward_-23.25.zip
+[2024-11-17 06:41:42] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_064142_reward_-23.25.zip
+[2024-11-17 06:45:59] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_064559_reward_-23.25.zip
+[2024-11-17 06:50:12] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_065012_reward_-23.25.zip
+[2024-11-17 06:54:26] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_065426_reward_-23.25.zip
+[2024-11-17 06:58:41] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_065840_reward_-23.25.zip
+[2024-11-17 07:02:52] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_070252_reward_-23.25.zip
+[2024-11-17 07:07:02] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_070702_reward_-23.25.zip
+[2024-11-17 07:11:14] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_071114_reward_-23.25.zip
+[2024-11-17 07:15:29] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_071529_reward_-23.25.zip
+[2024-11-17 07:19:40] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_071940_reward_-23.25.zip
+[2024-11-17 07:23:50] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_072350_reward_-23.25.zip
+[2024-11-17 07:28:02] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_072802_reward_-23.25.zip
+[2024-11-17 07:32:14] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_073214_reward_-23.25.zip
+[2024-11-17 07:36:26] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_073626_reward_-23.25.zip
+[2024-11-17 07:40:37] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_074037_reward_-23.25.zip
+[2024-11-17 07:44:50] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_074450_reward_-23.25.zip
+[2024-11-17 07:48:58] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_074858_reward_-23.25.zip
+[2024-11-17 07:53:10] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_075310_reward_-23.25.zip
+[2024-11-17 07:57:21] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_075721_reward_-23.25.zip
+[2024-11-17 08:01:33] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_080133_reward_-23.25.zip
+[2024-11-17 08:05:45] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_080545_reward_-23.25.zip
+[2024-11-17 08:09:56] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_080956_reward_-23.25.zip
+[2024-11-17 08:14:05] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_081405_reward_-23.25.zip
+[2024-11-17 08:18:16] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_081816_reward_-23.25.zip
+[2024-11-17 08:22:24] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_082224_reward_-23.25.zip
+[2024-11-17 08:26:31] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_082631_reward_-23.25.zip
+[2024-11-17 08:30:42] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_083041_reward_-23.25.zip
+[2024-11-17 08:34:51] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_083451_reward_-23.25.zip
+[2024-11-17 08:38:59] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_083859_reward_-23.25.zip
+[2024-11-17 08:43:09] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_084309_reward_-23.25.zip
+[2024-11-17 08:47:18] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_084718_reward_-23.25.zip
+[2024-11-17 08:51:25] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_085125_reward_-23.25.zip
+[2024-11-17 08:55:34] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_085534_reward_-23.25.zip
+[2024-11-17 08:59:42] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_085942_reward_-23.25.zip
+[2024-11-17 09:03:49] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_090348_reward_-23.25.zip
+[2024-11-17 09:07:57] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_090757_reward_-23.25.zip
+[2024-11-17 09:12:06] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_091206_reward_-23.25.zip
+[2024-11-17 09:16:16] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_091616_reward_-23.25.zip
+[2024-11-17 09:20:26] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_092025_reward_-23.25.zip
+[2024-11-17 09:24:35] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_092435_reward_-23.25.zip
+[2024-11-17 09:28:47] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_092847_reward_-23.25.zip
+[2024-11-17 09:32:52] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_093252_reward_-23.25.zip
+[2024-11-17 09:37:01] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_093701_reward_-23.25.zip
+[2024-11-17 09:41:10] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_094110_reward_-23.25.zip
+[2024-11-17 09:45:19] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_094519_reward_-23.25.zip
+[2024-11-17 09:49:29] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_094929_reward_-23.25.zip
+[2024-11-17 09:53:37] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_095337_reward_-23.25.zip
+[2024-11-17 09:57:46] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_095746_reward_-23.25.zip
+[2024-11-17 10:01:52] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_100152_reward_-23.25.zip
+[2024-11-17 10:06:01] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_100601_reward_-23.25.zip
+[2024-11-17 10:10:09] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_101009_reward_-23.25.zip
+[2024-11-17 10:14:14] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_101414_reward_-23.25.zip
+[2024-11-17 10:18:10] INFO:__main__: Stopping training: 'I' key pressed.
+[2024-11-17 10:18:11] INFO:__main__: Training stopped by user.
+[2024-11-17 10:18:11] INFO:__main__: Training completed in 24442.55 seconds
+[2024-11-17 10:18:11] INFO:__main__: Saving final model...
+[2024-11-17 10:18:11] INFO:__main__: Closing environments and stopping listener...
+[2024-11-17 10:18:11] INFO:__main__: Training process has been stopped.
+[2024-11-17 10:21:43] INFO:__main__: Using DQN training parameters.
+[2024-11-17 10:21:43] INFO:__main__: Initializing environment...
+[2024-11-17 10:21:43] DEBUG:__main__: Directory checked/created: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn
+[2024-11-17 10:21:43] DEBUG:__main__: Directory checked/created: ./logs_dqn/
+[2024-11-17 10:21:43] DEBUG:__main__: Directory checked/created: ./logs_eval_dqn/
+[2024-11-17 10:21:43] INFO:__main__: Setting policy parameters...
+[2024-11-17 10:22:15] INFO:__main__: Loading model from C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_final.zip...
+[2024-11-17 10:22:15] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 10:22:16] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 10:22:16] INFO:__main__: Loaded model is compatible with the new observation space.
+[2024-11-17 10:22:16] INFO:__main__: Waiting for 'o' key to start training...
+[2024-11-17 10:22:16] INFO:__main__: Waiting for the 'o' key to start training...
+[2024-11-17 10:22:21] INFO:__main__: Starting training: 'o' key pressed.
+[2024-11-17 10:22:21] INFO:__main__: 'o' key pressed. Proceeding with training...
+[2024-11-17 10:22:21] INFO:__main__: Starting keyboard listener for stopping training...
+[2024-11-17 10:22:21] INFO:__main__: Starting training...
+[2024-11-17 10:22:35] INFO:__main__: Stopping training: 'I' key pressed.
+[2024-11-17 10:22:35] INFO:__main__: Training stopped by user.
+[2024-11-17 10:22:35] INFO:__main__: Training completed in 14.36 seconds
+[2024-11-17 10:22:35] INFO:__main__: Saving final model...
+[2024-11-17 10:22:35] INFO:__main__: Closing environments and stopping listener...
+[2024-11-17 10:22:35] INFO:__main__: Training process has been stopped.
+[2024-11-17 10:23:16] INFO:__main__: Using DQN training parameters.
+[2024-11-17 10:23:16] INFO:__main__: Initializing environment...
+[2024-11-17 10:23:16] DEBUG:__main__: Directory checked/created: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn
+[2024-11-17 10:23:16] DEBUG:__main__: Directory checked/created: ./logs_dqn/
+[2024-11-17 10:23:16] DEBUG:__main__: Directory checked/created: ./logs_eval_dqn/
+[2024-11-17 10:23:16] INFO:__main__: Setting policy parameters...
+[2024-11-17 10:23:18] INFO:__main__: Loading model from C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_final.zip...
+[2024-11-17 10:23:19] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 10:23:19] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 10:23:19] INFO:__main__: Loaded model is compatible with the new observation space.
+[2024-11-17 10:23:19] INFO:__main__: Waiting for 'o' key to start training...
+[2024-11-17 10:23:19] INFO:__main__: Waiting for the 'o' key to start training...
+[2024-11-17 10:23:23] INFO:__main__: Starting training: 'o' key pressed.
+[2024-11-17 10:23:23] INFO:__main__: 'o' key pressed. Proceeding with training...
+[2024-11-17 10:23:23] INFO:__main__: Starting keyboard listener for stopping training...
+[2024-11-17 10:23:23] INFO:__main__: Starting training...
+[2024-11-17 10:27:18] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_102718_reward_-51.91.zip
+[2024-11-17 10:31:34] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_103134_reward_-51.91.zip
+[2024-11-17 10:35:48] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_103548_reward_-51.91.zip
+[2024-11-17 10:40:04] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_104004_reward_-51.91.zip
+[2024-11-17 10:44:20] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_104420_reward_-51.91.zip
+[2024-11-17 10:48:34] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_104834_reward_-51.91.zip
+[2024-11-17 10:52:47] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_105246_reward_-51.91.zip
+[2024-11-17 10:57:01] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_105701_reward_-51.91.zip
+[2024-11-17 11:01:13] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_110113_reward_-51.91.zip
+[2024-11-17 11:05:26] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_110526_reward_-51.91.zip
+[2024-11-17 11:09:41] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_110941_reward_-51.91.zip
+[2024-11-17 11:13:55] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_111355_reward_-51.91.zip
+[2024-11-17 11:18:05] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_111805_reward_-51.91.zip
+[2024-11-17 11:22:19] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_112219_reward_-51.91.zip
+[2024-11-17 11:26:31] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_112631_reward_-51.91.zip
+[2024-11-17 11:30:45] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_113044_reward_-51.91.zip
+[2024-11-17 11:34:56] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_113456_reward_-51.91.zip
+[2024-11-17 11:39:07] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_113907_reward_-51.91.zip
+[2024-11-17 11:43:19] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_114319_reward_-51.91.zip
+[2024-11-17 11:47:34] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_114734_reward_-51.91.zip
+[2024-11-17 11:51:48] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_115148_reward_-51.91.zip
+[2024-11-17 11:56:02] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_115602_reward_-51.91.zip
+[2024-11-17 12:00:13] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_120012_reward_-51.91.zip
+[2024-11-17 12:04:28] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_120428_reward_-51.91.zip
+[2024-11-17 12:08:43] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_120843_reward_-51.91.zip
+[2024-11-17 12:12:54] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_121254_reward_-51.91.zip
+[2024-11-17 12:17:08] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_121708_reward_-51.91.zip
+[2024-11-17 12:17:16] INFO:__main__: Stopping training: 'I' key pressed.
+[2024-11-17 12:17:16] INFO:__main__: Training stopped by user.
+[2024-11-17 12:17:16] INFO:__main__: Training completed in 6833.35 seconds
+[2024-11-17 12:17:16] INFO:__main__: Saving final model...
+[2024-11-17 12:17:16] INFO:__main__: Closing environments and stopping listener...
+[2024-11-17 12:17:16] INFO:__main__: Training process has been stopped.
+[2024-11-17 12:19:13] INFO:__main__: Using DQN training parameters.
+[2024-11-17 12:19:13] INFO:__main__: Initializing environment...
+[2024-11-17 12:19:13] DEBUG:__main__: Directory checked/created: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn
+[2024-11-17 12:19:13] DEBUG:__main__: Directory checked/created: ./logs_dqn/
+[2024-11-17 12:19:13] DEBUG:__main__: Directory checked/created: ./logs_eval_dqn/
+[2024-11-17 12:19:13] INFO:__main__: Setting policy parameters...
+[2024-11-17 12:19:23] INFO:__main__: Loading model from C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_final.zip...
+[2024-11-17 12:19:23] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 12:19:23] INFO:__main__: CustomCombinedExtractor initialized with features_dim=18480
+[2024-11-17 12:19:23] INFO:__main__: Loaded model is compatible with the new observation space.
+[2024-11-17 12:19:23] INFO:__main__: Waiting for 'o' key to start training...
+[2024-11-17 12:19:23] INFO:__main__: Waiting for the 'o' key to start training...
+[2024-11-17 12:19:27] INFO:__main__: Starting training: 'o' key pressed.
+[2024-11-17 12:19:27] INFO:__main__: 'o' key pressed. Proceeding with training...
+[2024-11-17 12:19:27] INFO:__main__: Starting keyboard listener for stopping training...
+[2024-11-17 12:19:27] INFO:__main__: Starting training...
+[2024-11-17 12:23:27] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_122327_reward_-3153.98.zip
+[2024-11-17 12:27:43] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_122742_reward_-3153.98.zip
+[2024-11-17 12:31:59] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_123159_reward_-3153.98.zip
+[2024-11-17 12:36:12] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_123612_reward_-3153.98.zip
+[2024-11-17 12:40:30] INFO:__main__: Model checkpoint saved at: C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn\dqn_minecraft_20241117_124030_reward_-3153.98.zip
+[2024-11-17 12:43:17] INFO:__main__: Stopping training: 'I' key pressed.
+[2024-11-17 12:43:18] INFO:__main__: Training stopped by user.
+[2024-11-17 12:43:18] INFO:__main__: Training completed in 1430.08 seconds
+[2024-11-17 12:43:18] INFO:__main__: Saving final model...
+[2024-11-17 12:43:18] INFO:__main__: Closing environments and stopping listener...
+[2024-11-17 12:43:18] INFO:__main__: Training process has been stopped.

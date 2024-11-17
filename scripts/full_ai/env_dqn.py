@@ -14,7 +14,7 @@ import sys
 
 # Constants
 ACTION_DELAY = 0.2
-MAX_EPISODE_LENGTH = 2000
+MAX_EPISODE_LENGTH = 10000
 TASK_SIZE = 20
 REWARD_MODEL = "constant_x"  # or "random_task"
 TRAINING_LOGS_DIR = "training_logs"
@@ -104,10 +104,10 @@ class MinecraftEnv(gym.Env):
 
         progress = (desired_dx * delta_x + desired_dz * delta_z)
         reward = (progress * 3)
-        reward += 0.1 * np.cos(np.radians(yaw_diff))
+        #reward += 0.1 * np.cos(np.radians(yaw_diff))
 
         if progress <= 0:
-            reward -= 0.1
+            reward -= 0.5
 
         return np.clip(reward, -20.0, 20.0)
     

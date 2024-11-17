@@ -330,10 +330,10 @@ class MinecraftAgent:
     def toggle_space(self):
         """Toggle spacebar on or off."""
         if not self.is_space_toggled:
-            pyautogui.keyDown('space')
+            #pyautogui.keyDown('space')
             self.is_space_toggled = True
         else:
-            pyautogui.keyUp('space')
+            #pyautogui.keyUp('space')
             self.is_space_toggled = False
 
     def press_1(self):

@@ -13,6 +13,7 @@ import traceback
 import logging
 import time
 from datetime import datetime
+import re
 
 from stable_baselines3 import DQN
 from stable_baselines3.common.utils import check_for_correct_spaces
@@ -24,7 +25,7 @@ from env_dqn import MinecraftEnv  # Import the updated environment
 # -------------------- Configuration --------------------
 
 # Learning rate
-LEARNING_RATE = 0.0005  # Reduced learning rate for stability
+LEARNING_RATE = 0.005  # Reduced learning rate for stability
 
 # Directories
 MODELS_DIR = r'C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\models_dqn'
@@ -39,13 +40,13 @@ TRAINING_PARAMS = {
     'total_timesteps': 500000,  # Increased total timesteps for better learning
     'learning_rate': LEARNING_RATE,
     'buffer_size': 50000,  # Reduced buffer size to manage memory usage
-    'learning_starts': 500,
-    'batch_size': 64,  # Increased batch size for stability
+    'learning_starts': 1000,
+    'batch_size': 256,  # Increased batch size for stability
     'gamma': 0.99,
     'train_freq': (1, 'step'),  # Train every step
-    'target_update_interval': 500,
-    'exploration_fraction': 0.25,  # Increased exploration
-    'exploration_final_eps': 0.1,
+    'target_update_interval': 1000,
+    'exploration_fraction': 0.15,  # Increased exploration
+    'exploration_final_eps': 0.05,
     'verbose': 2
 }
 
@@ -105,17 +106,53 @@ threading.excepthook = handle_thread_exception
 
 class TimestampedCheckpointCallback(BaseCallback):
     """
-    A custom callback to save models with a unique timestamp every `save_freq` steps.
+    Custom callback to save models with timestamp and cumulative reward.
     """
-    def __init__(self, save_freq: int, save_path: str, verbose: int = 0):
+    def __init__(self, save_freq: int, save_path: str, log_dir: str, verbose: int = 0):
         super(TimestampedCheckpointCallback, self).__init__(verbose)
         self.save_freq = save_freq
         self.save_path = save_path
+        self.log_dir = log_dir
+        self.start_cumulative_reward = 0.0  # Default to 0 if no logs are available
+
+        try:
+            # Get all log files in the directory
+            log_files = [os.path.join(self.log_dir, f) for f in os.listdir(self.log_dir) if f.endswith(".txt")]
+            if log_files:
+                # Find the newest log file
+                latest_log_file = max(log_files, key=os.path.getmtime)
+
+                # Read the newest log file
+                with open(latest_log_file, "r") as file:
+                    lines = file.readlines()
+
+                # Search for the last occurrence of cumulative reward
+                for line in reversed(lines):
+                    match = re.search(r"Cumulative Reward = ([\d\.\-]+)", line)
+                    if match:
+                        self.start_cumulative_reward = float(match.group(1))
+                        break
+        except Exception as e:
+            logger.warning(f"Could not read cumulative reward from log files: {e}")
 
     def _on_step(self) -> bool:
+        # Safely access the cumulative reward
+        cumulative_reward = self.start_cumulative_reward
+        try:
+            if hasattr(self.training_env, "get_wrapper_attr"):
+                cumulative_reward = self.training_env.get_wrapper_attr("cumulative_reward")
+            elif hasattr(self.training_env, "unwrapped") and hasattr(self.training_env.unwrapped, "cumulative_reward"):
+                cumulative_reward = self.training_env.unwrapped.cumulative_reward
+        except Exception as e:
+            logger.warning(f"Could not fetch cumulative reward: {e}")
+
+        # Save model every `save_freq` steps
         if self.n_calls % self.save_freq == 0:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            model_path = os.path.join(self.save_path, f"dqn_minecraft_{timestamp}.zip")
+            model_path = os.path.join(
+                self.save_path,
+                f"dqn_minecraft_{timestamp}_reward_{cumulative_reward:.2f}.zip"
+            )
             self.model.save(model_path)
             if self.verbose > 0:
                 logger.info(f"Model checkpoint saved at: {model_path}")
@@ -155,6 +192,10 @@ class StopTrainingCallback(BaseCallback):
         return True
 
 # -------------------- Custom Feature Extractor --------------------
+
+
+
+
 
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 
@@ -411,6 +452,7 @@ def main():
     checkpoint_callback = TimestampedCheckpointCallback(
         save_freq=500,  # Save model every 500 steps
         save_path=MODELS_DIR,
+        log_dir=r"C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\training_logs",
         verbose=1
     )
 
@@ -419,7 +461,7 @@ def main():
         best_model_save_path=BEST_MODEL_DIR,
         save_path=TIMESTAMPED_BEST_MODELS_DIR,
         log_path=LOGS_DIR,
-        eval_freq=5000,  # Adjusted evaluation frequency
+        eval_freq=200000,  # Adjusted evaluation frequency
         deterministic=True,
         render=False
     )

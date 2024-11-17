@@ -2,12 +2,13 @@ import os
 import re
 import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib.backends.backend_pdf import PdfPages
 
 # Define the folder containing log files
 log_folder = r"C:\Users\odezz\source\MinecraftAI2\scripts\full_ai\training_logs"
 
 # Parameters for graph resolution
-BIN_SIZE = 10  # Number of steps per bin for aggregation (e.g., 10, 100, 1000)
+BIN_SIZE = 1  # Number of steps per bin for aggregation (e.g., 10, 100, 1000)
 
 def parse_log_file(file_path):
     """
@@ -23,15 +24,16 @@ def parse_log_file(file_path):
         "Action": [],
         "Action Name": [],
         "Reward": [],
-        "Cumulative Reward": []
+        "Cumulative Reward": [],
     }
-    
-    with open(file_path, 'r') as file:
+
+    with open(file_path, "r") as file:
         for line in file:
             match = re.match(
                 r"Step (\d+): X = ([\d\.-]+), Y = ([\d\.-]+), Z = ([\d\.-]+), "
                 r"Yaw = ([\d\.-]+), Pitch = ([\d\.-]+), Action = (\d+), "
-                r"Action Name = (\w+), Reward = ([\d\.-]+), Cumulative Reward = ([\d\.-]+)", line
+                r"Action Name = (\w+), Reward = ([\d\.-]+), Cumulative Reward = ([\d\.-]+)",
+                line,
             )
             if match:
                 step, x, y, z, yaw, pitch, action, action_name, reward, cum_reward = match.groups()
@@ -45,8 +47,10 @@ def parse_log_file(file_path):
                 data["Action Name"].append(action_name)
                 data["Reward"].append(float(reward))
                 data["Cumulative Reward"].append(float(cum_reward))
-    
+
+    print(f"Parsed {len(data['Step'])} steps from {file_path}")
     return pd.DataFrame(data)
+
 
 def aggregate_data(df, bin_size):
     """
@@ -59,12 +63,11 @@ def aggregate_data(df, bin_size):
     aggregated["Step"] = aggregated["Bin"] * bin_size  # Map bins back to steps
     return aggregated
 
-def plot_combined_graphs(df, output_dir, bin_size):
+
+def plot_combined_graphs(df, pdf, bin_size):
     """
-    Plot combined graphs from the aggregated dataframe.
+    Plot combined graphs from the aggregated dataframe and save to a PDF.
     """
-    os.makedirs(output_dir, exist_ok=True)
-    
     # Aggregate data for reduced resolution
     aggregated_df = aggregate_data(df, bin_size)
 
@@ -75,7 +78,7 @@ def plot_combined_graphs(df, output_dir, bin_size):
     plt.ylabel("Reward")
     plt.title(f"Reward Over Steps (Bin Size: {bin_size})")
     plt.legend()
-    plt.savefig(os.path.join(output_dir, f"combined_reward_{bin_size}.png"))
+    pdf.savefig()  # Save the plot to the PDF
     plt.close()
 
     # Plot Cumulative Reward over Steps
@@ -85,7 +88,7 @@ def plot_combined_graphs(df, output_dir, bin_size):
     plt.ylabel("Cumulative Reward")
     plt.title(f"Cumulative Reward Over Steps (Bin Size: {bin_size})")
     plt.legend()
-    plt.savefig(os.path.join(output_dir, f"combined_cumulative_reward_{bin_size}.png"))
+    pdf.savefig()  # Save the plot to the PDF
     plt.close()
 
     # Plot Position (X, Z) over Steps
@@ -96,7 +99,7 @@ def plot_combined_graphs(df, output_dir, bin_size):
     plt.ylabel("Position")
     plt.title(f"Position Over Steps (Bin Size: {bin_size})")
     plt.legend()
-    plt.savefig(os.path.join(output_dir, f"combined_position_{bin_size}.png"))
+    pdf.savefig()  # Save the plot to the PDF
     plt.close()
 
     # Plot Yaw over Steps
@@ -106,7 +109,7 @@ def plot_combined_graphs(df, output_dir, bin_size):
     plt.ylabel("Yaw")
     plt.title(f"Yaw Over Steps (Bin Size: {bin_size})")
     plt.legend()
-    plt.savefig(os.path.join(output_dir, f"combined_yaw_{bin_size}.png"))
+    pdf.savefig()  # Save the plot to the PDF
     plt.close()
 
     # Plot Average Reward per Action
@@ -117,12 +120,62 @@ def plot_combined_graphs(df, output_dir, bin_size):
     plt.ylabel("Average Reward")
     plt.title("Average Reward per Action")
     plt.xticks(action_rewards.index)
-    plt.savefig(os.path.join(output_dir, "combined_avg_reward_per_action.png"))
+    pdf.savefig()  # Save the plot to the PDF
     plt.close()
 
-def process_and_plot_all_logs(log_folder, output_dir="combined_graphs", bin_size=BIN_SIZE):
+
+def plot_every_100th_datapoint(df, pdf):
     """
-    Process all log files, combine data, and generate graphs.
+    Plot a graph using every 100th datapoint from the DataFrame and save to a PDF.
+    """
+    # Select every 100th row
+    every_100th_df = df.iloc[::100, :]
+
+    # Plot every 100th Reward over Steps
+    plt.figure()
+    plt.plot(every_100th_df["Step"], every_100th_df["Reward"], label="Reward")
+    plt.xlabel("Step")
+    plt.ylabel("Reward")
+    plt.title("Reward Over Steps (Every 100th Datapoint)")
+    plt.legend()
+    pdf.savefig()  # Save the plot to the PDF
+    plt.close()
+
+    # Plot every 100th Cumulative Reward over Steps
+    plt.figure()
+    plt.plot(every_100th_df["Step"], every_100th_df["Cumulative Reward"], label="Cumulative Reward", color="orange")
+    plt.xlabel("Step")
+    plt.ylabel("Cumulative Reward")
+    plt.title("Cumulative Reward Over Steps (Every 100th Datapoint)")
+    plt.legend()
+    pdf.savefig()  # Save the plot to the PDF
+    plt.close()
+
+    # Plot Position (X, Z) for every 100th datapoint
+    plt.figure()
+    plt.plot(every_100th_df["Step"], every_100th_df["X"], label="X Position")
+    plt.plot(every_100th_df["Step"], every_100th_df["Z"], label="Z Position", color="green")
+    plt.xlabel("Step")
+    plt.ylabel("Position")
+    plt.title("Position Over Steps (Every 100th Datapoint)")
+    plt.legend()
+    pdf.savefig()  # Save the plot to the PDF
+    plt.close()
+
+    # Plot Yaw over Steps for every 100th datapoint
+    plt.figure()
+    plt.plot(every_100th_df["Step"], every_100th_df["Yaw"], label="Yaw", color="purple")
+    plt.xlabel("Step")
+    plt.ylabel("Yaw")
+    plt.title("Yaw Over Steps (Every 100th Datapoint)")
+    plt.legend()
+    pdf.savefig()  # Save the plot to the PDF
+    plt.close()
+
+
+def process_and_plot_all_logs(log_folder, output_pdf="combined_graphs.pdf", output_csv="combined_data.csv", bin_size=BIN_SIZE):
+    """
+    Process all log files, combine data, generate graphs in a single PDF, and save raw data to a CSV.
     """
     all_data = []
     for file_name in os.listdir(log_folder):
@@ -131,13 +184,25 @@ def process_and_plot_all_logs(log_folder, output_dir="combined_graphs", bin_size
             print(f"Processing {file_name}...")
             df = parse_log_file(file_path)
             all_data.append(df)
-    
+
     # Combine all data into one DataFrame
     combined_df = pd.concat(all_data, ignore_index=True)
-    print(f"Total steps processed: {len(combined_df)}")
-    
-    # Plot combined graphs
-    plot_combined_graphs(combined_df, output_dir, bin_size)
+    combined_df = combined_df.sort_values("Step").reset_index(drop=True)
+    print(f"Combined DataFrame contains {len(combined_df)} steps.")
+
+    # Save the raw data to a CSV file
+    combined_df.to_csv(output_csv, index=False)
+    print(f"Raw data saved to {output_csv}")
+
+    # Open a multi-page PDF for all plots
+    with PdfPages(output_pdf) as pdf:
+        # Plot combined graphs
+        plot_combined_graphs(combined_df, pdf, bin_size)
+        # Plot every 100th datapoint graphs
+        plot_every_100th_datapoint(combined_df, pdf)
+
+    print(f"Graphs saved to {output_pdf}")
+
 
 # Run the script
 process_and_plot_all_logs(log_folder)
