@@ -1,0 +1,2 @@
+python train_simulated.py --parallel 4
+python train_simulated.py
