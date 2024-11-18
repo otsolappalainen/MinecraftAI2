@@ -1,13 +1,15 @@
 import os
 import logging
-from stable_baselines3 import DQN
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
-from stable_baselines3.common.callbacks import BaseCallback
-from stable_baselines3.common.logger import TensorBoardOutputFormat
 import datetime
 import numpy as np
 import optuna  # For hyperparameter optimization
-from env_simulated import SimulatedEnvGraphics  # Import the environment
+import torch as th
+import torch.nn as nn
+from stable_baselines3 import DQN
+from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+from cnn_env import SimulatedEnvGraphics  # Import the environment
 
 # Hardcoded paths and parameters
 MODEL_PATH = r"E:\model_spam"  # Path to save the trained model
@@ -15,8 +17,15 @@ BEST_MODELS_PATH = os.path.join(MODEL_PATH, "best_models")
 TRAJECTORY_PATH = os.path.join(MODEL_PATH, "trajectories")
 PARALLEL_ENVS = 1  # Number of parallel environments
 RENDER_MODE = "none"
-SAVE_EVERY_STEPS = 100000  # Save the model every 100000 steps
-OPTUNA_TRIALS = 40  # Number of trials for hyperparameter tuning
+SAVE_EVERY_STEPS = 10000  # Save the model every 100000 steps
+OPTUNA_TRIALS = 10  # Number of trials for hyperparameter tuning
+TOTAL_TIMESTEPS = 200000  # Total timesteps for final training
+
+# CNN parameters
+FEATURES_DIM = 256  # Output dimensions of the CNN feature extractor
+CNN_FILTERS = [32, 64, 64]  # Filters for each convolutional layer
+CNN_KERNEL_SIZES = [8, 4, 3]  # Kernel sizes for each convolutional layer
+CNN_STRIDES = [4, 2, 1]  # Strides for each convolutional layer
 
 # Logging setup
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s')
@@ -92,6 +101,55 @@ class SaveBestModelOnEvalCallback(BaseCallback):
         return True
 
 
+class CustomCombinedExtractor(BaseFeaturesExtractor):
+    """
+    Custom feature extractor for Dict observation spaces, combining CNN for image and MLP for other data.
+    """
+    def __init__(self, observation_space, features_dim=FEATURES_DIM):
+        super(CustomCombinedExtractor, self).__init__(observation_space, features_dim)
+
+        # Extractors for each key in the Dict observation space
+        self.extractors = {}
+
+        # Build the CNN for the 'image' key
+        image_shape = observation_space['image'].shape
+        self.extractors['image'] = nn.Sequential(
+            nn.Conv2d(image_shape[0], CNN_FILTERS[0], kernel_size=CNN_KERNEL_SIZES[0], stride=CNN_STRIDES[0]),
+            nn.ReLU(),
+            nn.Conv2d(CNN_FILTERS[0], CNN_FILTERS[1], kernel_size=CNN_KERNEL_SIZES[1], stride=CNN_STRIDES[1]),
+            nn.ReLU(),
+            nn.Conv2d(CNN_FILTERS[1], CNN_FILTERS[2], kernel_size=CNN_KERNEL_SIZES[2], stride=CNN_STRIDES[2]),
+            nn.ReLU(),
+            nn.Flatten()
+        )
+
+        # Compute the output size of the CNN
+        with th.no_grad():
+            sample_input = th.zeros(1, *image_shape)
+            cnn_output_size = self.extractors['image'](sample_input).shape[1]
+
+        # MLP for the 'other' key
+        other_shape = observation_space['other'].shape[0]
+        self.extractors['other'] = nn.Sequential(
+            nn.Linear(other_shape, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU()
+        )
+
+        # Total combined features dimension
+        self._features_dim = cnn_output_size + 128
+
+    def forward(self, observations):
+        # Extract features from image and other data
+        image_features = self.extractors['image'](observations['image'])
+        other_features = self.extractors['other'](observations['other'])
+
+        # Concatenate features
+        combined_features = th.cat((image_features, other_features), dim=1)
+        return combined_features
+
+
 def hyperparameter_tuning(trial):
     """
     Objective function for hyperparameter tuning with Optuna.
@@ -100,16 +158,21 @@ def hyperparameter_tuning(trial):
 
     # Sample hyperparameters
     learning_rate = trial.suggest_loguniform("learning_rate", 1e-5, 1e-3)
-    buffer_size = trial.suggest_int("buffer_size", 10000, 30000, step=5000)
+    buffer_size = trial.suggest_int("buffer_size", 50000, 100000, step=10000)
     batch_size = trial.suggest_int("batch_size", 32, 256, step=32)
     gamma = trial.suggest_float("gamma", 0.9, 0.99)
-    train_freq = trial.suggest_int("train_freq", 1, 10)
+    train_freq = trial.suggest_int("train_freq", 1, 8)
     target_update_interval = trial.suggest_int("target_update_interval", 500, 5000, step=500)
     exploration_fraction = trial.suggest_float("exploration_fraction", 0.1, 0.5)
     exploration_final_eps = trial.suggest_float("exploration_final_eps", 0.01, 0.1)
 
+    policy_kwargs = dict(
+        features_extractor_class=CustomCombinedExtractor,
+        features_extractor_kwargs=dict(features_dim=FEATURES_DIM),
+    )
+
     model = DQN(
-        policy="MlpPolicy",
+        policy="MultiInputPolicy",
         env=env,
         learning_rate=learning_rate,
         buffer_size=buffer_size,
@@ -119,6 +182,7 @@ def hyperparameter_tuning(trial):
         target_update_interval=target_update_interval,
         exploration_fraction=exploration_fraction,
         exploration_final_eps=exploration_final_eps,
+        policy_kwargs=policy_kwargs,
         verbose=0,
     )
 
@@ -158,8 +222,13 @@ def train_agent_with_tuned_params(env, model_path, params, total_timesteps):
     """
     os.makedirs(model_path, exist_ok=True)
 
+    policy_kwargs = dict(
+        features_extractor_class=CustomCombinedExtractor,
+        features_extractor_kwargs=dict(features_dim=FEATURES_DIM),
+    )
+
     model = DQN(
-        policy="MlpPolicy",
+        policy="MultiInputPolicy",
         env=env,
         learning_rate=params["learning_rate"],
         buffer_size=params["buffer_size"],
@@ -169,13 +238,14 @@ def train_agent_with_tuned_params(env, model_path, params, total_timesteps):
         target_update_interval=params["target_update_interval"],
         exploration_fraction=params["exploration_fraction"],
         exploration_final_eps=params["exploration_final_eps"],
+        policy_kwargs=policy_kwargs,
         verbose=1,
         tensorboard_log="./simulated_tensorboard/",
     )
 
     save_on_step_callback = SaveOnStepCallback(
         save_freq=SAVE_EVERY_STEPS,
-        save_path="models/step_checkpoints",
+        save_path=os.path.join(model_path, "step_checkpoints"),
         verbose=1
     )
 
@@ -200,7 +270,7 @@ def main():
 
     print("Training with best parameters...")
     env = DummyVecEnv([make_env(render_mode=RENDER_MODE)])
-    train_agent_with_tuned_params(env, MODEL_PATH, best_params, total_timesteps=2000000)
+    train_agent_with_tuned_params(env, MODEL_PATH, best_params, total_timesteps=TOTAL_TIMESTEPS)
 
 
 if __name__ == "__main__":

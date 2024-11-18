@@ -10,22 +10,40 @@ class SimulatedEnvGraphics(gym.Env):
     Simulated environment with lightweight graphics for visualization and
     compatibility with the real environment.
     """
-    def __init__(self, render_mode="none", grid_size=2000, cell_size=50, task_size=20, max_episode_length=250, simulation_speed=5, zoom_factor=0.2):
+    def __init__(
+        self,
+        render_mode="none",
+        grid_size=2000,
+        cell_size=50,
+        task_size=20,
+        max_episode_length=250,
+        simulation_speed=5,
+        zoom_factor=0.2,
+    ):
         super(SimulatedEnvGraphics, self).__init__()
 
-        # Match observation space with the real environment
-        self.position_size = 5  # x, y, z, yaw, pitch
-        self.image_size = 224 * 224  # Flattened image size
-        self.scalar_size = 3  # health, hunger, alive
-        self.task_size = task_size
-        self.obs_size = self.position_size + self.image_size + self.scalar_size + self.task_size
+        # Observation space parameters
+        self.image_height = 224
+        self.image_width = 224
+        self.image_channels = 1  # Grayscale image
 
-        self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(self.obs_size,), dtype=np.float32
-        )
+        self.position_size = 5  # x, y, z, yaw, pitch
+        self.scalar_size = 3    # health, hunger, alive
+        self.task_size = task_size
+        self.other_size = self.position_size + self.scalar_size + self.task_size
+
+        # Define observation space using Dict for image and other data
+        self.observation_space = spaces.Dict({
+            "image": spaces.Box(
+                low=0, high=1, shape=(self.image_channels, self.image_height, self.image_width), dtype=np.float32
+            ),
+            "other": spaces.Box(
+                low=-np.inf, high=np.inf, shape=(self.other_size,), dtype=np.float32
+            )
+        })
 
         # Match action space with the real environment
-        self.action_space = spaces.Discrete(25)  # Include all 25 actions
+        self.action_space = spaces.Discrete(4)  # Reduced to 4 meaningful actions
 
         # Simulation parameters
         self.x = 0
@@ -53,25 +71,33 @@ class SimulatedEnvGraphics(gym.Env):
     def _get_observation(self):
         """
         Create an observation that matches the real environment's format.
+        Returns a dictionary with 'image' and 'other' keys.
         """
-        # Dynamically generate a blank grayscale image (224x224)
-        image_flattened = np.full((224 * 224,), 128, dtype=np.float32) / 255.0  # Gray image normalized to 0-1
+        # Generate a blank grayscale image (224x224)
+        image = np.full((self.image_height, self.image_width), 128, dtype=np.float32) / 255.0  # Gray image normalized to 0-1
         # Add noise to image
-        image_flattened += np.random.normal(0, 0.01, size=image_flattened.shape)
+        image += np.random.normal(0, 0.01, size=image.shape)
         # Clip image values between 0 and 1
-        image_flattened = np.clip(image_flattened, 0, 1)
+        image = np.clip(image, 0, 1)
+        # Reshape to (channels, height, width)
+        image = image.reshape(self.image_channels, self.image_height, self.image_width)
 
         # Positional and scalar values
         positional_values = np.array([self.x, 0, self.z, self.yaw, self.pitch], dtype=np.float32)
         # Add noise to positional values
-        positional_values += np.random.normal(0, 0.01, size=positional_values.shape)
+        positional_values += np.random.normal(0, 0.001, size=positional_values.shape)
 
         scalar_values = np.array([self.hunger, self.health, self.alive], dtype=np.float32)
         # Add noise to scalar values
-        scalar_values += np.random.normal(0, 0.01, size=scalar_values.shape)
+        scalar_values += np.random.normal(0, 0.001, size=scalar_values.shape)
 
-        # Combine into a single observation
-        observation = np.concatenate([image_flattened, positional_values, scalar_values, self.current_task])
+        # Combine into 'other' observation
+        other_observation = np.concatenate([positional_values, scalar_values, self.current_task])
+
+        observation = {
+            "image": image,
+            "other": other_observation
+        }
         return observation
 
     def reset(self, seed=None, options=None):
@@ -80,13 +106,13 @@ class SimulatedEnvGraphics(gym.Env):
         """
         super().reset(seed=seed)
         if self.cumulative_reward != 0:
-            print(f"reward {self.cumulative_reward}")
+            print(f"Episode reward: {self.cumulative_reward}")
 
         # Reset simulation parameters
         self.x = np.random.uniform(-1200, 1200)
         self.z = np.random.uniform(-1200, 1200)
 
-        self.yaw = np.random.uniform(-180, 180)  # Random yaw (0 to 360 degrees)
+        self.yaw = np.random.uniform(-180, 180)  # Random yaw (-180 to 180 degrees)
         self.pitch = np.random.uniform(-90, 90)  # Random pitch (-90 to 90 degrees)
 
         self.hunger = 100
@@ -108,11 +134,9 @@ class SimulatedEnvGraphics(gym.Env):
             [0, -1],
             [-1, -1]
         ]
-
-
         self.current_task[:2] = np.array(random.choice(possible_tasks), dtype=np.float32)
 
-        print(f"{self.current_task}")
+        print(f"Current task: {self.current_task[:2]}")
 
         if self.render_mode == "human":
             self._initialize_graphics()
@@ -126,7 +150,7 @@ class SimulatedEnvGraphics(gym.Env):
         """
         self.step_count += 1
 
-        # Actions (only a subset affects the simulation; others are no-ops)
+        # Actions (only a subset affects the simulation)
         if action == 0:  # Move forward
             self.x += np.sin(np.radians(self.yaw))
             self.z += np.cos(np.radians(self.yaw))
@@ -148,10 +172,10 @@ class SimulatedEnvGraphics(gym.Env):
         self.prev_z = self.z
 
         # Calculate reward based on the current task
-        reward = (delta_x * self.current_task[0] + delta_z * self.current_task[1]) * 2  # Scaling factor
+        reward = np.dot([delta_x, delta_z], self.current_task[:2]) * 10  # Scaling factor
         if reward > 0:
-            reward * 2
-        reward -= 0.5
+            reward += 5  # Bonus for moving in the right direction
+        reward -= 0.1  # Step penalty
 
         self.cumulative_reward += reward
 
@@ -239,7 +263,6 @@ class SimulatedEnvGraphics(gym.Env):
 
         # Cap the frame rate
         self.clock.tick(self.simulation_speed)
-
 
     def close(self):
         """
