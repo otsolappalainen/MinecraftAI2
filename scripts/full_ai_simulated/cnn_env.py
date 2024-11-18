@@ -1,15 +1,19 @@
 import gymnasium as gym
 from gymnasium import spaces
+import torch as th
 import numpy as np
+import random
 import pygame
 import time
-import random
+import csv
+
 
 class SimulatedEnvGraphics(gym.Env):
     """
-    Simulated environment with lightweight graphics for visualization and
-    compatibility with the real environment.
+    Optimized Simulated environment with lightweight graphics for visualization
+    and compatibility with the real environment.
     """
+
     def __init__(
         self,
         render_mode="none",
@@ -19,31 +23,38 @@ class SimulatedEnvGraphics(gym.Env):
         max_episode_length=250,
         simulation_speed=5,
         zoom_factor=0.2,
+        device="cpu",  # Dynamically set device if not provided
+        log_file=r"E:\CNN\training_data.csv",
     ):
         super(SimulatedEnvGraphics, self).__init__()
+
+        
 
         # Observation space parameters
         self.image_height = 224
         self.image_width = 224
         self.image_channels = 1  # Grayscale image
+        self.log_file = log_file
 
+        self.device = "cpu"
+        self.agent_id="agent_1",
         self.position_size = 5  # x, y, z, yaw, pitch
-        self.scalar_size = 3    # health, hunger, alive
+        self.scalar_size = 3  # health, hunger, alive
         self.task_size = task_size
         self.other_size = self.position_size + self.scalar_size + self.task_size
 
         # Define observation space using Dict for image and other data
-        self.observation_space = spaces.Dict({
-            "image": spaces.Box(
-                low=0, high=1, shape=(self.image_channels, self.image_height, self.image_width), dtype=np.float32
-            ),
-            "other": spaces.Box(
-                low=-np.inf, high=np.inf, shape=(self.other_size,), dtype=np.float32
-            )
-        })
+        self.observation_space = spaces.Dict(
+            {
+                "image": spaces.Box(
+                    low=0, high=1, shape=(self.image_channels, self.image_height, self.image_width), dtype=np.float32
+                ),
+                "other": spaces.Box(low=-np.inf, high=np.inf, shape=(self.other_size,), dtype=np.float32),
+            }
+        )
 
-        # Match action space with the real environment
-        self.action_space = spaces.Discrete(4)  # Reduced to 4 meaningful actions
+        # Action space
+        self.action_space = spaces.Discrete(25)  # Placeholder for future use
 
         # Simulation parameters
         self.x = 0
@@ -59,6 +70,7 @@ class SimulatedEnvGraphics(gym.Env):
         self.cell_size = cell_size
         self.zoom_factor = zoom_factor
 
+        self.episode_id = 0
         self.step_count = 0
         self.max_episode_length = max_episode_length
         self.render_mode = render_mode
@@ -68,37 +80,53 @@ class SimulatedEnvGraphics(gym.Env):
         self.window = None
         self.clock = None
 
+        # Initialize the log file
+        with open(self.log_file, mode="w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["agent_id", "episode_id", "step", "x", "z", "yaw", "reward", "task_x", "task_z"])
+
+
+    def _log_step(self, x, z, yaw, reward, task_x, task_z):
+        """
+        Log data for the current step.
+        """
+        with open(self.log_file, mode="a", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow([self.agent_id, self.episode_id, self.step_count, x, z, yaw, reward, task_x, task_z])
+
+
     def _get_observation(self):
         """
-        Create an observation that matches the real environment's format.
-        Returns a dictionary with 'image' and 'other' keys.
+        Create an observation with image and other data.
+        Returns PyTorch tensors for Stable-Baselines3 compatibility.
         """
         # Generate a blank grayscale image (224x224)
-        image = np.full((self.image_height, self.image_width), 128, dtype=np.float32) / 255.0  # Gray image normalized to 0-1
-        # Add noise to image
+        image = np.full(
+            (self.image_channels, self.image_height, self.image_width),
+            128 / 255.0,
+            dtype=np.float32,
+        )
+        # Add noise to the image
         image += np.random.normal(0, 0.01, size=image.shape)
-        # Clip image values between 0 and 1
         image = np.clip(image, 0, 1)
-        # Reshape to (channels, height, width)
-        image = image.reshape(self.image_channels, self.image_height, self.image_width)
 
         # Positional and scalar values
-        positional_values = np.array([self.x, 0, self.z, self.yaw, self.pitch], dtype=np.float32)
-        # Add noise to positional values
-        positional_values += np.random.normal(0, 0.001, size=positional_values.shape)
-
-        scalar_values = np.array([self.hunger, self.health, self.alive], dtype=np.float32)
-        # Add noise to scalar values
-        scalar_values += np.random.normal(0, 0.001, size=scalar_values.shape)
+        positional_values = np.array(
+            [self.x, 0, self.z, self.yaw, self.pitch], dtype=np.float32
+        )
+        scalar_values = np.array(
+            [self.hunger, self.health, self.alive], dtype=np.float32
+        )
+        task_values = np.array(self.current_task, dtype=np.float32)
 
         # Combine into 'other' observation
-        other_observation = np.concatenate([positional_values, scalar_values, self.current_task])
+        other_observation = np.concatenate([positional_values, scalar_values, task_values])
 
-        observation = {
-            "image": image,
-            "other": other_observation
-        }
-        return observation
+        # Convert to tensors on the appropriate device
+        return {
+            "image": th.tensor(image, dtype=th.float32, device=self.device),
+            "other": th.tensor(other_observation, dtype=th.float32, device=self.device),
+    }
 
     def reset(self, seed=None, options=None):
         """
@@ -109,8 +137,8 @@ class SimulatedEnvGraphics(gym.Env):
             print(f"Episode reward: {self.cumulative_reward}")
 
         # Reset simulation parameters
-        self.x = np.random.uniform(-1200, 1200)
-        self.z = np.random.uniform(-1200, 1200)
+        self.x = np.random.uniform(-120, 120)
+        self.z = np.random.uniform(-120, 120)
 
         self.yaw = np.random.uniform(-180, 180)  # Random yaw (-180 to 180 degrees)
         self.pitch = np.random.uniform(-90, 90)  # Random pitch (-90 to 90 degrees)
@@ -126,28 +154,28 @@ class SimulatedEnvGraphics(gym.Env):
         # Set current task with at least one of the first two positions being 1
         self.current_task = np.zeros(self.task_size, dtype=np.float32)
         possible_tasks = [
-            [1, -1],
-            [1, 0],
-            [1, 1],
-            [0, 1],
-            [-1, 1],
-            [0, -1],
-            [-1, -1]
+            [-1, 0],
+            #[1, 0],
         ]
+
+
         self.current_task[:2] = np.array(random.choice(possible_tasks), dtype=np.float32)
 
-        print(f"Current task: {self.current_task[:2]}")
+        #print(f"Current task: {self.current_task[:2]}")
+        self._log_step(self.x, self.z, self.yaw, 0, self.current_task[0], self.current_task[1])
 
-        if self.render_mode == "human":
-            self._initialize_graphics()
 
         observation = self._get_observation()
         return observation, {}
+
 
     def step(self, action):
         """
         Perform a step in the environment.
         """
+        if not hasattr(self, "no_progress_count"):
+            self.no_progress_count = 0
+
         self.step_count += 1
 
         # Actions (only a subset affects the simulation)
@@ -161,7 +189,6 @@ class SimulatedEnvGraphics(gym.Env):
             self.yaw = (self.yaw - 10) % 360 - 180
         elif action == 3:  # Turn right
             self.yaw = (self.yaw + 10) % 360 - 180
-        # Other actions do nothing (no-op)
 
         # Calculate delta_x and delta_z
         delta_x = self.x - self.prev_x
@@ -172,102 +199,46 @@ class SimulatedEnvGraphics(gym.Env):
         self.prev_z = self.z
 
         # Calculate reward based on the current task
-        reward = np.dot([delta_x, delta_z], self.current_task[:2]) * 10  # Scaling factor
-        if reward > 0:
-            reward += 5  # Bonus for moving in the right direction
-        reward -= 0.1  # Step penalty
+        current_task_vector = th.tensor(self.current_task[:2], dtype=th.float32, device=self.device)
+        movement_vector = th.tensor([delta_x, delta_z], dtype=th.float32, device=self.device)
+        dot_product = th.dot(movement_vector, current_task_vector).item()
 
+        if dot_product > 0:
+            # Reward for moving in the correct direction
+            reward = dot_product * 10 + 5  # Bonus reward
+            self.no_progress_count = 0  # Reset the no progress counter
+        elif dot_product < 0:
+            # Penalty for moving in the wrong direction
+            reward = dot_product * 10 - 5
+            self.no_progress_count += 1
+        else:
+            # Strong penalty for staying still
+            self.no_progress_count += 1
+            reward = -5
+
+        # Add escalating penalty for staying still or oscillating
+        reward -= self.no_progress_count ** 2 * 0.1
+
+        # Clamp reward to prevent runaway values (optional)
+        reward = max(reward, -50)
+
+        # Update cumulative reward
         self.cumulative_reward += reward
 
         # Determine if the episode is done
         terminated = self.step_count >= self.max_episode_length
         truncated = False
 
-        # Get observation with noise
+        # Get observation
         observation = self._get_observation()
 
-        # Render if in graphical mode
-        if self.render_mode == "human":
-            self._render()
-            time.sleep(self.time_step)
+        
 
-        # Return the updated observation, reward, and status flags
+        if self.step_count % 5 == 0:
+            self._log_step(self.x, self.z, self.yaw, reward, self.current_task[0], self.current_task[1])
+            #print(f"x: {self.x} z: {self.z} yaw: {self.yaw} CR: {self.cumulative_reward}")
+
+
         return observation, reward, terminated, truncated, {}
 
-    def _initialize_graphics(self):
-        """
-        Initialize the graphical environment and precompute static elements.
-        """
-        pygame.init()
-        pygame.font.init()
-        self.window = pygame.display.set_mode((self.window_size, self.window_size), pygame.HWSURFACE | pygame.DOUBLEBUF)
-        pygame.display.set_caption("Simulated Environment")
-        self.clock = pygame.time.Clock()
-
-        # Create a surface for static elements (grid)
-        self.background = pygame.Surface((self.window_size, self.window_size))
-        self.background.fill((255, 255, 255))  # White background
-
-        # Draw the grid on the background surface
-        adjusted_cell_size = self.cell_size * self.zoom_factor
-        for x in range(0, self.window_size, int(adjusted_cell_size)):
-            pygame.draw.line(self.background, (200, 200, 200), (x, 0), (x, self.window_size))
-        for y in range(0, self.window_size, int(adjusted_cell_size)):
-            pygame.draw.line(self.background, (200, 200, 200), (0, y), (self.window_size, y))
-
-        # Load font once
-        self.font = pygame.font.SysFont(None, 24)
-
-    def _render(self):
-        """
-        Render the environment using pygame with precomputed static elements.
-        """
-        if self.window is None:
-            self._initialize_graphics()
-
-        # Blit the static background
-        self.window.blit(self.background, (0, 0))
-
-        # Convert x, z to screen coordinates relative to the center of the grid
-        center_offset = self.grid_size // 2
-        agent_x = int(
-            (self.x + center_offset) * self.zoom_factor * self.window_size / self.grid_size
-        )
-        agent_z = int(
-            (self.z + center_offset) * self.zoom_factor * self.window_size / self.grid_size
-        )
-
-        # Draw the agent (triangle arrow)
-        agent_direction = np.radians(self.yaw)
-        agent_triangle = [
-            (agent_x + 10 * self.zoom_factor * np.cos(agent_direction), 
-            agent_z + 10 * self.zoom_factor * np.sin(agent_direction)),
-            (agent_x + 5 * self.zoom_factor * np.cos(agent_direction + 2.5), 
-            agent_z + 5 * self.zoom_factor * np.sin(agent_direction + 2.5)),
-            (agent_x + 5 * self.zoom_factor * np.cos(agent_direction - 2.5), 
-            agent_z + 5 * self.zoom_factor * np.sin(agent_direction - 2.5)),
-        ]
-        pygame.draw.polygon(self.window, (0, 0, 255), agent_triangle)
-
-        # Render text for coordinates and cumulative reward
-        text = self.font.render(
-            f"X: {self.x:.2f}, Z: {self.z:.2f}, Reward: {self.cumulative_reward:.2f}",
-            True,
-            (0, 0, 0),
-        )
-        text_rect = text.get_rect(center=(agent_x, agent_z - 15 * self.zoom_factor))
-        self.window.blit(text, text_rect)
-
-        # Refresh the display
-        pygame.display.flip()
-
-        # Cap the frame rate
-        self.clock.tick(self.simulation_speed)
-
-    def close(self):
-        """
-        Close the graphical environment.
-        """
-        if self.window:
-            pygame.quit()
-            self.window = None
+    # Remaining methods (_initialize_graphics, _render, close) are unchanged

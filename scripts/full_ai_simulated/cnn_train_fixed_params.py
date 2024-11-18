@@ -2,7 +2,6 @@ import os
 import logging
 import datetime
 import numpy as np
-import optuna  # For hyperparameter optimization
 import torch as th
 import torch.nn as nn
 from stable_baselines3 import DQN
@@ -10,16 +9,26 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from cnn_env import SimulatedEnvGraphics  # Import the environment
+import signal
+
 
 # Hardcoded paths and parameters
-MODEL_PATH = r"E:\model_spam"  # Path to save the trained model
-BEST_MODELS_PATH = os.path.join(MODEL_PATH, "best_models")
-TRAJECTORY_PATH = os.path.join(MODEL_PATH, "trajectories")
+MODEL_PATH = r"E:\CNN"  # Path to save and load the models
 PARALLEL_ENVS = 1  # Number of parallel environments
 RENDER_MODE = "none"
-SAVE_EVERY_STEPS = 10000  # Save the model every 100000 steps
-OPTUNA_TRIALS = 10  # Number of trials for hyperparameter tuning
-TOTAL_TIMESTEPS = 200000  # Total timesteps for final training
+SAVE_EVERY_STEPS = 20000  # Save the model every 10,000 steps
+TOTAL_TIMESTEPS = 500000  # Total timesteps for training
+
+# Training parameters
+LEARNING_RATE = 0.0001
+BUFFER_SIZE = 15000
+BATCH_SIZE = 224
+GAMMA = 0.94
+TRAIN_FREQ = 4
+TARGET_UPDATE_INTERVAL = 1500
+EXPLORATION_FRACTION = 0.4
+EXPLORATION_FINAL_EPS = 0.02
+EVAL_FREQ = 30000
 
 # CNN parameters
 FEATURES_DIM = 256  # Output dimensions of the CNN feature extractor
@@ -63,24 +72,46 @@ def make_env(render_mode="none"):
 
 class SaveBestModelOnEvalCallback(BaseCallback):
     """
-    Custom callback to save the best model during evaluation with console logs for evaluation steps.
+    Custom callback to save the best model during evaluation with smoothed rewards.
+    Includes functionality to save the last model when training ends or upon a manual stop.
     """
-    def __init__(self, eval_env, save_path, verbose=1, eval_frequency=1000):
+    def __init__(self, eval_env, save_path, verbose=1, eval_frequency=1000, moving_avg_window=25):
         super(SaveBestModelOnEvalCallback, self).__init__(verbose)
         self.eval_env = eval_env
         self.save_path = save_path
-        self.best_mean_reward = -float("inf")
+        self.best_smoothed_reward = -float("inf")
         self.eval_frequency = eval_frequency
+        self.moving_avg_window = moving_avg_window
+        self.reward_history = []  # Keep track of recent rewards for moving average
+        self.stop_training = False  # Signal to stop training
         os.makedirs(save_path, exist_ok=True)
+
+        # Handle interrupt signal to stop training
+        signal.signal(signal.SIGINT, self._handle_stop_signal)
 
     def _on_step(self) -> bool:
         if self.n_calls % self.eval_frequency == 0:
             mean_reward = self.evaluate_model()
-            logger.info(f"Evaluation completed: Mean Reward={mean_reward:.2f}")
+            self.reward_history.append(mean_reward)
 
-            if mean_reward > self.best_mean_reward:
-                self.best_mean_reward = mean_reward
-                self.save_best_model(mean_reward)
+            # Maintain the reward history window size
+            if len(self.reward_history) > self.moving_avg_window:
+                self.reward_history.pop(0)
+
+            # Compute smoothed reward
+            smoothed_reward = np.mean(self.reward_history)
+            logger.info(f"Evaluation completed: Mean Reward={mean_reward:.2f}, Smoothed Reward={smoothed_reward:.2f}")
+
+            # Save the model if the smoothed reward is the best so far
+            if smoothed_reward > self.best_smoothed_reward:
+                self.best_smoothed_reward = smoothed_reward
+                self.save_best_model(smoothed_reward)
+
+        # Stop training if stop signal is triggered
+        if self.stop_training:
+            logger.info("Manual stop triggered. Saving the last model...")
+            self.save_last_model()
+            return False  # Stop training
 
         return True
 
@@ -89,27 +120,51 @@ class SaveBestModelOnEvalCallback(BaseCallback):
         Evaluate the current model using the provided evaluation environment.
         """
         logger.info("Starting evaluation...")
-        episode_rewards = []
-        obs = self.eval_env.reset()
-        done = False
+        total_rewards = []
 
-        while not done:
-            action, _ = self.model.predict(obs, deterministic=True)
-            obs, rewards, dones, infos = self.eval_env.step(action)
-            episode_rewards.append(rewards[0])
-            done = dones[0]
+        for episode in range(self.moving_avg_window):  # Evaluate over `moving_avg_window` episodes
+            obs = self.eval_env.reset()
+            done = [False] * self.eval_env.num_envs
+            episode_reward = 0
 
-        mean_reward = np.mean(episode_rewards)
+            while not all(done):
+                action, _ = self.model.predict(obs, deterministic=True)
+                obs, rewards, dones, infos = self.eval_env.step(action)
+                episode_reward += rewards[0]
+                done = dones
+
+            total_rewards.append(episode_reward)
+            logger.info(f"Episode {episode + 1}: Reward = {episode_reward}")
+
+        mean_reward = np.mean(total_rewards)
         return mean_reward
 
-    def save_best_model(self, mean_reward):
+    def save_best_model(self, smoothed_reward):
         """
-        Save the model with a timestamp if it achieves a new best mean reward.
+        Save the model with a timestamp if it achieves a new best smoothed reward.
         """
         timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         save_file = os.path.join(self.save_path, f"best_model_{timestamp}.zip")
         self.model.save(save_file)
-        logger.info(f"New best model saved at {save_file} with mean reward: {mean_reward:.2f}")
+        logger.info(f"New best model saved at {save_file} with smoothed reward: {smoothed_reward:.2f}")
+
+    def save_last_model(self):
+        """
+        Save the current model when training is manually stopped or ends.
+        """
+        save_file = os.path.join(self.save_path, "last_model.zip")
+        self.model.save(save_file)
+        logger.info(f"Last model saved at {save_file}")
+
+    def _handle_stop_signal(self, signum, frame):
+        """
+        Handle SIGINT (Ctrl+C) signal to stop training gracefully.
+        """
+        logger.info("Received stop signal (Ctrl+C). Preparing to save the last model and stop training...")
+        self.stop_training = True
+
+
+
 
 
 class CustomCombinedExtractor(BaseFeaturesExtractor):
@@ -196,75 +251,12 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         return combined_features
 
 
-def hyperparameter_tuning(trial):
+
+
+
+def train_agent(env, model_path, total_timesteps):
     """
-    Objective function for hyperparameter tuning with Optuna.
-    """
-    env = DummyVecEnv([make_env(render_mode="none")])
-
-    # Sample hyperparameters
-    learning_rate = trial.suggest_loguniform("learning_rate", 1e-5, 1e-3)
-    buffer_size = trial.suggest_int("buffer_size", 10000, 20000, step=1000)
-    batch_size = trial.suggest_int("batch_size", 32, 256, step=32)
-    gamma = trial.suggest_float("gamma", 0.9, 0.99)
-    train_freq = trial.suggest_int("train_freq", 1, 8)
-    target_update_interval = trial.suggest_int("target_update_interval", 500, 5000, step=500)
-    exploration_fraction = trial.suggest_float("exploration_fraction", 0.1, 0.5)
-    exploration_final_eps = trial.suggest_float("exploration_final_eps", 0.01, 0.1)
-
-    policy_kwargs = dict(
-        features_extractor_class=CustomCombinedExtractor,
-        features_extractor_kwargs=dict(features_dim=FEATURES_DIM),
-    )
-
-    model = DQN(
-        policy="MultiInputPolicy",
-        env=env,
-        learning_rate=learning_rate,
-        buffer_size=buffer_size,
-        batch_size=batch_size,
-        gamma=gamma,
-        train_freq=train_freq,
-        target_update_interval=target_update_interval,
-        exploration_fraction=exploration_fraction,
-        exploration_final_eps=exploration_final_eps,
-        policy_kwargs=policy_kwargs,
-        verbose=0,
-    )
-
-    # Train the model for a fixed number of timesteps
-    model.learn(total_timesteps=10000)
-
-    # Evaluate the model
-    mean_reward = 0
-    obs = env.reset()
-    for _ in range(10):
-        done = False
-        while not done:
-            action, _ = model.predict(obs, deterministic=True)
-            obs, rewards, dones, infos = env.step(action)
-            mean_reward += rewards[0]
-            done = dones[0]
-    mean_reward /= 10  # Average reward
-
-    env.close()
-    return mean_reward
-
-
-def tune_hyperparameters():
-    """
-    Run Optuna hyperparameter optimization.
-    """
-    study = optuna.create_study(direction="maximize")
-    study.optimize(hyperparameter_tuning, n_trials=OPTUNA_TRIALS)
-
-    print("Best hyperparameters:", study.best_params)
-    return study.best_params
-
-
-def train_agent_with_tuned_params(env, model_path, params, total_timesteps):
-    """
-    Train the agent using tuned hyperparameters on GPU.
+    Train the agent using pre-defined hyperparameters on GPU and save the best models.
     """
     os.makedirs(model_path, exist_ok=True)
 
@@ -272,9 +264,9 @@ def train_agent_with_tuned_params(env, model_path, params, total_timesteps):
         features_extractor_class=CustomCombinedExtractor,
         features_extractor_kwargs=dict(
             features_dim=FEATURES_DIM,
-            cnn_filters=[32, 64, 64],
-            cnn_kernel_sizes=[8, 4, 3],
-            cnn_strides=[4, 2, 1],
+            cnn_filters=CNN_FILTERS,
+            cnn_kernel_sizes=CNN_KERNEL_SIZES,
+            cnn_strides=CNN_STRIDES,
             mlp_hidden_sizes=[128, 128],
             device="cuda" if th.cuda.is_available() else "cpu",  # Explicitly pass GPU device
         ),
@@ -283,14 +275,14 @@ def train_agent_with_tuned_params(env, model_path, params, total_timesteps):
     model = DQN(
         policy="MultiInputPolicy",
         env=env,
-        learning_rate=params["learning_rate"],
-        buffer_size=params["buffer_size"],
-        batch_size=params["batch_size"],
-        gamma=params["gamma"],
-        train_freq=params["train_freq"],
-        target_update_interval=params["target_update_interval"],
-        exploration_fraction=params["exploration_fraction"],
-        exploration_final_eps=params["exploration_final_eps"],
+        learning_rate=LEARNING_RATE,
+        buffer_size=BUFFER_SIZE,
+        batch_size=BATCH_SIZE,
+        gamma=GAMMA,
+        train_freq=TRAIN_FREQ,
+        target_update_interval=TARGET_UPDATE_INTERVAL,
+        exploration_fraction=EXPLORATION_FRACTION,
+        exploration_final_eps=EXPLORATION_FINAL_EPS,
         policy_kwargs=policy_kwargs,
         verbose=1,
         tensorboard_log="./simulated_tensorboard/",
@@ -299,14 +291,16 @@ def train_agent_with_tuned_params(env, model_path, params, total_timesteps):
 
     save_on_step_callback = SaveOnStepCallback(
         save_freq=SAVE_EVERY_STEPS,
-        save_path=os.path.join(model_path, "step_checkpoints"),
+        save_path=model_path,
         verbose=1
     )
 
     save_best_model_callback = SaveBestModelOnEvalCallback(
         eval_env=DummyVecEnv([make_env(render_mode="none")]),
-        save_path=os.path.join(model_path, "best_models"),
-        verbose=1
+        save_path=MODEL_PATH,
+        verbose=1,
+        eval_frequency=1000,  # Evaluate every 1000 steps
+        moving_avg_window=10  # Use smoothed rewards over 25 episodes
     )
 
     model.learn(
@@ -346,29 +340,86 @@ def main():
 
         # Load or train based on user selection
         if choice == len(existing_models) + 1:
-            print("Starting hyperparameter tuning...")
-            best_params = tune_hyperparameters()
-            print("Training with best parameters...")
+            print("Training a new model...")
             env = DummyVecEnv([make_env(render_mode=RENDER_MODE)])
-            train_agent_with_tuned_params(env, MODEL_PATH, best_params, total_timesteps=TOTAL_TIMESTEPS)
+            train_agent(env, MODEL_PATH, total_timesteps=TOTAL_TIMESTEPS)
         else:
             selected_model = os.path.join(MODEL_PATH, existing_models[choice - 1])
             print(f"Loading model: {selected_model}")
+
+            # Recreate the environment
             env = DummyVecEnv([make_env(render_mode=RENDER_MODE)])
-            model = DQN.load(selected_model, env=env, device="cuda" if th.cuda.is_available() else "cpu")
+
+            # Load the saved model
+            print("Reinitializing model with current parameters and loading saved weights...")
+            saved_model = DQN.load(selected_model, device="cuda" if th.cuda.is_available() else "cpu")
+
+            # Reinitialize the model with current parameters
+            policy_kwargs = dict(
+                features_extractor_class=CustomCombinedExtractor,
+                features_extractor_kwargs=dict(
+                    features_dim=FEATURES_DIM,
+                    cnn_filters=CNN_FILTERS,
+                    cnn_kernel_sizes=CNN_KERNEL_SIZES,
+                    cnn_strides=CNN_STRIDES,
+                    mlp_hidden_sizes=[128, 128],
+                    device="cuda" if th.cuda.is_available() else "cpu",  # Explicitly pass GPU device
+                ),
+            )
+
+            model = DQN(
+                policy="MultiInputPolicy",
+                env=env,
+                learning_rate=LEARNING_RATE,
+                buffer_size=BUFFER_SIZE,
+                batch_size=BATCH_SIZE,
+                gamma=GAMMA,
+                train_freq=TRAIN_FREQ,
+                target_update_interval=TARGET_UPDATE_INTERVAL,
+                exploration_fraction=EXPLORATION_FRACTION,
+                exploration_final_eps=EXPLORATION_FINAL_EPS,
+                policy_kwargs=policy_kwargs,
+                verbose=1,
+                tensorboard_log="./simulated_tensorboard/",
+                device="cuda" if th.cuda.is_available() else "cpu",
+            )
+
+            # Load parameters from the saved model into the new model
+            model.set_parameters(saved_model.get_parameters())
             print("Model loaded successfully. Ready for evaluation or further training.")
-    else:
-        print("No existing models found. Training a new model...")
-        print("Starting hyperparameter tuning...")
-        best_params = tune_hyperparameters()
-        print("Training with best parameters...")
-        env = DummyVecEnv([make_env(render_mode=RENDER_MODE)])
-        train_agent_with_tuned_params(env, MODEL_PATH, best_params, total_timesteps=TOTAL_TIMESTEPS)
+
+            # Continue training
+            ADDITIONAL_TIMESTEPS = 500000  # Adjust as needed
+            print(f"Continuing training for {ADDITIONAL_TIMESTEPS} timesteps...")
+
+            # Define callbacks
+            save_on_step_callback = SaveOnStepCallback(
+                save_freq=SAVE_EVERY_STEPS,
+                save_path=MODEL_PATH,
+                verbose=1
+            )
+
+            save_best_model_callback = SaveBestModelOnEvalCallback(
+                eval_env=DummyVecEnv([make_env(render_mode="none")]),
+                save_path=MODEL_PATH,
+                verbose=1,
+                eval_frequency=1000,
+                moving_avg_window=10
+            )
+
+            # Continue training with callbacks
+            model.learn(
+                total_timesteps=ADDITIONAL_TIMESTEPS,
+                callback=[save_on_step_callback, save_best_model_callback]
+            )
+
+            print("Training continued successfully.")
 
 
 if __name__ == "__main__":
-    main()
-
-
-if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print("An error occurred:", e)
+        import traceback
+        traceback.print_exc()

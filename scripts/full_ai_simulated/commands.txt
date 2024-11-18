@@ -1,2 +1,9 @@
 python train_simulated.py --parallel 4
 python train_simulated.py
+
+
+
+[I 2024-11-18 16:59:47,912] Trial 3 finished with value: 2894.979512691498 and parameters: 
+{'learning_rate': 2.9536423595378476e-05, 'buffer_size': 15000, 'batch_size': 224, 'gamma': 0.9039252550368551, 
+'train_freq': 4, 'target_update_interval': 1500, 'exploration_fraction': 0.4209027839279591, 
+'exploration_final_eps': 0.027785211224845403}. Best is trial 3 with value: 2894.979512691498.
