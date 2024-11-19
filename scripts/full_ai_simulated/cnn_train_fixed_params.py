@@ -4,48 +4,158 @@ import datetime
 import numpy as np
 import torch as th
 import torch.nn as nn
+import torch.optim as optim
 from stable_baselines3 import DQN
-from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+from stable_baselines3.common.buffers import ReplayBuffer
+
+
 from cnn_env import SimulatedEnvGraphics  # Import the environment
 import signal
+from torch.utils.tensorboard import SummaryWriter
 
+#PrioritizedReplayBuffer
 
-# Hardcoded paths and parameters
+# Configuration and Hyperparameters
+
+# Paths and Directories
 MODEL_PATH = r"E:\CNN"  # Path to save and load the models
+LOG_DIR = r"C:\Users\odezz\source\MinecraftAI2\scripts\full_ai_simulated\simulated_tensorboard"
+LOG_FILE = r"E:\CNN\training_data.csv"
+
+# General Parameters
 PARALLEL_ENVS = 1  # Number of parallel environments
 RENDER_MODE = "none"
-SAVE_EVERY_STEPS = 50000  # Save the model every 10,000 steps
-TOTAL_TIMESTEPS = 5000000  # Total timesteps for training
+SAVE_EVERY_STEPS = 50000  # Save the model every N steps
+TOTAL_TIMESTEPS = 5_000_000  # Total timesteps for training
+ADDITIONAL_TIMESTEPS = 1_000_000  # Additional timesteps for continued training
 
-# Training parameters
-LEARNING_RATE = 0.0002
-BUFFER_SIZE = 10000
-BATCH_SIZE = 224
-GAMMA = 0.91
-TRAIN_FREQ = 4
-TARGET_UPDATE_INTERVAL = 1500
-EXPLORATION_FRACTION = 0.4
+# Training Parameters
+LEARNING_RATE = 0.0008
+BUFFER_SIZE = 50_000  # Increased buffer size
+BATCH_SIZE = 256  # Increased batch size
+GAMMA = 0.95
+TRAIN_FREQ = 16  # Increased train frequency
+GRADIENT_STEPS = 8  # Number of gradient steps per update
+TARGET_UPDATE_INTERVAL = 500
+EXPLORATION_FRACTION = 0.5
 EXPLORATION_FINAL_EPS = 0.05
-EVAL_FREQ = 5000
 
-# CNN parameters
+# CNN Parameters
 FEATURES_DIM = 256  # Output dimensions of the CNN feature extractor
 CNN_FILTERS = [32, 64, 64]  # Filters for each convolutional layer
 CNN_KERNEL_SIZES = [8, 4, 3]  # Kernel sizes for each convolutional layer
 CNN_STRIDES = [4, 2, 1]  # Strides for each convolutional layer
+
+# Environment Parameters
+IMAGE_HEIGHT = 224
+IMAGE_WIDTH = 224
+IMAGE_CHANNELS = 1  # Grayscale image
+GRID_SIZE = 2000
+CELL_SIZE = 50
+TASK_SIZE = 20
+MAX_EPISODE_LENGTH = 500
+SIMULATION_SPEED = 5
+ZOOM_FACTOR = 0.2
+DEVICE = "cpu"  # Default device for environment
+
+# Agent Parameters
+INITIAL_HUNGER = 100
+INITIAL_HEALTH = 100
+INITIAL_ALIVE = 1
+YAW_RANGE = (-180, 180)
+PITCH_RANGE = (-90, 90)
+POSITION_RANGE = (-120, 120)
+
+# Action Constants
+ACTION_MOVE_FORWARD = 0
+ACTION_MOVE_BACKWARD = 1
+ACTION_TURN_LEFT = 2
+ACTION_TURN_RIGHT = 3
+YAW_CHANGE = 10  # Degrees to turn left or right
+ACTION_SPACE_SIZE = 25  # Placeholder for future use
+
+# Reward Parameters
+REWARD_SCALE_POSITIVE = 10
+REWARD_SCALE_NEGATIVE = 9
+REWARD_PENALTY_STAY_STILL = -3
+REWARD_MAX = 10
+REWARD_MIN = -10
+
+# Evaluation Parameters
+EVAL_FREQUENCY = 50_000  # Evaluate every N steps
+MOVING_AVG_WINDOW = 10  # Use smoothed rewards over N episodes
+
+# Miscellaneous
+VERBOSE = 1  # Verbosity level
 
 # Logging setup
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
 
 
+def linear_schedule(initial_value):
+    """
+    Linear learning rate schedule.
+    """
+    def func(progress_remaining):
+        return initial_value * progress_remaining
+    return func
+
+
+class TensorboardLoggingCallback(BaseCallback):
+    """
+    Custom callback for logging rewards, episode info, and action distributions to TensorBoard.
+    """
+    def __init__(self, log_dir, verbose=VERBOSE):
+        super(TensorboardLoggingCallback, self).__init__(verbose)
+        self.writer = None
+        self.log_dir = log_dir  # Base directory for logs
+
+    def _on_training_start(self) -> None:
+        # Generate a unique folder for this training session
+        unique_dir = os.path.join(
+            self.log_dir,
+            f"DQN_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        )
+        os.makedirs(unique_dir, exist_ok=True)
+
+        # Initialize TensorBoard writer in the unique directory
+        self.writer = SummaryWriter(log_dir=unique_dir)
+        self.start_time = datetime.datetime.now()
+
+    def _on_step(self) -> bool:
+        # Log only every `log_interval` steps
+        if self.num_timesteps % 100 == 0:
+            # Log rewards
+            if "rewards" in self.locals:
+                rewards = self.locals["rewards"]  # Extract rewards from self.locals
+                if rewards is not None:
+                    mean_reward = np.mean(rewards)
+                    self.writer.add_scalar("Reward/Step Reward", mean_reward, self.num_timesteps)
+
+            # Log additional episode information
+            if "infos" in self.locals:
+                infos = self.locals["infos"]
+                for info in infos:
+                    if "episode" in info.keys():
+                        episode_reward = info["episode"]["r"]
+                        self.writer.add_scalar("Reward/Episode Reward", episode_reward, self.num_timesteps)
+
+        return True
+
+    def _on_training_end(self) -> None:
+        # Close the TensorBoard writer
+        self.writer.close()
+
+
 class SaveOnStepCallback(BaseCallback):
     """
     Custom callback to save the model every N steps.
     """
-    def __init__(self, save_freq, save_path, verbose=1):
+    def __init__(self, save_freq, save_path, verbose=VERBOSE):
         super(SaveOnStepCallback, self).__init__(verbose)
         self.save_freq = save_freq
         self.save_path = save_path
@@ -61,12 +171,25 @@ class SaveOnStepCallback(BaseCallback):
         return True
 
 
-def make_env(render_mode="none"):
+def make_env(seed, render_mode=RENDER_MODE, enable_logging=False):
     """
     Create a simulated environment instance.
     """
     def _init():
-        return SimulatedEnvGraphics(render_mode=render_mode)
+        env = SimulatedEnvGraphics(
+            render_mode=render_mode,
+            grid_size=GRID_SIZE,
+            cell_size=CELL_SIZE,
+            task_size=TASK_SIZE,
+            max_episode_length=MAX_EPISODE_LENGTH,
+            simulation_speed=SIMULATION_SPEED,
+            zoom_factor=ZOOM_FACTOR,
+            device=DEVICE,
+            log_file=LOG_FILE if enable_logging else None,
+            enable_logging=enable_logging,
+        )
+        env.seed(seed)
+        return env
     return _init
 
 
@@ -75,7 +198,7 @@ class SaveBestModelOnEvalCallback(BaseCallback):
     Custom callback to save the best model during evaluation with smoothed rewards.
     Includes functionality to save the last model when training ends or upon a manual stop.
     """
-    def __init__(self, eval_env, save_path, verbose=1, eval_frequency=1000, moving_avg_window=25):
+    def __init__(self, eval_env, save_path, verbose=VERBOSE, eval_frequency=EVAL_FREQUENCY, moving_avg_window=MOVING_AVG_WINDOW):
         super(SaveBestModelOnEvalCallback, self).__init__(verbose)
         self.eval_env = eval_env
         self.save_path = save_path
@@ -123,15 +246,15 @@ class SaveBestModelOnEvalCallback(BaseCallback):
         total_rewards = []
 
         for episode in range(self.moving_avg_window):  # Evaluate over `moving_avg_window` episodes
-            obs = self.eval_env.reset()
-            done = [False] * self.eval_env.num_envs
+            obs, _ = self.eval_env.reset()
+            done = False
             episode_reward = 0
 
-            while not all(done):
+            while not done:
                 action, _ = self.model.predict(obs, deterministic=True)
                 obs, rewards, dones, infos = self.eval_env.step(action)
                 episode_reward += rewards[0]
-                done = dones
+                done = dones[0]
 
             total_rewards.append(episode_reward)
             logger.info(f"Episode {episode + 1}: Reward = {episode_reward}")
@@ -164,9 +287,6 @@ class SaveBestModelOnEvalCallback(BaseCallback):
         self.stop_training = True
 
 
-
-
-
 class CustomCombinedExtractor(BaseFeaturesExtractor):
     """
     Custom feature extractor for Dict observation spaces, combining CNN for image and MLP for other data.
@@ -174,18 +294,19 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
     def __init__(
         self,
         observation_space,
-        features_dim=256,  # Default combined feature size
-        cnn_filters=[32, 64, 64],
-        cnn_kernel_sizes=[8, 4, 3],
-        cnn_strides=[4, 2, 1],
-        mlp_hidden_sizes=[256, 256],
-        device="cuda",  # Default to GPU
+        features_dim=FEATURES_DIM,
+        cnn_filters=CNN_FILTERS,
+        cnn_kernel_sizes=CNN_KERNEL_SIZES,
+        cnn_strides=CNN_STRIDES,
+        mlp_hidden_sizes=[128, 128],
+        device="cuda",
+        image_weight=0.1,
     ):
         super(CustomCombinedExtractor, self).__init__(observation_space, features_dim)
 
         # Set the device
         self.device = th.device(device)
-
+        self.image_weight = image_weight
         # Initialize extractors
         self.extractors = {}
 
@@ -245,21 +366,17 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         # Extract features and move to the correct device
         image_features = self.extractors["image"](observations["image"].to(self.device))
         other_features = self.extractors["other"](observations["other"].to(self.device))
+        image_features = image_features * self.image_weight
 
         # Concatenate features
         combined_features = th.cat((image_features, other_features), dim=1)
         return combined_features
 
 
-
-
-
-def train_agent(env, model_path, total_timesteps):
+def create_model(env):
     """
-    Train the agent using pre-defined hyperparameters on GPU and save the best models.
+    Create the DQN model with the specified parameters.
     """
-    os.makedirs(model_path, exist_ok=True)
-
     policy_kwargs = dict(
         features_extractor_class=CustomCombinedExtractor,
         features_extractor_kwargs=dict(
@@ -267,45 +384,72 @@ def train_agent(env, model_path, total_timesteps):
             cnn_filters=CNN_FILTERS,
             cnn_kernel_sizes=CNN_KERNEL_SIZES,
             cnn_strides=CNN_STRIDES,
-            mlp_hidden_sizes=[256, 256],
-            device="cuda" if th.cuda.is_available() else "cpu",  # Explicitly pass GPU device
+            mlp_hidden_sizes=[128, 128],
+            image_weight=0.1,
+            device="cuda" if th.cuda.is_available() else "cpu",
         ),
     )
 
     model = DQN(
         policy="MultiInputPolicy",
         env=env,
-        learning_rate=LEARNING_RATE,
+        learning_rate=linear_schedule(LEARNING_RATE),
         buffer_size=BUFFER_SIZE,
         batch_size=BATCH_SIZE,
         gamma=GAMMA,
         train_freq=TRAIN_FREQ,
+        gradient_steps=GRADIENT_STEPS,
         target_update_interval=TARGET_UPDATE_INTERVAL,
         exploration_fraction=EXPLORATION_FRACTION,
         exploration_final_eps=EXPLORATION_FINAL_EPS,
         policy_kwargs=policy_kwargs,
-        verbose=1,
-        tensorboard_log="./simulated_tensorboard/",
-        device="cuda" if th.cuda.is_available() else "cpu",  # Enable GPU
+        verbose=VERBOSE,
+        tensorboard_log=LOG_DIR,
+        device="cuda" if th.cuda.is_available() else "cpu",
     )
+    return model
 
+
+def create_callbacks(model_path):
+    """
+    Create callbacks for saving models and logging.
+    """
     save_on_step_callback = SaveOnStepCallback(
         save_freq=SAVE_EVERY_STEPS,
         save_path=model_path,
-        verbose=1
+        verbose=VERBOSE
     )
 
     save_best_model_callback = SaveBestModelOnEvalCallback(
-        eval_env=DummyVecEnv([make_env(render_mode="none")]),
-        save_path=MODEL_PATH,
-        verbose=1,
-        eval_frequency=4000,  # Evaluate every 1000 steps
-        moving_avg_window=10  # Use smoothed rewards over 25 episodes
+        eval_env=DummyVecEnv([make_env(seed=0, render_mode="none")]),
+        save_path=model_path,
+        verbose=VERBOSE,
+        eval_frequency=EVAL_FREQUENCY,
+        moving_avg_window=MOVING_AVG_WINDOW
     )
+
+    tensorboard_callback = TensorboardLoggingCallback(
+        log_dir=LOG_DIR,
+        verbose=VERBOSE
+    )
+
+    return [save_on_step_callback, save_best_model_callback, tensorboard_callback]
+
+
+def train_agent(env, model_path, total_timesteps, model=None):
+    """
+    Train the agent using pre-defined hyperparameters on GPU and save the best models.
+    """
+    os.makedirs(model_path, exist_ok=True)
+
+    if model is None:
+        model = create_model(env)
+
+    callbacks = create_callbacks(model_path)
 
     model.learn(
         total_timesteps=total_timesteps,
-        callback=[save_on_step_callback, save_best_model_callback]
+        callback=callbacks
     )
 
     model.save(f"{model_path}/final_model")
@@ -341,79 +485,34 @@ def main():
         # Load or train based on user selection
         if choice == len(existing_models) + 1:
             print("Training a new model...")
-            env = DummyVecEnv([make_env(render_mode=RENDER_MODE)])
+            env = SubprocVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
             train_agent(env, MODEL_PATH, total_timesteps=TOTAL_TIMESTEPS)
         else:
             selected_model = os.path.join(MODEL_PATH, existing_models[choice - 1])
             print(f"Loading model: {selected_model}")
 
             # Recreate the environment
-            env = DummyVecEnv([make_env(render_mode=RENDER_MODE)])
-
-            # Load the saved model
-            print("Reinitializing model with current parameters and loading saved weights...")
-            saved_model = DQN.load(selected_model, device="cuda" if th.cuda.is_available() else "cpu")
+            env = SubprocVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
 
             # Reinitialize the model with current parameters
-            policy_kwargs = dict(
-                features_extractor_class=CustomCombinedExtractor,
-                features_extractor_kwargs=dict(
-                    features_dim=FEATURES_DIM,
-                    cnn_filters=CNN_FILTERS,
-                    cnn_kernel_sizes=CNN_KERNEL_SIZES,
-                    cnn_strides=CNN_STRIDES,
-                    mlp_hidden_sizes=[256, 256],
-                    device="cuda" if th.cuda.is_available() else "cpu",  # Explicitly pass GPU device
-                ),
-            )
+            model = create_model(env)
 
-            model = DQN(
-                policy="MultiInputPolicy",
-                env=env,
-                learning_rate=LEARNING_RATE,
-                buffer_size=BUFFER_SIZE,
-                batch_size=BATCH_SIZE,
-                gamma=GAMMA,
-                train_freq=TRAIN_FREQ,
-                target_update_interval=TARGET_UPDATE_INTERVAL,
-                exploration_fraction=EXPLORATION_FRACTION,
-                exploration_final_eps=EXPLORATION_FINAL_EPS,
-                policy_kwargs=policy_kwargs,
-                verbose=1,
-                tensorboard_log="./simulated_tensorboard/",
-                device="cuda" if th.cuda.is_available() else "cpu",
-            )
-
-            # Load parameters from the saved model into the new model
-            model.set_parameters(saved_model.get_parameters())
+            # Load the saved model
+            print("Loading saved model parameters...")
+            model.load(selected_model, device="cuda" if th.cuda.is_available() else "cpu")
             print("Model loaded successfully. Ready for evaluation or further training.")
 
             # Continue training
-            ADDITIONAL_TIMESTEPS = 500000  # Adjust as needed
             print(f"Continuing training for {ADDITIONAL_TIMESTEPS} timesteps...")
 
-            # Define callbacks
-            save_on_step_callback = SaveOnStepCallback(
-                save_freq=SAVE_EVERY_STEPS,
-                save_path=MODEL_PATH,
-                verbose=1
-            )
-
-            save_best_model_callback = SaveBestModelOnEvalCallback(
-                eval_env=DummyVecEnv([make_env(render_mode="none")]),
-                save_path=MODEL_PATH,
-                verbose=1,
-                eval_frequency=4000,
-                moving_avg_window=10
-            )
-
             # Continue training with callbacks
-            model.learn(
-                total_timesteps=ADDITIONAL_TIMESTEPS,
-                callback=[save_on_step_callback, save_best_model_callback]
-            )
+            train_agent(env, MODEL_PATH, total_timesteps=ADDITIONAL_TIMESTEPS, model=model)
 
             print("Training continued successfully.")
+    else:
+        print("No existing models found. Training a new model...")
+        env = SubprocVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
+        train_agent(env, MODEL_PATH, total_timesteps=TOTAL_TIMESTEPS)
 
 
 if __name__ == "__main__":
