@@ -34,14 +34,14 @@ ADDITIONAL_TIMESTEPS = 1_000_000  # Additional timesteps for continued training
 
 # Training Parameters
 LEARNING_RATE = 0.0008
-BUFFER_SIZE = 50_000  # Increased buffer size
-BATCH_SIZE = 256  # Increased batch size
+BUFFER_SIZE = 40_000  # Increased buffer size
+BATCH_SIZE = 128  # Increased batch size
 GAMMA = 0.95
-TRAIN_FREQ = 16  # Increased train frequency
-GRADIENT_STEPS = 8  # Number of gradient steps per update
-TARGET_UPDATE_INTERVAL = 500
+TRAIN_FREQ = 8  # Increased train frequency
+GRADIENT_STEPS = 1  # Number of gradient steps per update
+TARGET_UPDATE_INTERVAL = 1000
 EXPLORATION_FRACTION = 0.5
-EXPLORATION_FINAL_EPS = 0.05
+EXPLORATION_FINAL_EPS = 0.03
 
 # CNN Parameters
 FEATURES_DIM = 256  # Output dimensions of the CNN feature extractor
@@ -85,7 +85,7 @@ REWARD_MAX = 10
 REWARD_MIN = -10
 
 # Evaluation Parameters
-EVAL_FREQUENCY = 50_000  # Evaluate every N steps
+EVAL_FREQUENCY = 30_000  # Evaluate every N steps
 MOVING_AVG_WINDOW = 10  # Use smoothed rewards over N episodes
 
 # Miscellaneous
@@ -239,22 +239,38 @@ class SaveBestModelOnEvalCallback(BaseCallback):
         return True
 
     def evaluate_model(self):
-        """
-        Evaluate the current model using the provided evaluation environment.
-        """
         logger.info("Starting evaluation...")
         total_rewards = []
 
-        for episode in range(self.moving_avg_window):  # Evaluate over `moving_avg_window` episodes
-            obs, _ = self.eval_env.reset()
+        for episode in range(self.moving_avg_window):
+            obs = self.eval_env.reset()
+            #print("Raw observation from reset:", obs)
+
+            # Unwrap observation if coming from VecEnv
+            if isinstance(obs, (list, tuple)):
+                obs = obs[0]
+
+            if not isinstance(obs, dict) or "image" not in obs or "other" not in obs:
+                raise ValueError(f"Invalid observation format at reset: {obs}")
+
             done = False
             episode_reward = 0
 
             while not done:
-                action, _ = self.model.predict(obs, deterministic=True)
-                obs, rewards, dones, infos = self.eval_env.step(action)
-                episode_reward += rewards[0]
-                done = dones[0]
+                obs_preprocessed = {
+                    "image": np.array(obs["image"], dtype=np.float32),
+                    "other": np.array(obs["other"], dtype=np.float32),
+                }
+                action, _ = self.model.predict(obs_preprocessed, deterministic=True)
+                
+                # Correct unpacking of values
+                obs, reward, done, info = self.eval_env.step(action)
+
+                # Unwrap observation again if necessary
+                if isinstance(obs, (list, tuple)):
+                    obs = obs[0]
+
+                episode_reward += reward
 
             total_rewards.append(episode_reward)
             logger.info(f"Episode {episode + 1}: Reward = {episode_reward}")
@@ -485,14 +501,14 @@ def main():
         # Load or train based on user selection
         if choice == len(existing_models) + 1:
             print("Training a new model...")
-            env = SubprocVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
+            env = DummyVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
             train_agent(env, MODEL_PATH, total_timesteps=TOTAL_TIMESTEPS)
         else:
             selected_model = os.path.join(MODEL_PATH, existing_models[choice - 1])
             print(f"Loading model: {selected_model}")
 
             # Recreate the environment
-            env = SubprocVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
+            env = DummyVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
 
             # Reinitialize the model with current parameters
             model = create_model(env)
@@ -511,7 +527,7 @@ def main():
             print("Training continued successfully.")
     else:
         print("No existing models found. Training a new model...")
-        env = SubprocVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
+        env = DummyVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
         train_agent(env, MODEL_PATH, total_timesteps=TOTAL_TIMESTEPS)
 
 
