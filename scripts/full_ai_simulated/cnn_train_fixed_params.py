@@ -33,15 +33,15 @@ TOTAL_TIMESTEPS = 5_000_000  # Total timesteps for training
 ADDITIONAL_TIMESTEPS = 1_000_000  # Additional timesteps for continued training
 
 # Training Parameters
-LEARNING_RATE = 0.0005
+LEARNING_RATE = 0.001
 BUFFER_SIZE = 40_000  # Increased buffer size
 BATCH_SIZE = 128  # Increased batch size
-GAMMA = 0.92
+GAMMA = 0.91
 TRAIN_FREQ = 4  # Increased train frequency
 GRADIENT_STEPS = 1  # Number of gradient steps per update
 TARGET_UPDATE_INTERVAL = 500
-EXPLORATION_FRACTION = 0.2
-EXPLORATION_FINAL_EPS = 0.02
+EXPLORATION_FRACTION = 0.05
+EXPLORATION_FINAL_EPS = 0.01
 
 # CNN Parameters
 FEATURES_DIM = 256  # Output dimensions of the CNN feature extractor

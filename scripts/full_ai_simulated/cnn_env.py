@@ -224,7 +224,7 @@ class SimulatedEnvGraphics(gym.Env):
         observation = self._get_observation()
 
         # Log step if needed
-        if self.step_count % 25 == 0:
+        if self.step_count % 5 == 0:
             self._log_step(self.x, self.z, self.yaw, reward, self.current_task[0], self.current_task[1])
 
         return observation, reward, terminated, truncated, {}
