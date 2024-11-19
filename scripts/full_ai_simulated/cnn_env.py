@@ -27,8 +27,8 @@ ACTION_TURN_RIGHT = 3
 YAW_CHANGE = 10  # Degrees to turn left or right
 
 REWARD_SCALE_POSITIVE = 10
-REWARD_SCALE_NEGATIVE = 9
-REWARD_PENALTY_STAY_STILL = -3
+REWARD_SCALE_NEGATIVE = 5
+REWARD_PENALTY_STAY_STILL = -5
 REWARD_MAX = 10
 REWARD_MIN = -10
 
@@ -48,8 +48,8 @@ class SimulatedEnvGraphics(gym.Env):
         simulation_speed=5,
         zoom_factor=0.2,
         device=DEVICE,
-        log_file=None,
-        enable_logging=False,
+        log_file=r"E:\CNN\training_data.csv",
+        enable_logging=True,
     ):
         super(SimulatedEnvGraphics, self).__init__()
 
@@ -101,11 +101,13 @@ class SimulatedEnvGraphics(gym.Env):
         self.simulation_speed = simulation_speed  # Updates per second
         self.time_step = 1.0 / self.simulation_speed  # Time interval per update
 
-        # Initialize the log file
-        if self.enable_logging and self.log_file is not None:
-            with open(self.log_file, mode="w", newline="") as f:
-                writer = csv.writer(f)
-                writer.writerow(["agent_id", "episode_id", "step", "x", "z", "yaw", "reward", "task_x", "task_z"])
+
+        # Open the log file once during initialization
+        self.log_file_handle = open(self.log_file, mode="w", newline="")
+        self.log_writer = csv.writer(self.log_file_handle)
+        # Write the header row
+        self.log_writer.writerow(["agent_id", "episode_id", "step", "x", "z", "yaw", "reward", "task_x", "task_z"])
+        
 
         # Cache the constant image
         self.constant_image = np.full((self.image_channels, self.image_height, self.image_width), 128 / 255.0, dtype=np.float32)
@@ -114,10 +116,7 @@ class SimulatedEnvGraphics(gym.Env):
         """
         Log data for the current step.
         """
-        if self.enable_logging and self.log_file is not None:
-            with open(self.log_file, mode="a", newline="") as f:
-                writer = csv.writer(f)
-                writer.writerow([self.agent_id, self.episode_id, self.step_count, x, z, yaw, reward, task_x, task_z])
+        self.log_writer.writerow([self.agent_id, self.episode_id, self.step_count, x, z, yaw, reward, task_x, task_z])
 
 
     def seed(self, seed=None):
@@ -234,4 +233,9 @@ class SimulatedEnvGraphics(gym.Env):
         pass  # Implement rendering if needed
 
     def close(self):
-        pass
+        """
+        Close the environment and any open resources.
+        """
+        if self.log_file_handle:
+            self.log_file_handle.close()  # Ensure the file handle is properly closed
+        super(SimulatedEnvGraphics, self).close()

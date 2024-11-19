@@ -33,15 +33,15 @@ TOTAL_TIMESTEPS = 5_000_000  # Total timesteps for training
 ADDITIONAL_TIMESTEPS = 1_000_000  # Additional timesteps for continued training
 
 # Training Parameters
-LEARNING_RATE = 0.0008
+LEARNING_RATE = 0.0005
 BUFFER_SIZE = 40_000  # Increased buffer size
 BATCH_SIZE = 128  # Increased batch size
-GAMMA = 0.95
-TRAIN_FREQ = 8  # Increased train frequency
+GAMMA = 0.92
+TRAIN_FREQ = 4  # Increased train frequency
 GRADIENT_STEPS = 1  # Number of gradient steps per update
-TARGET_UPDATE_INTERVAL = 1000
-EXPLORATION_FRACTION = 0.5
-EXPLORATION_FINAL_EPS = 0.03
+TARGET_UPDATE_INTERVAL = 500
+EXPLORATION_FRACTION = 0.2
+EXPLORATION_FINAL_EPS = 0.02
 
 # CNN Parameters
 FEATURES_DIM = 256  # Output dimensions of the CNN feature extractor
@@ -79,13 +79,13 @@ ACTION_SPACE_SIZE = 25  # Placeholder for future use
 
 # Reward Parameters
 REWARD_SCALE_POSITIVE = 10
-REWARD_SCALE_NEGATIVE = 9
+REWARD_SCALE_NEGATIVE = 5
 REWARD_PENALTY_STAY_STILL = -3
 REWARD_MAX = 10
 REWARD_MIN = -10
 
 # Evaluation Parameters
-EVAL_FREQUENCY = 30_000  # Evaluate every N steps
+EVAL_FREQUENCY = 20_000  # Evaluate every N steps
 MOVING_AVG_WINDOW = 10  # Use smoothed rewards over N episodes
 
 # Miscellaneous
@@ -171,7 +171,7 @@ class SaveOnStepCallback(BaseCallback):
         return True
 
 
-def make_env(seed, render_mode=RENDER_MODE, enable_logging=False):
+def make_env(seed, render_mode=RENDER_MODE, enable_logging=True):
     """
     Create a simulated environment instance.
     """
@@ -373,19 +373,39 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
 
     def forward(self, observations):
         """
-        Forward pass to extract features from 'image' and 'other' observations.
+        Forward pass to extract features from 'image' and 'other' observations,
+        with learned emphasis on task and position vectors.
         """
         # Ensure observations contain expected keys
         assert "image" in observations, "Input observations must contain 'image' key."
         assert "other" in observations, "Input observations must contain 'other' key."
 
-        # Extract features and move to the correct device
+        # Extract image features
         image_features = self.extractors["image"](observations["image"].to(self.device))
-        other_features = self.extractors["other"](observations["other"].to(self.device))
-        image_features = image_features * self.image_weight
 
-        # Concatenate features
-        combined_features = th.cat((image_features, other_features), dim=1)
+        # Split the 'other' vector into components
+        other_features = observations["other"].to(self.device)
+        position_vector = other_features[:, :5]  # Position features
+        task_vector = other_features[:, 5:25]  # Task features
+        other_scalar_features = other_features[:, 25:]  # Other scalar features
+
+        # Pass each component through individual small MLPs (learned weighting)
+        position_processed = nn.Linear(5, 5).to(self.device)(position_vector)
+        task_processed = nn.Linear(20, 20).to(self.device)(task_vector)
+        other_scalar_processed = nn.Linear(other_scalar_features.size(1), other_scalar_features.size(1)).to(self.device)(
+            other_scalar_features
+        )
+
+        # Concatenate all processed parts
+        weighted_other_features = th.cat([position_processed, task_processed, other_scalar_processed], dim=1)
+
+        # Pass the combined 'other' features through the main MLP
+        other_processed = self.extractors["other"](weighted_other_features)
+
+        # Combine image and processed 'other' features
+        image_features = image_features * self.image_weight
+        combined_features = th.cat((image_features, other_processed), dim=1)
+
         return combined_features
 
 

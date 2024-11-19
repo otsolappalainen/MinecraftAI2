@@ -22,25 +22,39 @@ def read_log_file(log_file):
     with open(log_file, mode="r") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            step = int(row["step"])
-            task_key = (float(row["task_x"]), float(row["task_z"]))
+            try:
+                # Check if any critical fields are missing or None
+                required_fields = ["step", "x", "z", "yaw", "reward", "task_x", "task_z"]
+                if any(row.get(field) in (None, "") for field in required_fields):
+                    print(f"Skipping invalid row: {row}")
+                    continue
 
-            # Detect a new episode when step count resets or reaches a threshold
-            if step == 0 and current_episode:
-                episodes[current_target].append(current_episode)
-                current_episode = []
+                # Convert values to appropriate types
+                step = int(float(row["step"]))
+                task_x = float(row["task_x"])
+                task_z = float(row["task_z"])
+                task_key = (task_x, task_z)
 
-            # Update the current target and add the row to the current episode
-            current_target = task_key
-            current_episode.append({
-                "step": step,
-                "x": float(row["x"]),
-                "z": float(row["z"]),
-                "yaw": float(row["yaw"]),
-                "reward": float(row["reward"]),
-                "task_x": float(row["task_x"]),
-                "task_z": float(row["task_z"]),
-            })
+                # Detect a new episode when step count resets or reaches a threshold
+                if step == 0 and current_episode:
+                    episodes[current_target].append(current_episode)
+                    current_episode = []
+
+                # Update the current target and add the row to the current episode
+                current_target = task_key
+                current_episode.append({
+                    "step": step,
+                    "x": float(row["x"]),
+                    "z": float(row["z"]),
+                    "yaw": float(row["yaw"]),
+                    "reward": float(row["reward"]),
+                    "task_x": task_x,
+                    "task_z": task_z,
+                })
+            except ValueError as e:
+                print(f"Error parsing row {row}: {e}")
+            except TypeError as e:
+                print(f"Type error with row {row}: {e}")
 
     # Add the last episode if not empty
     if current_episode:
