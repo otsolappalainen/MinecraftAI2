@@ -107,7 +107,7 @@ class SimulatedEnvGraphics(gym.Env):
             dtype=np.float32,
         )
         # Add noise to the image
-        image += np.random.normal(0, 0.01, size=image.shape)
+        #image += np.random.normal(0, 0.01, size=image.shape)
         image = np.clip(image, 0, 1)
 
         # Positional and scalar values
@@ -154,8 +154,10 @@ class SimulatedEnvGraphics(gym.Env):
         # Set current task with at least one of the first two positions being 1
         self.current_task = np.zeros(self.task_size, dtype=np.float32)
         possible_tasks = [
-            [-1, 0],
-            #[1, 0],
+            #[-1, 0],
+            #[0, -1],
+            [1, 0],
+            [0, 1],
         ]
 
 
@@ -217,10 +219,10 @@ class SimulatedEnvGraphics(gym.Env):
             reward = -5
 
         # Add escalating penalty for staying still or oscillating
-        reward -= self.no_progress_count ** 2 * 0.1
+        reward -= self.no_progress_count ** 2 * 0.05
 
         # Clamp reward to prevent runaway values (optional)
-        reward = max(reward, -50)
+        reward = max(reward, -20)
 
         # Update cumulative reward
         self.cumulative_reward += reward

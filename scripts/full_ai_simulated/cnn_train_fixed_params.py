@@ -16,19 +16,19 @@ import signal
 MODEL_PATH = r"E:\CNN"  # Path to save and load the models
 PARALLEL_ENVS = 1  # Number of parallel environments
 RENDER_MODE = "none"
-SAVE_EVERY_STEPS = 20000  # Save the model every 10,000 steps
-TOTAL_TIMESTEPS = 500000  # Total timesteps for training
+SAVE_EVERY_STEPS = 50000  # Save the model every 10,000 steps
+TOTAL_TIMESTEPS = 5000000  # Total timesteps for training
 
 # Training parameters
-LEARNING_RATE = 0.0001
-BUFFER_SIZE = 15000
+LEARNING_RATE = 0.0002
+BUFFER_SIZE = 10000
 BATCH_SIZE = 224
-GAMMA = 0.94
+GAMMA = 0.91
 TRAIN_FREQ = 4
 TARGET_UPDATE_INTERVAL = 1500
 EXPLORATION_FRACTION = 0.4
-EXPLORATION_FINAL_EPS = 0.02
-EVAL_FREQ = 30000
+EXPLORATION_FINAL_EPS = 0.05
+EVAL_FREQ = 5000
 
 # CNN parameters
 FEATURES_DIM = 256  # Output dimensions of the CNN feature extractor
@@ -178,7 +178,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         cnn_filters=[32, 64, 64],
         cnn_kernel_sizes=[8, 4, 3],
         cnn_strides=[4, 2, 1],
-        mlp_hidden_sizes=[128, 128],
+        mlp_hidden_sizes=[256, 256],
         device="cuda",  # Default to GPU
     ):
         super(CustomCombinedExtractor, self).__init__(observation_space, features_dim)
@@ -267,7 +267,7 @@ def train_agent(env, model_path, total_timesteps):
             cnn_filters=CNN_FILTERS,
             cnn_kernel_sizes=CNN_KERNEL_SIZES,
             cnn_strides=CNN_STRIDES,
-            mlp_hidden_sizes=[128, 128],
+            mlp_hidden_sizes=[256, 256],
             device="cuda" if th.cuda.is_available() else "cpu",  # Explicitly pass GPU device
         ),
     )
@@ -299,7 +299,7 @@ def train_agent(env, model_path, total_timesteps):
         eval_env=DummyVecEnv([make_env(render_mode="none")]),
         save_path=MODEL_PATH,
         verbose=1,
-        eval_frequency=1000,  # Evaluate every 1000 steps
+        eval_frequency=4000,  # Evaluate every 1000 steps
         moving_avg_window=10  # Use smoothed rewards over 25 episodes
     )
 
@@ -362,7 +362,7 @@ def main():
                     cnn_filters=CNN_FILTERS,
                     cnn_kernel_sizes=CNN_KERNEL_SIZES,
                     cnn_strides=CNN_STRIDES,
-                    mlp_hidden_sizes=[128, 128],
+                    mlp_hidden_sizes=[256, 256],
                     device="cuda" if th.cuda.is_available() else "cpu",  # Explicitly pass GPU device
                 ),
             )
@@ -403,7 +403,7 @@ def main():
                 eval_env=DummyVecEnv([make_env(render_mode="none")]),
                 save_path=MODEL_PATH,
                 verbose=1,
-                eval_frequency=1000,
+                eval_frequency=4000,
                 moving_avg_window=10
             )
 

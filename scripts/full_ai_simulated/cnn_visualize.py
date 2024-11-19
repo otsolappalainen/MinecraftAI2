@@ -51,7 +51,7 @@ def read_log_file(log_file):
 
 def visualize_group(target_key, episodes, animation_speed=50, save_as_video=False):
     """
-    Visualize a group of episodes with the same target as moving dots.
+    Visualize a group of episodes with the same target as moving dots and show the target direction.
     """
     print(f"Visualizing group with target: {target_key}")
 
@@ -64,13 +64,21 @@ def visualize_group(target_key, episodes, animation_speed=50, save_as_video=Fals
 
     # Initialize the plot
     fig, ax = plt.subplots(figsize=(8, 8))
-    ax.set_title(f"Target: {target_key}")
+    ax.set_title(f"Target Direction: {target_key}")
     ax.set_xlabel("X Position")
     ax.set_ylabel("Z Position")
     ax.grid(True)
 
-    # Add a directional arrow for the target
-    ax.quiver(0, 0, target_key[0], target_key[1], angles='xy', scale_units='xy', scale=1, color='red', label="Target Direction")
+    # Draw the target direction
+    # Normalize the target vector for direction
+    target_x, target_z = target_key
+    magnitude = (target_x**2 + target_z**2)**0.5
+    normalized_x, normalized_z = target_x / magnitude, target_z / magnitude
+
+    # Extend the target direction across the plot
+    arrow_length = max(10, magnitude * 10)  # Make it visually significant
+    ax.arrow(0, 0, normalized_x * arrow_length, normalized_z * arrow_length,
+             head_width=2, head_length=3, fc='red', ec='red', label="Target Direction")
 
     # Initialize agent positions as scatter plot
     agents = ax.scatter([], [], color="blue", label="Agent Position")
