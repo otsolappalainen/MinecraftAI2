@@ -115,52 +115,49 @@ class SimulatedEnvSimplified(gym.Env):
         return self._get_observation(), {}
 
     def step(self, action):
+        """
+        Perform a step in the environment with updated reward structure.
+        """
         self.step_count += 1
         reward = -0.1  # Step penalty
 
         prev_x = self.x
 
-        # Update position based on action
-        if action == ACTION_MOVE_FORWARD:
-            # Move forward based on yaw
-            self.x += np.cos(np.radians(self.yaw))  # Use cos for x
-            self.z -= np.sin(np.radians(self.yaw))  # Use -sin for z
-        elif action == ACTION_MOVE_BACKWARD:
-            # Move backward based on yaw
-            self.x -= np.cos(np.radians(self.yaw))  # Use cos for x
-            self.z += np.sin(np.radians(self.yaw))  # Use -sin for z
-        elif action == ACTION_TURN_LEFT:
-            # Turn left (counterclockwise)
-            self.yaw -= YAW_CHANGE
-            # Wrap yaw to [-180, 180)
-            self.yaw = (self.yaw + 180) % 360 - 180
-        elif action == ACTION_TURN_RIGHT:
-            # Turn right (clockwise)
-            self.yaw += YAW_CHANGE
-            # Wrap yaw to [-180, 180)
-            self.yaw = (self.yaw + 180) % 360 - 180
-        elif 4 <= action < 24:
-            # Placeholder for additional actions
-            pass
+        # Actions
+        if action == ACTION_MOVE_FORWARD:  # Move forward
+            self.x += np.sin(np.radians(self.yaw))
+            self.z += np.cos(np.radians(self.yaw))
+        elif action == ACTION_MOVE_BACKWARD:  # Move backward
+            self.x -= np.sin(np.radians(self.yaw))
+            self.z -= np.cos(np.radians(self.yaw))
+        elif action == ACTION_TURN_LEFT:  # Turn left
+            self.yaw = (self.yaw - YAW_CHANGE + 360) % 360
+        elif action == ACTION_TURN_RIGHT:  # Turn right
+            self.yaw = (self.yaw + YAW_CHANGE + 360) % 360
 
-        # Calculate reward based on progress in the preferred direction (x-axis)
+        # Adjust yaw to be between [-180, 180)
+        if self.yaw >= 180:
+            self.yaw -= 360
+
+        # Calculate delta_x
         delta_x = self.x - prev_x
-        reward += delta_x  # Positive for moving right, negative for moving left
+
+        # Update reward based on delta_x
+        reward += delta_x  # Positive for moving forward, negative for moving backward
 
         # Update cumulative reward
         self.cumulative_reward += reward
 
-        # Check for episode termination
+        # Determine if the episode is done
         terminated = self.step_count >= self.max_episode_length
         truncated = False
 
         # Get observation
         observation = self._get_observation()
 
-        # Log step
+        # Log step if needed
         if self.step_count % 5 == 0:
-            self._log_step(episode_id=0, step=self.step_count, x=self.x, z=self.z, yaw=self.yaw,
-                          reward=reward, task_x=self.current_task[0], task_z=self.current_task[1])
+            self._log_step(self.x, self.z, self.yaw, reward, self.current_task[0], self.current_task[1])
 
         return observation, reward, terminated, truncated, {}
 

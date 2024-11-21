@@ -20,7 +20,6 @@ YAW_RANGE = (-180, 180)
 PITCH_RANGE = (-90, 90)
 POSITION_RANGE = (-120, 120)
 
-
 ACTION_MOVE_FORWARD = 0
 ACTION_MOVE_BACKWARD = 1
 ACTION_TURN_LEFT = 2
@@ -49,10 +48,13 @@ class SimulatedEnvGraphics(gym.Env):
         simulation_speed=5,
         zoom_factor=0.2,
         device=DEVICE,
-        log_file=r"E:\CNN\training_data.csv",
+        log_file="training_data.csv",
         enable_logging=True,
+        env_id=None  # Added env_id as an optional parameter
     ):
         super(SimulatedEnvGraphics, self).__init__()
+
+        self.env_id = env_id  # Store the env_id if needed
 
         # Observation space parameters
         self.image_height = IMAGE_HEIGHT
@@ -62,7 +64,7 @@ class SimulatedEnvGraphics(gym.Env):
         self.enable_logging = enable_logging
 
         self.device = device
-        self.agent_id = "agent_1"
+        self.agent_id = f"agent_{self.env_id}" if self.env_id is not None else "agent_1"
         self.position_size = 5  # x, y, z, yaw, pitch
         self.scalar_size = 3  # health, hunger, alive
         self.task_size = task_size
@@ -102,13 +104,17 @@ class SimulatedEnvGraphics(gym.Env):
         self.simulation_speed = simulation_speed  # Updates per second
         self.time_step = 1.0 / self.simulation_speed  # Time interval per update
 
-
         # Open the log file once during initialization
-        self.log_file_handle = open(self.log_file, mode="w", newline="")
-        self.log_writer = csv.writer(self.log_file_handle)
-        # Write the header row
-        self.log_writer.writerow(["agent_id", "episode_id", "step", "x", "z", "yaw", "reward", "task_x", "task_z"])
-        
+        if self.enable_logging:
+            # Use env_id to create unique log files if needed
+            if self.env_id is not None:
+                log_file_name = f"training_data_env_{self.env_id}.csv"
+            else:
+                log_file_name = self.log_file
+            self.log_file_handle = open(log_file_name, mode="w", newline="")
+            self.log_writer = csv.writer(self.log_file_handle)
+            # Write the header row
+            self.log_writer.writerow(["agent_id", "episode_id", "step", "x", "z", "yaw", "reward", "task_x", "task_z"])
 
         # Cache the constant image
         self.constant_image = np.full((self.image_channels, self.image_height, self.image_width), 128 / 255.0, dtype=np.float32)
@@ -117,15 +123,13 @@ class SimulatedEnvGraphics(gym.Env):
         """
         Log data for the current step.
         """
-        self.log_writer.writerow([self.agent_id, self.episode_id, self.step_count, x, z, yaw, reward, task_x, task_z])
-
+        if self.enable_logging:
+            self.log_writer.writerow([self.agent_id, self.episode_id, self.step_count, x, z, yaw, reward, task_x, task_z])
 
     def seed(self, seed=None):
         # Set the seed for this env's random number generator(s).
         self.np_random, seed = gym.utils.seeding.np_random(seed)
         return [seed]
-    
-
 
     def _get_observation(self):
         """
@@ -190,10 +194,15 @@ class SimulatedEnvGraphics(gym.Env):
             self.x -= np.sin(np.radians(self.yaw))
             self.z -= np.cos(np.radians(self.yaw))
         elif action == ACTION_TURN_LEFT:  # Turn left
-            self.yaw = (self.yaw - YAW_CHANGE) % 360 - 180
+            self.yaw = (self.yaw - YAW_CHANGE + 360) % 360
         elif action == ACTION_TURN_RIGHT:  # Turn right
-            self.yaw = (self.yaw + YAW_CHANGE) % 360 - 180
+            self.yaw = (self.yaw + YAW_CHANGE + 360) % 360
 
+        # Adjust yaw to be between [-180, 180)
+        if self.yaw >= 180:
+            self.yaw -= 360
+        elif self.yaw < -180:
+            self.yaw += 360
         # Calculate delta_x and delta_z
         delta_x = self.x - self.prev_x
         delta_z = self.z - self.prev_z
@@ -237,6 +246,6 @@ class SimulatedEnvGraphics(gym.Env):
         """
         Close the environment and any open resources.
         """
-        if self.log_file_handle:
-            self.log_file_handle.close()  # Ensure the file handle is properly closed
+        if self.enable_logging and hasattr(self, 'log_file_handle') and self.log_file_handle:
+            self.log_file_handle.close()
         super(SimulatedEnvGraphics, self).close()
