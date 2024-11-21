@@ -3,14 +3,14 @@ import logging
 import datetime
 import numpy as np
 import torch as th
+import torch.nn as nn
 from stable_baselines3 import DQN
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
-from stable_baselines3.common.logger import TensorBoardOutputFormat
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+from gymnasium import spaces  # Import spaces from gymnasium
 import signal
-import os
-import datetime
-
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 from env import SimulatedEnvSimplified  # Import the simplified environment
 
@@ -22,7 +22,7 @@ LOG_DIR = "tensorboard_logs"
 LOG_FILE = "training_data.csv"
 
 # General Parameters
-PARALLEL_ENVS = 4  # Number of parallel environments
+PARALLEL_ENVS = 8  # Number of parallel environments
 RENDER_MODE = "none"
 SAVE_EVERY_STEPS = 5_000_000  # Save the model every N steps
 TOTAL_TIMESTEPS = 50_000_000  # Total timesteps for training
@@ -60,31 +60,18 @@ def make_env(env_id, rank, seed=0):
         env = SimulatedEnvSimplified(
             render_mode=RENDER_MODE,
             log_file=LOG_FILE,
-            enable_logging=True
+            enable_logging=True,
+            env_id=rank
         )
         env.seed(seed + rank)
         return env
     return _init
 
 
-from stable_baselines3.common.callbacks import EvalCallback
-import os
-import datetime
-
 
 def custom_learning_rate_schedule(initial_lr_low, lr_high, total_timesteps, low_pct=0.05, high_pct=0.2):
     """
     Custom learning rate schedule.
-
-    Args:
-        initial_lr_low (float): The low learning rate.
-        lr_high (float): The high learning rate.
-        total_timesteps (int): Total number of training timesteps.
-        low_pct (float): Percentage of timesteps for low initial learning rate.
-        high_pct (float): Percentage of timesteps for high learning rate phase.
-
-    Returns:
-        function: A function that takes progress_remaining as input and returns the learning rate.
     """
     low_timesteps = int(low_pct * total_timesteps)
     high_timesteps = int(high_pct * total_timesteps)
@@ -109,8 +96,6 @@ def custom_learning_rate_schedule(initial_lr_low, lr_high, total_timesteps, low_
 
     return lr_schedule
 
-
-
 class TimestampedEvalCallback(EvalCallback):
     """
     Custom EvalCallback to save the best model with a unique timestamp.
@@ -126,7 +111,6 @@ class TimestampedEvalCallback(EvalCallback):
             self.model.save(save_path)
             logger.info(f"New best model saved with timestamp: {save_path}")
         return result
-
 
 class SaveOnStepCallback(BaseCallback):
     """
@@ -146,9 +130,66 @@ class SaveOnStepCallback(BaseCallback):
                 logger.info(f"Model saved at step {self.num_timesteps} to {save_file}")
         return True
 
+# Custom Feature Extractor
+class CustomFeatureExtractor(BaseFeaturesExtractor):
+    """
+    Custom feature extractor that processes scalar inputs, includes placeholders for image features,
+    and passes through fusion and decision layers.
+    """
+    def __init__(self, observation_space: spaces.Box):
+        # The output of the feature extractor will be features_dim (final output of decision layers)
+        super(CustomFeatureExtractor, self).__init__(observation_space, features_dim=24)  # Output: Q-values for actions
+
+        # Scalar input processing (64+64)
+        self.scalar_input_dim = observation_space.shape[0]  # Should be 5
+        self.scalar_net = nn.Sequential(
+            nn.Linear(self.scalar_input_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+        )
+
+        # Placeholder for future image features
+        self.image_placeholder_dim = 64  # e.g., 64
+        self.image_placeholder = nn.Parameter(th.zeros(self.image_placeholder_dim), requires_grad=False)
+
+        # Fusion layers (combine scalar features and image placeholder)
+        self.fusion_layers = nn.Sequential(
+            nn.Linear(64 + self.image_placeholder_dim, 128),  # Combining scalar and image features
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+        )
+
+        # Decision layers (output Q-values for 24 actions)
+        self.decision_layers = nn.Sequential(
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 24),  # 24 possible actions
+        )
+
+    def forward(self, observations):
+        # Process scalar inputs
+        scalar_features = self.scalar_net(observations)
+
+        # Expand the image placeholder to match batch size
+        batch_size = observations.shape[0]
+        image_features = self.image_placeholder.unsqueeze(0).expand(batch_size, -1).to(observations.device)
+
+        # Concatenate scalar features and image features
+        fused_input = th.cat([scalar_features, image_features], dim=1)
+
+        # Fusion processing
+        fused_features = self.fusion_layers(fused_input)
+
+        # Decision-making
+        q_values = self.decision_layers(fused_features)
+        return q_values
+
+
 def create_model(env):
     """
-    Create the DQN model with specified parameters.
+    Create the DQN model with specified parameters and custom feature extractor.
     """
     initial_lr_low = LOW_LR
     lr_high = HIGH_LR
@@ -161,10 +202,13 @@ def create_model(env):
         high_pct=0.2   # Next 20% high
     )
 
-
+    policy_kwargs = dict(
+        features_extractor_class=CustomFeatureExtractor,
+        net_arch=[128, 128],  # Decision layers: 128+128 neurons
+    )
 
     model = DQN(
-        policy="MlpPolicy",  # Using MLP since observation is a flat vector
+        policy="MlpPolicy",  # Using MLP policy with custom feature extractor
         env=env,
         learning_rate=lr_schedule,
         buffer_size=BUFFER_SIZE,
@@ -178,11 +222,13 @@ def create_model(env):
         verbose=VERBOSE,
         tensorboard_log=LOG_DIR,
         device="cuda" if th.cuda.is_available() else "cpu",
+        policy_kwargs=policy_kwargs,
     )
     return model
 
 def main():
     print("Starting the simplified training script...")
+    
     print(f"Using device: {'cuda' if th.cuda.is_available() else 'cpu'}")
 
     # Create the directory for models
@@ -224,6 +270,8 @@ def main():
 
     signal.signal(signal.SIGINT, handle_interrupt)
 
+    print(model.policy.features_extractor)
+
     # Start training
     model.learn(
         total_timesteps=TOTAL_TIMESTEPS,
@@ -237,6 +285,7 @@ def main():
     # Close environments
     env.close()
     eval_env.close()
+
 if __name__ == "__main__":
     try:
         main()

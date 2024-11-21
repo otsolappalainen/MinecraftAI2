@@ -36,6 +36,7 @@ class SimulatedEnvSimplified(gym.Env):
         max_episode_length=MAX_EPISODE_LENGTH,
         log_file="training_data.csv",
         enable_logging=True,
+        env_id=0  # Add an environment ID
     ):
         super(SimulatedEnvSimplified, self).__init__()
 
@@ -48,7 +49,7 @@ class SimulatedEnvSimplified(gym.Env):
         )
 
         # Action space: 0 - Forward, 1 - Backward, 2 - Turn Left, 3 - Turn Right
-        self.action_space = spaces.Discrete(4)
+        self.action_space = spaces.Discrete(24)
 
         # Simulation parameters
         self.x = 0.0
@@ -67,7 +68,9 @@ class SimulatedEnvSimplified(gym.Env):
         # Logging
         self.enable_logging = enable_logging
         if self.enable_logging:
-            self.log_file_handle = open(log_file, mode="w", newline="")
+            # Use a unique log file per environment
+            log_file_name = f"training_data_env_{env_id}.csv"
+            self.log_file_handle = open(log_file_name, mode="w", newline="")
             self.log_writer = csv.writer(self.log_file_handle)
             self.log_writer.writerow(["episode_id", "step", "x", "z", "yaw", "reward", "task_x", "task_z"])
 
@@ -113,43 +116,51 @@ class SimulatedEnvSimplified(gym.Env):
 
     def step(self, action):
         self.step_count += 1
-        reward = 0.0
+        reward = -0.1  # Step penalty
 
+        prev_x = self.x
+
+        # Update position based on action
         if action == ACTION_MOVE_FORWARD:
-            self.x += np.sin(np.radians(self.yaw))
-            self.z += np.cos(np.radians(self.yaw))
+            # Move forward based on yaw
+            self.x += np.cos(np.radians(self.yaw))  # Use cos for x
+            self.z -= np.sin(np.radians(self.yaw))  # Use -sin for z
         elif action == ACTION_MOVE_BACKWARD:
-            self.x -= np.sin(np.radians(self.yaw))
-            self.z -= np.cos(np.radians(self.yaw))
+            # Move backward based on yaw
+            self.x -= np.cos(np.radians(self.yaw))  # Use cos for x
+            self.z += np.sin(np.radians(self.yaw))  # Use -sin for z
         elif action == ACTION_TURN_LEFT:
-            self.yaw = (self.yaw - YAW_CHANGE) % 360
+            # Turn left (counterclockwise)
+            self.yaw -= YAW_CHANGE
+            # Wrap yaw to [-180, 180)
+            self.yaw = (self.yaw + 180) % 360 - 180
         elif action == ACTION_TURN_RIGHT:
-            self.yaw = (self.yaw + YAW_CHANGE) % 360
+            # Turn right (clockwise)
+            self.yaw += YAW_CHANGE
+            # Wrap yaw to [-180, 180)
+            self.yaw = (self.yaw + 180) % 360 - 180
+        elif 4 <= action < 24:
+            # Placeholder for additional actions
+            pass
 
-        # Calculate movement vector
-        movement_vector = np.array([np.sin(np.radians(self.yaw)), np.cos(np.radians(self.yaw))], dtype=np.float32)
-        task_vector = self.current_task
+        # Calculate reward based on progress in the preferred direction (x-axis)
+        delta_x = self.x - prev_x
+        reward += delta_x  # Positive for moving right, negative for moving left
 
-        dot_product = np.dot(movement_vector, task_vector)
-
-        if dot_product > 0:
-            reward = min(dot_product * REWARD_SCALE_POSITIVE, REWARD_MAX)
-        elif dot_product < 0:
-            reward = max(dot_product * REWARD_SCALE_NEGATIVE, REWARD_MIN)
-        else:
-            reward = REWARD_PENALTY_STAY_STILL
-
+        # Update cumulative reward
         self.cumulative_reward += reward
 
+        # Check for episode termination
         terminated = self.step_count >= self.max_episode_length
         truncated = False
-        
 
+        # Get observation
         observation = self._get_observation()
 
+        # Log step
         if self.step_count % 5 == 0:
             self._log_step(episode_id=0, step=self.step_count, x=self.x, z=self.z, yaw=self.yaw,
-                      reward=reward, task_x=self.current_task[0], task_z=self.current_task[1])
+                          reward=reward, task_x=self.current_task[0], task_z=self.current_task[1])
 
         return observation, reward, terminated, truncated, {}
 
