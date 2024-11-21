@@ -15,7 +15,7 @@ scripts/full_ai/ppo_minecraft_tensorboard/
 # Ignore virtual environments
 .venv/
 .env/
-
+venv/
 # Ignore model and checkpoint files
 *.pth
 *.zip

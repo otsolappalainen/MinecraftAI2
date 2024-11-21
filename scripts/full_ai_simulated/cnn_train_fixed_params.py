@@ -26,22 +26,22 @@ LOG_DIR = r"C:\Users\odezz\source\MinecraftAI2\scripts\full_ai_simulated\simulat
 LOG_FILE = r"E:\CNN\training_data.csv"
 
 # General Parameters
-PARALLEL_ENVS = 1  # Number of parallel environments
+PARALLEL_ENVS = 8  # Number of parallel environments
 RENDER_MODE = "none"
 SAVE_EVERY_STEPS = 50000  # Save the model every N steps
 TOTAL_TIMESTEPS = 5_000_000  # Total timesteps for training
-ADDITIONAL_TIMESTEPS = 1_000_000  # Additional timesteps for continued training
+ADDITIONAL_TIMESTEPS = 2_000_000  # Additional timesteps for continued training
 
 # Training Parameters
-LEARNING_RATE = 0.001
-BUFFER_SIZE = 40_000  # Increased buffer size
+LEARNING_RATE = 0.005
+BUFFER_SIZE = 6_000  # Increased buffer size
 BATCH_SIZE = 128  # Increased batch size
-GAMMA = 0.91
+GAMMA = 0.95
 TRAIN_FREQ = 4  # Increased train frequency
 GRADIENT_STEPS = 1  # Number of gradient steps per update
 TARGET_UPDATE_INTERVAL = 500
-EXPLORATION_FRACTION = 0.05
-EXPLORATION_FINAL_EPS = 0.01
+EXPLORATION_FRACTION = 0.1
+EXPLORATION_FINAL_EPS = 0.1
 
 # CNN Parameters
 FEATURES_DIM = 256  # Output dimensions of the CNN feature extractor
@@ -79,7 +79,7 @@ ACTION_SPACE_SIZE = 25  # Placeholder for future use
 
 # Reward Parameters
 REWARD_SCALE_POSITIVE = 10
-REWARD_SCALE_NEGATIVE = 5
+REWARD_SCALE_NEGATIVE = 10
 REWARD_PENALTY_STAY_STILL = -3
 REWARD_MAX = 10
 REWARD_MIN = -10
@@ -244,7 +244,6 @@ class SaveBestModelOnEvalCallback(BaseCallback):
 
         for episode in range(self.moving_avg_window):
             obs = self.eval_env.reset()
-            #print("Raw observation from reset:", obs)
 
             # Unwrap observation if coming from VecEnv
             if isinstance(obs, (list, tuple)):
@@ -254,15 +253,14 @@ class SaveBestModelOnEvalCallback(BaseCallback):
                 raise ValueError(f"Invalid observation format at reset: {obs}")
 
             done = False
-            episode_reward = 0
-
+            episode_reward = 0.0  # Initialize as float
             while not done:
                 obs_preprocessed = {
                     "image": np.array(obs["image"], dtype=np.float32),
                     "other": np.array(obs["other"], dtype=np.float32),
                 }
                 action, _ = self.model.predict(obs_preprocessed, deterministic=True)
-                
+
                 # Correct unpacking of values
                 obs, reward, done, info = self.eval_env.step(action)
 
@@ -270,7 +268,8 @@ class SaveBestModelOnEvalCallback(BaseCallback):
                 if isinstance(obs, (list, tuple)):
                     obs = obs[0]
 
-                episode_reward += reward
+                # Add the reward (ensure it's a float)
+                episode_reward += float(reward)
 
             total_rewards.append(episode_reward)
             logger.info(f"Episode {episode + 1}: Reward = {episode_reward}")
@@ -374,7 +373,7 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
     def forward(self, observations):
         """
         Forward pass to extract features from 'image' and 'other' observations,
-        with learned emphasis on task and position vectors.
+        without individual MLPs for task, position, or scalar vectors.
         """
         # Ensure observations contain expected keys
         assert "image" in observations, "Input observations must contain 'image' key."
@@ -383,31 +382,16 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         # Extract image features
         image_features = self.extractors["image"](observations["image"].to(self.device))
 
-        # Split the 'other' vector into components
+        # Use the 'other' vector directly without splitting or additional processing
         other_features = observations["other"].to(self.device)
-        position_vector = other_features[:, :5]  # Position features
-        task_vector = other_features[:, 5:25]  # Task features
-        other_scalar_features = other_features[:, 25:]  # Other scalar features
 
-        # Pass each component through individual small MLPs (learned weighting)
-        position_processed = nn.Linear(5, 5).to(self.device)(position_vector)
-        task_processed = nn.Linear(20, 20).to(self.device)(task_vector)
-        other_scalar_processed = nn.Linear(other_scalar_features.size(1), other_scalar_features.size(1)).to(self.device)(
-            other_scalar_features
-        )
-
-        # Concatenate all processed parts
-        weighted_other_features = th.cat([position_processed, task_processed, other_scalar_processed], dim=1)
-
-        # Pass the combined 'other' features through the main MLP
-        other_processed = self.extractors["other"](weighted_other_features)
+        # Pass the 'other' features through the main MLP
+        other_processed = self.extractors["other"](other_features)
 
         # Combine image and processed 'other' features
-        image_features = image_features * self.image_weight
         combined_features = th.cat((image_features, other_processed), dim=1)
 
         return combined_features
-
 
 def create_model(env):
     """
@@ -457,7 +441,7 @@ def create_callbacks(model_path):
     )
 
     save_best_model_callback = SaveBestModelOnEvalCallback(
-        eval_env=DummyVecEnv([make_env(seed=0, render_mode="none")]),
+        eval_env=SubprocVecEnv([make_env(seed=0, render_mode="none")]),
         save_path=model_path,
         verbose=VERBOSE,
         eval_frequency=EVAL_FREQUENCY,
@@ -521,14 +505,14 @@ def main():
         # Load or train based on user selection
         if choice == len(existing_models) + 1:
             print("Training a new model...")
-            env = DummyVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
+            env = SubprocVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
             train_agent(env, MODEL_PATH, total_timesteps=TOTAL_TIMESTEPS)
         else:
             selected_model = os.path.join(MODEL_PATH, existing_models[choice - 1])
             print(f"Loading model: {selected_model}")
 
             # Recreate the environment
-            env = DummyVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
+            env = SubprocVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
 
             # Reinitialize the model with current parameters
             model = create_model(env)
@@ -547,7 +531,7 @@ def main():
             print("Training continued successfully.")
     else:
         print("No existing models found. Training a new model...")
-        env = DummyVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
+        env = SubprocVecEnv([make_env(seed=i) for i in range(PARALLEL_ENVS)])
         train_agent(env, MODEL_PATH, total_timesteps=TOTAL_TIMESTEPS)
 
 
