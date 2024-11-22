@@ -26,11 +26,11 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 # General Parameters
 PARALLEL_ENVS = 8
-TOTAL_TIMESTEPS = 5_000_000
+TOTAL_TIMESTEPS = 10_000_000
 
 # Training Parameters
-LOW_LR = 1e-4
-HIGH_LR = 1e-3
+LOW_LR = 1e-5
+HIGH_LR = 1e-4
 BUFFER_SIZE = 30_000
 BATCH_SIZE = 128
 GAMMA = 0.95
@@ -58,7 +58,7 @@ def make_env_full(env_id, rank, seed=0):
     return _init
 
 # Learning rate scheduler
-def custom_learning_rate_schedule(initial_lr_low, lr_high, total_timesteps, low_pct=0.01, high_pct=0.2):
+def custom_learning_rate_schedule(initial_lr_low, lr_high, total_timesteps, low_pct=0.1, high_pct=0.3):
     low_timesteps = int(low_pct * total_timesteps)
     high_timesteps = int(high_pct * total_timesteps)
 
