@@ -1,59 +1,89 @@
+# sim_env.py
+
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 import random
-import time
 import csv
 
 # Constants
+IMAGE_HEIGHT = 224
+IMAGE_WIDTH = 224
+IMAGE_CHANNELS = 1  # Grayscale image
+TASK_SIZE = 20
+ACTION_SPACE_SIZE = 17  # Updated to 17
+MAX_EPISODE_LENGTH = 500
+
 INITIAL_HUNGER = 100
 INITIAL_HEALTH = 100
 INITIAL_ALIVE = 1
 YAW_RANGE = (-180, 180)
 POSITION_RANGE = (-120, 120)
-ACTION_DURATION = 0.05  # Simulate action duration in seconds
-YAW_CHANGE = 10  # Degrees to turn left or right
-ACTION_MOVE_SCALE = 2.0  # Scale for movement distance
-MAX_EPISODE_LENGTH = 500
 
-# Reward Parameters
-REWARD_SCALE_POSITIVE = 10
-REWARD_SCALE_NEGATIVE = 10
-REWARD_PENALTY_STAY_STILL = -5
-REWARD_MAX = 10
-REWARD_MIN = -10
+# Action Definitions
+ACTION_MOVE_FORWARD = 0
+ACTION_MOVE_BACKWARD = 1
+ACTION_TURN_LEFT = 2
+ACTION_TURN_RIGHT = 3
+ACTION_MOVE_LEFT = 4
+ACTION_MOVE_RIGHT = 5
+ACTION_SNEAK_TOGGLE = 6
+# Actions 7-16 mapped to "no_op"
+
+# Reward Definitions
+REWARD_SCALE_POSITIVE = 1.0  # Reward multiplier for positive movement
+REWARD_PENALTY_STAY_STILL = -0.1  # Penalty for non-movement
+
+# Movement Parameters
+MOVE_DISTANCE_PER_STEP = 0.25  # Desired position change per timestep
+MOVE_DURATION_FORWARD = 10      # Timesteps for moving forward
+MOVE_DURATION_SIDES = 4         # Timesteps for moving backward and sideways
+ACTION_DURATION = {
+    "move_forward": MOVE_DURATION_FORWARD,
+    "move_backward": MOVE_DURATION_SIDES,
+    "move_left": MOVE_DURATION_SIDES,
+    "move_right": MOVE_DURATION_SIDES,
+}
 
 class SimulatedEnvSimplified(gym.Env):
     """
-    Simplified Simulated Environment with action durations and dynamic updates.
+    Simulated simplified environment with 2D movement and sneak toggle functionality.
+    Observation space is a Dict with 'image' and 'other' to match the full environment.
     """
+
     metadata = {"render.modes": ["human"]}
 
     def __init__(
         self,
-        render_mode="none",
+        render_mode="none",  # Enforced to "none"
         max_episode_length=MAX_EPISODE_LENGTH,
         log_file="training_data.csv",
         enable_logging=True,
-        env_id=0  # Add an environment ID
+        env_id=0  # Environment ID for logging
     ):
         super(SimulatedEnvSimplified, self).__init__()
 
-        # Observation space: x, z, yaw, task_x, task_z
-        self.observation_space = spaces.Box(
-            low=-np.inf,
-            high=np.inf,
-            shape=(5,),
-            dtype=np.float32
+        # Enforce render_mode to "none"
+        self.render_mode = "none"
+
+        # Define observation space using Dict for image and other data
+        self.observation_space = spaces.Dict(
+            {
+                "image": spaces.Box(
+                    low=0, high=1, shape=(IMAGE_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH), dtype=np.float32
+                ),
+                "other": spaces.Box(low=-np.inf, high=np.inf, shape=(28,), dtype=np.float32),  # Padded to 28
+            }
         )
 
-        # Action space: 0 - Forward, 1 - Backward, 2 - Turn Left, 3 - Turn Right
-        self.action_space = spaces.Discrete(24)
+        # Action space: 17 actions
+        self.action_space = spaces.Discrete(ACTION_SPACE_SIZE)
 
         # Simulation parameters
         self.x = 0.0
         self.z = 0.0
         self.yaw = 0.0
+        self.sneaking = False  # Sneak state
         self.hunger = INITIAL_HUNGER
         self.health = INITIAL_HEALTH
         self.alive = INITIAL_ALIVE
@@ -62,38 +92,71 @@ class SimulatedEnvSimplified(gym.Env):
 
         self.step_count = 0
         self.max_episode_length = max_episode_length
-        self.render_mode = render_mode
+
+        # Action Persistence
+        self.active_action = None
+        self.action_remaining_steps = 0
 
         # Logging
         self.enable_logging = enable_logging
         if self.enable_logging:
-            # Use a unique log file per environment
             log_file_name = f"training_data_env_{env_id}.csv"
             self.log_file_handle = open(log_file_name, mode="w", newline="")
             self.log_writer = csv.writer(self.log_file_handle)
             self.log_writer.writerow(["episode_id", "step", "x", "z", "yaw", "reward", "task_x", "task_z"])
+
+        # Initialize RNG
+        self.np_random, self.seed_val = gym.utils.seeding.np_random(None)
+
+    def seed(self, seed=None):
+        """
+        Sets the seed for this environment's RNG.
+        """
+        self.np_random, seed = gym.utils.seeding.np_random(seed)
+        self.seed_val = seed
+        return [seed]
 
     def _log_step(self, episode_id, step, x, z, yaw, reward, task_x, task_z):
         if self.enable_logging:
             self.log_writer.writerow([episode_id, step, x, z, yaw, reward, task_x, task_z])
 
     def _get_observation(self):
-        return np.array([self.x, self.z, self.yaw, self.current_task[0], self.current_task[1]], dtype=np.float32)
+        image = np.full((IMAGE_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH), 128 / 255.0, dtype=np.float32)  # Constant image
+        other = np.zeros(28, dtype=np.float32)
+        other[0] = self.x
+        other[1] = self.z
+        other[2] = self.yaw
+        other[3] = self.current_task[0]
+        other[4] = self.current_task[1]
+        # Remaining 23 elements are zeros
+        return {"image": image, "other": other}
 
     def reset(self, seed=None, options=None):
+        """
+        Reset the environment to the initial state.
+        """
         super().reset(seed=seed)
 
-        print(f"reward: {self.cumulative_reward}")
+        print(f"Resetting environment. Previous cumulative reward: {self.cumulative_reward}")
 
-        self.x = np.random.uniform(POSITION_RANGE[0], POSITION_RANGE[1])
-        self.z = np.random.uniform(POSITION_RANGE[0], POSITION_RANGE[1])
-        self.yaw = np.random.uniform(YAW_RANGE[0], YAW_RANGE[1])
+        # If a new seed is provided, use it
+        if seed is not None:
+            self.seed(seed)
+
+        self.x = self.np_random.uniform(POSITION_RANGE[0], POSITION_RANGE[1])
+        self.z = self.np_random.uniform(POSITION_RANGE[0], POSITION_RANGE[1])
+        self.yaw = self.np_random.uniform(YAW_RANGE[0], YAW_RANGE[1])
 
         self.hunger = INITIAL_HUNGER
         self.health = INITIAL_HEALTH
         self.alive = INITIAL_ALIVE
         self.cumulative_reward = 0.0
         self.step_count = 0
+        self.sneaking = False
+
+        # Reset active action
+        self.active_action = None
+        self.action_remaining_steps = 0
 
         # Set current task
         possible_tasks = [
@@ -104,47 +167,92 @@ class SimulatedEnvSimplified(gym.Env):
         ]
         self.current_task = np.array(random.choice(possible_tasks), dtype=np.float32)
 
-        self._log_step(episode_id=0, step=self.step_count, x=self.x, z=self.z, yaw=self.yaw,
-                       reward=0.0, task_x=self.current_task[0], task_z=self.current_task[1])
+        self._log_step(
+            episode_id=0,
+            step=self.step_count,
+            x=self.x,
+            z=self.z,
+            yaw=self.yaw,
+            reward=0.0,
+            task_x=self.current_task[0],
+            task_z=self.current_task[1]
+        )
 
         return self._get_observation(), {}
 
-    def _simulate_action(self, action_name, duration):
-        """Simulate action execution with intermediate state updates."""
-        if action_name == "move_forward":
-            dx = np.cos(np.radians(self.yaw)) * ACTION_MOVE_SCALE
-            dz = -np.sin(np.radians(self.yaw)) * ACTION_MOVE_SCALE
-            self.x += dx * duration
-            self.z += dz * duration
-        elif action_name == "move_backward":
-            dx = -np.cos(np.radians(self.yaw)) * ACTION_MOVE_SCALE
-            dz = np.sin(np.radians(self.yaw)) * ACTION_MOVE_SCALE
-            self.x += dx * duration
-            self.z += dz * duration
-        elif action_name == "turn_left":
-            self.yaw = (self.yaw - YAW_CHANGE * duration + 360) % 360
-        elif action_name == "turn_right":
-            self.yaw = (self.yaw + YAW_CHANGE * duration + 360) % 360
+    def _simulate_action(self, action_name):
+        """Simulate action execution based on the active action."""
+        # Calculate movement based on action_name
+        if self.active_action in ["move_forward", "move_backward", "move_left", "move_right"]:
+            speed_factor = 1 / 3.3 if self.sneaking else 1  # SNEAK_FACTOR = 3.3
+
+            # Calculate movement direction based on yaw
+            yaw_rad = np.radians(self.yaw)
+            if self.active_action == "move_forward":
+                direction = np.array([np.cos(yaw_rad), -np.sin(yaw_rad)])
+            elif self.active_action == "move_backward":
+                direction = np.array([-np.cos(yaw_rad), np.sin(yaw_rad)])
+            elif self.active_action == "move_left":
+                direction = np.array([-np.sin(yaw_rad), -np.cos(yaw_rad)])
+            elif self.active_action == "move_right":
+                direction = np.array([np.sin(yaw_rad), np.cos(yaw_rad)])
+            else:
+                direction = np.array([0.0, 0.0])
+
+            # Apply movement scaling
+            delta_position = direction * MOVE_DISTANCE_PER_STEP * speed_factor
+            self.x += delta_position[0]
+            self.z += delta_position[1]
 
     def step(self, action):
         self.step_count += 1
-        reward = -0.1  # Step penalty
+        reward = REWARD_PENALTY_STAY_STILL  # Step penalty
 
+        # Action Mapping
         action_map = {
-            0: "move_forward",
-            1: "move_backward",
-            2: "turn_left",
-            3: "turn_right"
+            ACTION_MOVE_FORWARD: "move_forward",
+            ACTION_MOVE_BACKWARD: "move_backward",
+            ACTION_TURN_LEFT: "turn_left",
+            ACTION_TURN_RIGHT: "turn_right",
+            ACTION_MOVE_LEFT: "move_left",
+            ACTION_MOVE_RIGHT: "move_right",
+            ACTION_SNEAK_TOGGLE: "sneak_toggle",
+            # Actions 7-16 mapped to "no_op"
         }
 
-        # Simulate action
-        if action in action_map:
-            start_x, start_z = self.x, self.z
-            self._simulate_action(action_map[action], ACTION_DURATION)
+        # Handle actions 7-16 as no_op
+        if action not in action_map:
+            action_map[action] = "no_op"
 
-            # Calculate distance traveled for reward
-            distance = np.sqrt((self.x - start_x) ** 2 + (self.z - start_z) ** 2)
+        action_name = action_map.get(action, "no_op")
+
+        # Handle action execution
+        if action_name in ["move_forward", "move_backward", "move_left", "move_right"]:
+            # Start a new movement action, canceling any previous one
+            self.active_action = action_name
+            self.action_remaining_steps = ACTION_DURATION[action_name]
+        elif action_name == "sneak_toggle":
+            self.sneaking = not self.sneaking
+        elif action_name == "turn_left":
+            self.yaw = (self.yaw + 15) % 360  # Increment yaw by 15 degrees
+        elif action_name == "turn_right":
+            self.yaw = (self.yaw - 15) % 360  # Decrement yaw by 15 degrees
+        elif action_name == "no_op":
+            pass  # No operation
+
+        # Simulate movement based on active action
+        if self.active_action is not None and self.action_remaining_steps > 0:
+            self._simulate_action(self.active_action)
+            self.action_remaining_steps -= 1
+            if self.action_remaining_steps == 0:
+                self.active_action = None
+
+            # Calculate reward based on movement
+            distance = MOVE_DISTANCE_PER_STEP
             reward += distance * REWARD_SCALE_POSITIVE
+        else:
+            # No movement action active
+            pass
 
         # Check for episode termination
         terminated = self.step_count >= self.max_episode_length
@@ -153,10 +261,19 @@ class SimulatedEnvSimplified(gym.Env):
         # Get observation
         observation = self._get_observation()
 
-        # Log step
+        # Log step every 5 steps
         if self.step_count % 5 == 0:
-            self._log_step(episode_id=0, step=self.step_count, x=self.x, z=self.z, yaw=self.yaw,
-                           reward=reward, task_x=self.current_task[0], task_z=self.current_task[1])
+            self._log_step(
+                episode_id=0,
+                step=self.step_count,
+                x=self.x,
+                z=self.z,
+                yaw=self.yaw,
+                reward=reward,
+                task_x=self.current_task[0],
+                task_z=self.current_task[1]
+            )
+        self.cumulative_reward += reward
 
         return observation, reward, terminated, truncated, {}
 
@@ -164,6 +281,6 @@ class SimulatedEnvSimplified(gym.Env):
         pass  # No rendering in simplified version
 
     def close(self):
-        if self.enable_logging and self.log_file_handle:
+        if self.enable_logging and hasattr(self, 'log_file_handle') and self.log_file_handle:
             self.log_file_handle.close()
         super(SimulatedEnvSimplified, self).close()
