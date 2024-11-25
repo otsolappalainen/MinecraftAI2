@@ -29,23 +29,23 @@ os.makedirs(MODEL_PATH_FULL, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # General Parameters
-PARALLEL_ENVS = 4  # Reduced from 8 to 4 to manage memory
+PARALLEL_ENVS = 8  # Reduced from 8 to 4 to manage memory
 TOTAL_TIMESTEPS = 15_000_000
 
 # Training Parameters
-LOW_LR = 1e-5
-HIGH_LR = 1e-4
-BUFFER_SIZE = 10_000  # Reduced from 50_000
+LOW_LR = 1e-4
+HIGH_LR = 1e-3
+BUFFER_SIZE = 35_000  # Reduced from 50_000
 BATCH_SIZE = 64  # Reduced from 128
-GAMMA = 0.99
+GAMMA = 0.93
 TRAIN_FREQ = 4
 GRADIENT_STEPS = 2
-TARGET_UPDATE_INTERVAL = 1_000
+TARGET_UPDATE_INTERVAL = 500
 EXPLORATION_FRACTION = 0.4
 EXPLORATION_FINAL_EPS = 0.05
 SAVE_EVERY_STEPS = 500_000
-EVAL_FREQ = 5_000
-EVAL_EPISODES = 3
+EVAL_FREQ = 2_000
+EVAL_EPISODES = 5
 VERBOSE = 1
 
 # Callbacks
@@ -88,17 +88,17 @@ class TimestampedEvalCallback(EvalCallback):
 
 class FullModelFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space):
-        # Set features_dim to match the output of fusion_layers (128)
         super(FullModelFeatureExtractor, self).__init__(observation_space, features_dim=128)
-        
-        scalar_input_dim = observation_space["other"].shape[0]  # Should be 28
+
+        # Updated to handle the new `other` size (28 elements)
+        scalar_input_dim = observation_space["other"].shape[0]
         self.scalar_net = nn.Sequential(
             nn.Linear(scalar_input_dim, 64),
             nn.ReLU(),
             nn.Linear(64, 64),
             nn.ReLU(),
         )
-        
+
         image_shape = observation_space["image"].shape
         self.image_net = nn.Sequential(
             nn.Conv2d(image_shape[0], 32, kernel_size=8, stride=4),
@@ -109,7 +109,6 @@ class FullModelFeatureExtractor(BaseFeaturesExtractor):
             nn.ReLU(),
             nn.Flatten(),
         )
-        
         conv_output_size = self._get_conv_output_size(image_shape)
         self.fusion_layers = nn.Sequential(
             nn.Linear(64 + conv_output_size, 128),
@@ -145,7 +144,7 @@ def make_env_simplified(env_id, rank, seed=0):
         return env
     return _init
 
-def custom_learning_rate_schedule(initial_lr_low, lr_high, total_timesteps, low_pct=0.1, high_pct=0.3):
+def custom_learning_rate_schedule(initial_lr_low, lr_high, total_timesteps, low_pct=0.2, high_pct=0.3):
     low_timesteps = int(low_pct * total_timesteps)
     high_timesteps = int(high_pct * total_timesteps)
 
@@ -163,6 +162,7 @@ def custom_learning_rate_schedule(initial_lr_low, lr_high, total_timesteps, low_
 
     return lr_schedule
 
+
 def transfer_weights(simplified_model, full_model):
     """
     Transfer weights from the simplified model to the full model, skipping mismatched layers.
@@ -170,23 +170,21 @@ def transfer_weights(simplified_model, full_model):
     simplified_state_dict = simplified_model.policy.state_dict()
     full_state_dict = full_model.policy.state_dict()
 
-    # Create a new state_dict for the full model
-    new_full_state_dict = {}
-
+    # Iterate over simplified model's state_dict and match with the full model
     for key, param in simplified_state_dict.items():
         if key in full_state_dict:
             if full_state_dict[key].shape == param.shape:
-                new_full_state_dict[key] = param
+                # Transfer weights if shapes match
+                full_state_dict[key] = param
                 print(f"Transferred: {key}")
             else:
+                # Skip mismatched layers
                 print(f"Skipped (shape mismatch): {key} ({param.shape} vs {full_state_dict[key].shape})")
-        else:
-            print(f"Skipped (key not found): {key}")
 
-    # Update the full model's state_dict with the new parameters
-    full_state_dict.update(new_full_state_dict)
-    full_model.policy.load_state_dict(full_state_dict, strict=False)  # Allow missing keys
+    # Load the updated state_dict into the full model
+    full_model.policy.load_state_dict(full_state_dict)
     print("Weight transfer completed.")
+
 
 def create_simplified_model(env):
     lr_schedule = custom_learning_rate_schedule(LOW_LR, HIGH_LR, TOTAL_TIMESTEPS)

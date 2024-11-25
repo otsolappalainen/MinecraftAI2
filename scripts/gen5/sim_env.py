@@ -1,4 +1,4 @@
-# sim_env.py
+#sim_env.py
 
 import gymnasium as gym
 from gymnasium import spaces
@@ -18,6 +18,7 @@ INITIAL_HUNGER = 100
 INITIAL_HEALTH = 100
 INITIAL_ALIVE = 1
 YAW_RANGE = (-180, 180)
+PITCH_RANGE = (-90, 90)
 POSITION_RANGE = (-120, 120)
 
 # Action Definitions
@@ -44,6 +45,7 @@ ACTION_DURATION = {
     "move_left": MOVE_DURATION_SIDES,
     "move_right": MOVE_DURATION_SIDES,
 }
+
 
 class SimulatedEnvSimplified(gym.Env):
     """
@@ -72,7 +74,7 @@ class SimulatedEnvSimplified(gym.Env):
                 "image": spaces.Box(
                     low=0, high=1, shape=(IMAGE_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH), dtype=np.float32
                 ),
-                "other": spaces.Box(low=-np.inf, high=np.inf, shape=(28,), dtype=np.float32),  # Padded to 28
+                "other": spaces.Box(low=-np.inf, high=np.inf, shape=(TASK_SIZE + 8,), dtype=np.float32),
             }
         )
 
@@ -83,6 +85,7 @@ class SimulatedEnvSimplified(gym.Env):
         self.x = 0.0
         self.z = 0.0
         self.yaw = 0.0
+        self.pitch = 0.0  # Added pitch
         self.sneaking = False  # Sneak state
         self.hunger = INITIAL_HUNGER
         self.health = INITIAL_HEALTH
@@ -98,13 +101,16 @@ class SimulatedEnvSimplified(gym.Env):
         self.action_remaining_steps = 0
 
         # Logging
+        self.env_id = env_id
         self.enable_logging = enable_logging
         if self.enable_logging:
             log_file_name = f"training_data_env_{env_id}.csv"
             self.log_file_handle = open(log_file_name, mode="w", newline="")
             self.log_writer = csv.writer(self.log_file_handle)
-            self.log_writer.writerow(["episode_id", "step", "x", "z", "yaw", "reward", "task_x", "task_z"])
+            self.log_writer.writerow(["env_id", "episode_id", "step", "x", "z", "yaw", "pitch", "reward", "task_x", "task_z"])
 
+        # Cached constant image
+        self.constant_image = np.full((IMAGE_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH), 128 / 255.0, dtype=np.float32)
         # Initialize RNG
         self.np_random, self.seed_val = gym.utils.seeding.np_random(None)
 
@@ -116,19 +122,20 @@ class SimulatedEnvSimplified(gym.Env):
         self.seed_val = seed
         return [seed]
 
-    def _log_step(self, episode_id, step, x, z, yaw, reward, task_x, task_z):
+    def _log_step(self, episode_id, step, x, z, yaw, pitch, reward, task_x, task_z):
         if self.enable_logging:
-            self.log_writer.writerow([episode_id, step, x, z, yaw, reward, task_x, task_z])
+            self.log_writer.writerow([self.env_id, episode_id, step, x, z, yaw, pitch, reward, task_x, task_z])
 
     def _get_observation(self):
-        image = np.full((IMAGE_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH), 128 / 255.0, dtype=np.float32)  # Constant image
-        other = np.zeros(28, dtype=np.float32)
-        other[0] = self.x
-        other[1] = self.z
-        other[2] = self.yaw
-        other[3] = self.current_task[0]
-        other[4] = self.current_task[1]
-        # Remaining 23 elements are zeros
+        image = self.constant_image  # Use cached constant image
+        positional_values = np.array([self.x, self.z, self.yaw, self.pitch], dtype=np.float32)  # 4 elements
+        scalar_values = np.array([self.hunger, self.health, self.alive], dtype=np.float32)  # 3 elements
+        task_values = self.current_task  # TASK_SIZE (20 elements)
+
+        # Add a placeholder (e.g., 0.0) to make the total length 28
+        placeholder = np.array([0.0], dtype=np.float32)  # 1 element
+
+        other = np.concatenate([positional_values, scalar_values, task_values, placeholder])  # Total: 28 elements
         return {"image": image, "other": other}
 
     def reset(self, seed=None, options=None):
@@ -137,7 +144,7 @@ class SimulatedEnvSimplified(gym.Env):
         """
         super().reset(seed=seed)
 
-        print(f"Resetting environment. Previous cumulative reward: {self.cumulative_reward}")
+        print(f"Resetting environment {self.env_id}. Previous cumulative reward: {self.cumulative_reward}")
 
         # If a new seed is provided, use it
         if seed is not None:
@@ -146,6 +153,7 @@ class SimulatedEnvSimplified(gym.Env):
         self.x = self.np_random.uniform(POSITION_RANGE[0], POSITION_RANGE[1])
         self.z = self.np_random.uniform(POSITION_RANGE[0], POSITION_RANGE[1])
         self.yaw = self.np_random.uniform(YAW_RANGE[0], YAW_RANGE[1])
+        self.pitch = self.np_random.uniform(PITCH_RANGE[0], PITCH_RANGE[1])  # Random pitch
 
         self.hunger = INITIAL_HUNGER
         self.health = INITIAL_HEALTH
@@ -165,7 +173,9 @@ class SimulatedEnvSimplified(gym.Env):
             [1, 0],
             [-1, 0]
         ]
-        self.current_task = np.array(random.choice(possible_tasks), dtype=np.float32)
+        self.current_task = np.zeros(20, dtype=np.float32)
+        self.current_task[:2] = np.array(random.choice(possible_tasks), dtype=np.float32)
+
 
         self._log_step(
             episode_id=0,
@@ -173,12 +183,14 @@ class SimulatedEnvSimplified(gym.Env):
             x=self.x,
             z=self.z,
             yaw=self.yaw,
+            pitch=self.pitch,
             reward=0.0,
             task_x=self.current_task[0],
             task_z=self.current_task[1]
         )
 
         return self._get_observation(), {}
+
 
     def _simulate_action(self, action_name):
         """Simulate action execution based on the active action."""
@@ -257,8 +269,8 @@ class SimulatedEnvSimplified(gym.Env):
             delta_z = self.z - prev_z
             movement_vector = np.array([delta_x, delta_z])
 
-            # Normalize task vector
-            task_vector = self.current_task / np.linalg.norm(self.current_task)
+            # Normalize task vector (only use first 2 elements)
+            task_vector = self.current_task[:2] / np.linalg.norm(self.current_task[:2])
 
             # Project movement onto task direction
             movement_along_task = np.dot(movement_vector, task_vector)
@@ -288,6 +300,7 @@ class SimulatedEnvSimplified(gym.Env):
                 x=self.x,
                 z=self.z,
                 yaw=self.yaw,
+                pitch=self.pitch,  # Add pitch here
                 reward=reward,
                 task_x=self.current_task[0],
                 task_z=self.current_task[1]
