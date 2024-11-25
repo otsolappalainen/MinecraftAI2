@@ -10,23 +10,46 @@ import numpy as np
 LOG_DIR = r"C:\Users\odezz\source\MinecraftAI2\scripts\gen5"
 OUTPUT_DIR = r"visualizations"  # Directory to save rendered videos or gifs
 
+
 def is_valid_row(row):
     """
     Validate a row based on the given criteria.
+    Focuses only on the first 10 fields and ignores extra fields.
     """
+    required_fields = ['env_id', 'episode_id', 'step', 'x', 'z', 'yaw', 'pitch', 'reward', 'task_x', 'task_z']
     try:
-        step = int(float(row[1]))  # Ensure step is valid
-        float(row[2])  # x-coordinate
-        float(row[3])  # z-coordinate
-        float(row[4])  # yaw
-        float(row[5])  # reward
-        task_x = int(float(row[6]))
-        task_z = int(float(row[7]))
-        if task_x not in [-1, 0, 1] or task_z not in [-1, 0, 1]:  # Validate task directions
+        if len(row) < 10:
+            print(f"Row has an insufficient number of fields: {len(row)}")
             return False
+
+        # Extract required fields (only the first 10)
+        row_dict = {header: value for header, value in zip(required_fields, row[:10])}
+
+        # Validate 'step'
+        step = int(float(row_dict['step']))
+        if step < 0 or step > 500:
+            print(f"Invalid step value: {step}")
+            return False
+
+        # Validate 'x', 'z', 'yaw', 'pitch', 'reward'
+        float(row_dict['x'])      # x-coordinate
+        float(row_dict['z'])      # z-coordinate
+        float(row_dict['yaw'])    # yaw
+        float(row_dict['pitch'])  # pitch
+        float(row_dict['reward']) # reward
+
+        # Validate 'task_x' and 'task_z'
+        task_x = int(float(row_dict['task_x']))
+        task_z = int(float(row_dict['task_z']))
+        if task_x not in [-1, 0, 1] or task_z not in [-1, 0, 1]:
+            print(f"Invalid task values: task_x={task_x}, task_z={task_z}")
+            return False
+
         return True
-    except (ValueError, IndexError):
+    except (ValueError, KeyError) as e:
+        print(f"Row validation failed: {row} ({e})")
         return False
+
 
 def read_all_log_files(log_dir):
     """
@@ -43,55 +66,89 @@ def read_all_log_files(log_dir):
             continue
         print(f"Processing file: {file_path}")
         episodes = read_single_log_file(file_path, episodes)
+
+    # Print total episode count
+    total_episodes = sum(len(eps) for eps in episodes.values())
+    print(f"Total episodes processed: {total_episodes}")
+
+    # Print episode count per target group
+    for key, eps in episodes.items():
+        print(f"Target {key}: {len(eps)} episodes")
+
     return episodes
+
 
 def read_single_log_file(log_file, episodes):
     """
     Read a single log file and update the episodes dictionary.
+    Detects episode boundaries based on step count drops or maximum episode size.
     """
     current_episode = []
     current_target = None
     last_step = -1
+    row_count = 0
 
-    with open(log_file, mode="r") as f:
+    with open(log_file, mode="r", encoding="utf-8-sig") as f:
         reader = csv.reader(f)
         for row in reader:
+            row_count += 1
+            # Skip header row
+            if row_count == 1 and row[0].lower() == "env_id":
+                print(f"Skipping header row in file {log_file}.")
+                continue
             if not is_valid_row(row):
                 print(f"Invalid row skipped: {row}")
                 continue
             try:
-                step = int(float(row[1]))
-                task_x = int(float(row[6]))
-                task_z = int(float(row[7]))
+                # Extract required fields (only the first 10)
+                row_dict = {header: value for header, value in zip(['env_id', 'episode_id', 'step', 'x', 'z', 'yaw', 'pitch', 'reward', 'task_x', 'task_z'], row[:10])}
+
+                # Extract relevant data
+                step = int(float(row_dict['step']))
+                x = float(row_dict['x'])
+                z = float(row_dict['z'])
+                yaw = float(row_dict['yaw'])
+                pitch = float(row_dict['pitch'])
+                reward = float(row_dict['reward'])
+                task_x = int(float(row_dict['task_x']))
+                task_z = int(float(row_dict['task_z']))
                 task_key = (task_x, task_z)
 
-                # Detect episode boundary
-                if step < last_step and last_step >= 485:  # Step reset detected
+                # Detect episode boundary (step reset or step count limit)
+                if last_step != -1 and (step < last_step or len(current_episode) >= 100):
+                    print(f"New episode detected in file {log_file}: Step dropped from {last_step} to {step} or reached max steps.")
                     if current_episode:
                         episodes[current_target].append(current_episode)
-                    current_episode = []
+                    current_episode = []  # Start a new episode
 
                 # Store data for the current episode
                 current_target = task_key
                 current_episode.append({
                     "step": step,
-                    "x": float(row[2]),
-                    "z": float(row[3]),
-                    "yaw": float(row[4]),
-                    "reward": float(row[5]),
+                    "x": x,
+                    "z": z,
+                    "yaw": yaw,
+                    "pitch": pitch,
+                    "reward": reward,
                     "task_x": task_x,
                     "task_z": task_z,
                 })
                 last_step = step
             except ValueError as e:
                 print(f"Error parsing row {row}: {e}")
-    if current_episode:  # Save the last episode
+
+    # Add the final episode to the target group
+    if current_episode:
         episodes[current_target].append(current_episode)
+        print(f"Final episode added for target {current_target} with {len(current_episode)} steps.")
+
     return episodes
+
 
 def visualize_group(target_key, episodes, animation_speed=50, save_as_video=False):
     """
     Visualize a group of episodes with the same target as moving dots and show the target direction.
+    Dynamically adjusts the plot limits to keep all agents in view.
     """
     print(f"Visualizing group with target: {target_key}")
     episode_positions = [(list(map(lambda d: d["x"], ep)), list(map(lambda d: d["z"], ep))) for ep in episodes]
@@ -110,11 +167,6 @@ def visualize_group(target_key, episodes, animation_speed=50, save_as_video=Fals
              head_width=2, head_length=3, fc='red', ec='red', label="Target Direction")
     agents = ax.scatter([], [], color="blue", label="Agent Position")
 
-    all_x = [x for positions in episode_positions for x in positions[0]]
-    all_z = [z for positions in episode_positions for z in positions[1]]
-    margin = 10
-    ax.set_xlim(min(all_x) - margin, max(all_x) + margin)
-    ax.set_ylim(min(all_z) - margin, max(all_z) + margin)
     ax.legend()
 
     def update(frame):
@@ -124,6 +176,14 @@ def visualize_group(target_key, episodes, animation_speed=50, save_as_video=Fals
                 x_coords.append(x_positions[frame])
                 z_coords.append(z_positions[frame])
         agents.set_offsets(list(zip(x_coords, z_coords)))
+
+        # Dynamically adjust plot limits based on current positions
+        if x_coords and z_coords:
+            current_min_x, current_max_x = min(x_coords) - 5, max(x_coords) + 5
+            current_min_z, current_max_z = min(z_coords) - 5, max(z_coords) + 5
+            ax.set_xlim(current_min_x, current_max_x)
+            ax.set_ylim(current_min_z, current_max_z)
+
         return agents,
 
     ani = FuncAnimation(fig, update, frames=max(len(positions[0]) for positions in episode_positions), interval=animation_speed, blit=True)
@@ -136,6 +196,7 @@ def visualize_group(target_key, episodes, animation_speed=50, save_as_video=Fals
         print(f"Saved video to {output_path}")
     else:
         plt.show()
+
 
 def visualize_samples_animated(episodes, sample_size, animation_speed=50, save_as_video=True):
     """
@@ -165,6 +226,7 @@ def visualize_samples_animated(episodes, sample_size, animation_speed=50, save_a
     ax.set_ylabel("Z Position")
     ax.grid(True)
 
+    # Calculate overall limits
     all_x = [data["x"] for sample in samples for episode in sample for data in episode]
     all_z = [data["z"] for sample in samples for episode in sample for data in episode]
     margin = 10
@@ -196,6 +258,7 @@ def visualize_samples_animated(episodes, sample_size, animation_speed=50, save_a
     else:
         plt.show()
 
+
 def main():
     if not os.path.exists(LOG_DIR):
         print(f"Log directory '{LOG_DIR}' not found.")
@@ -206,7 +269,11 @@ def main():
     print("\nAvailable Target Groups:")
     target_keys = list(episodes.keys())
     for i, key in enumerate(target_keys):
-        print(f"{i}: Target {key}")
+        print(f"{i}: Target {key} (Episodes: {len(episodes[key])})")
+
+    if not target_keys:
+        print("No valid target groups found. Exiting.")
+        return
 
     try:
         choice = int(input("Enter the number of the target group to visualize: "))
@@ -230,16 +297,27 @@ def main():
         return
 
     if mode == 1:
-        animation_speed = int(input("Enter animation speed (default 50ms per frame): ") or "50")
+        try:
+            animation_speed = int(input("Enter animation speed in ms per frame (default 50ms): ") or "50")
+        except ValueError:
+            animation_speed = 50
         save_as_video = input("Save as video? (y/n): ").strip().lower() == "y"
         visualize_group(selected_target, selected_episodes, animation_speed, save_as_video)
 
     elif mode == 2:
-        sample_size = int(input("Enter the sample size (e.g., 5): "))
-        animation_speed = int(input("Enter animation speed (default 50ms per frame): ") or "50")
-        visualize_samples_animated(selected_episodes, sample_size, animation_speed)
+        try:
+            sample_size = int(input("Enter the sample size (e.g., 5): "))
+        except ValueError:
+            print("Invalid sample size. Exiting.")
+            return
+        try:
+            animation_speed = int(input("Enter animation speed in ms per frame (default 50ms): ") or "50")
+        except ValueError:
+            animation_speed = 50
+        visualize_samples_animated(selected_episodes, sample_size, animation_speed, save_as_video=True)
     else:
         print("Invalid mode selected. Exiting.")
+
 
 if __name__ == "__main__":
     main()
