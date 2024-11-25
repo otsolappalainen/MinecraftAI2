@@ -7,30 +7,26 @@ from datetime import datetime
 import numpy as np
 
 # Directory containing the environment log files
-LOG_DIR = r"C:\Users\odezz\source\MinecraftAI2\scripts\full_ai_simplified"
+LOG_DIR = r"C:\Users\odezz\source\MinecraftAI2\scripts\gen5"
 OUTPUT_DIR = r"visualizations"  # Directory to save rendered videos or gifs
-
 
 def is_valid_row(row):
     """
     Validate a row based on the given criteria.
     """
     try:
-        step = int(float(row[1]))
-        if step % 5 != 0 or step < 0 or step > 500:
-            return False
-        float(row[2])  # x
-        float(row[3])  # z
+        step = int(float(row[1]))  # Ensure step is valid
+        float(row[2])  # x-coordinate
+        float(row[3])  # z-coordinate
         float(row[4])  # yaw
         float(row[5])  # reward
         task_x = int(float(row[6]))
         task_z = int(float(row[7]))
-        if task_x not in [-1, 0, 1] or task_z not in [-1, 0, 1]:
+        if task_x not in [-1, 0, 1] or task_z not in [-1, 0, 1]:  # Validate task directions
             return False
         return True
     except (ValueError, IndexError):
         return False
-
 
 def read_all_log_files(log_dir):
     """
@@ -42,10 +38,12 @@ def read_all_log_files(log_dir):
         if not filename.startswith("training_data_env_") or not filename.endswith(".csv"):
             continue  # Skip files that don't match the pattern
         file_path = os.path.join(log_dir, filename)
+        if os.path.getsize(file_path) == 0:
+            print(f"Skipping empty file: {file_path}")
+            continue
         print(f"Processing file: {file_path}")
         episodes = read_single_log_file(file_path, episodes)
     return episodes
-
 
 def read_single_log_file(log_file, episodes):
     """
@@ -59,6 +57,7 @@ def read_single_log_file(log_file, episodes):
         reader = csv.reader(f)
         for row in reader:
             if not is_valid_row(row):
+                print(f"Invalid row skipped: {row}")
                 continue
             try:
                 step = int(float(row[1]))
@@ -66,11 +65,13 @@ def read_single_log_file(log_file, episodes):
                 task_z = int(float(row[7]))
                 task_key = (task_x, task_z)
 
+                # Detect episode boundary
                 if step < last_step and last_step >= 485:  # Step reset detected
                     if current_episode:
                         episodes[current_target].append(current_episode)
                     current_episode = []
 
+                # Store data for the current episode
                 current_target = task_key
                 current_episode.append({
                     "step": step,
@@ -84,10 +85,9 @@ def read_single_log_file(log_file, episodes):
                 last_step = step
             except ValueError as e:
                 print(f"Error parsing row {row}: {e}")
-    if current_episode:
+    if current_episode:  # Save the last episode
         episodes[current_target].append(current_episode)
     return episodes
-
 
 def visualize_group(target_key, episodes, animation_speed=50, save_as_video=False):
     """
@@ -103,7 +103,7 @@ def visualize_group(target_key, episodes, animation_speed=50, save_as_video=Fals
     ax.grid(True)
 
     target_x, target_z = target_key
-    magnitude = (target_x**2 + target_z**2)**0.5
+    magnitude = (target_x**2 + target_z**2)**0.5 if (target_x**2 + target_z**2) > 0 else 1
     normalized_x, normalized_z = target_x / magnitude, target_z / magnitude
     arrow_length = max(10, magnitude * 10)
     ax.arrow(0, 0, normalized_x * arrow_length, normalized_z * arrow_length,
@@ -136,7 +136,6 @@ def visualize_group(target_key, episodes, animation_speed=50, save_as_video=Fals
         print(f"Saved video to {output_path}")
     else:
         plt.show()
-
 
 def visualize_samples_animated(episodes, sample_size, animation_speed=50, save_as_video=True):
     """
@@ -197,7 +196,6 @@ def visualize_samples_animated(episodes, sample_size, animation_speed=50, save_a
     else:
         plt.show()
 
-
 def main():
     if not os.path.exists(LOG_DIR):
         print(f"Log directory '{LOG_DIR}' not found.")
@@ -242,7 +240,6 @@ def main():
         visualize_samples_animated(selected_episodes, sample_size, animation_speed)
     else:
         print("Invalid mode selected. Exiting.")
-
 
 if __name__ == "__main__":
     main()

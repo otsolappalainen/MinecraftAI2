@@ -182,20 +182,24 @@ class SimulatedEnvSimplified(gym.Env):
 
     def _simulate_action(self, action_name):
         """Simulate action execution based on the active action."""
-        # Calculate movement based on action_name
         if self.active_action in ["move_forward", "move_backward", "move_left", "move_right"]:
             speed_factor = 1 / 3.3 if self.sneaking else 1  # SNEAK_FACTOR = 3.3
 
-            # Calculate movement direction based on yaw
+            # Adjust yaw to wrap around -180 to 180
+            self.yaw = (self.yaw + 180) % 360 - 180
+
+            # Convert yaw to radians
             yaw_rad = np.radians(self.yaw)
+
+            # Calculate movement direction
             if self.active_action == "move_forward":
-                direction = np.array([np.cos(yaw_rad), -np.sin(yaw_rad)])
+                direction = np.array([np.sin(yaw_rad), -np.cos(yaw_rad)])  # Forward aligns with yaw
             elif self.active_action == "move_backward":
-                direction = np.array([-np.cos(yaw_rad), np.sin(yaw_rad)])
+                direction = np.array([-np.sin(yaw_rad), np.cos(yaw_rad)])  # Backward opposite to yaw
             elif self.active_action == "move_left":
-                direction = np.array([-np.sin(yaw_rad), -np.cos(yaw_rad)])
+                direction = np.array([-np.cos(yaw_rad), -np.sin(yaw_rad)])  # Left is 90 degrees counterclockwise
             elif self.active_action == "move_right":
-                direction = np.array([np.sin(yaw_rad), np.cos(yaw_rad)])
+                direction = np.array([np.cos(yaw_rad), np.sin(yaw_rad)])  # Right is 90 degrees clockwise
             else:
                 direction = np.array([0.0, 0.0])
 
@@ -206,7 +210,7 @@ class SimulatedEnvSimplified(gym.Env):
 
     def step(self, action):
         self.step_count += 1
-        reward = REWARD_PENALTY_STAY_STILL  # Step penalty
+        reward = REWARD_PENALTY_STAY_STILL  # Base penalty for every step
 
         # Action Mapping
         action_map = {
@@ -220,7 +224,6 @@ class SimulatedEnvSimplified(gym.Env):
             # Actions 7-16 mapped to "no_op"
         }
 
-        # Handle actions 7-16 as no_op
         if action not in action_map:
             action_map[action] = "no_op"
 
@@ -228,28 +231,44 @@ class SimulatedEnvSimplified(gym.Env):
 
         # Handle action execution
         if action_name in ["move_forward", "move_backward", "move_left", "move_right"]:
-            # Start a new movement action, canceling any previous one
             self.active_action = action_name
             self.action_remaining_steps = ACTION_DURATION[action_name]
         elif action_name == "sneak_toggle":
             self.sneaking = not self.sneaking
         elif action_name == "turn_left":
             self.yaw = (self.yaw + 15) % 360  # Increment yaw by 15 degrees
+            self.yaw = (self.yaw + 180) % 360 - 180  # Ensure yaw wraps between -180 and 180
         elif action_name == "turn_right":
             self.yaw = (self.yaw - 15) % 360  # Decrement yaw by 15 degrees
+            self.yaw = (self.yaw + 180) % 360 - 180  # Ensure yaw wraps between -180 and 180
         elif action_name == "no_op":
-            pass  # No operation
+            pass
 
         # Simulate movement based on active action
         if self.active_action is not None and self.action_remaining_steps > 0:
+            prev_x, prev_z = self.x, self.z
             self._simulate_action(self.active_action)
             self.action_remaining_steps -= 1
             if self.action_remaining_steps == 0:
                 self.active_action = None
 
-            # Calculate reward based on movement
-            distance = MOVE_DISTANCE_PER_STEP
-            reward += distance * REWARD_SCALE_POSITIVE
+            # Calculate movement vector
+            delta_x = self.x - prev_x
+            delta_z = self.z - prev_z
+            movement_vector = np.array([delta_x, delta_z])
+
+            # Normalize task vector
+            task_vector = self.current_task / np.linalg.norm(self.current_task)
+
+            # Project movement onto task direction
+            movement_along_task = np.dot(movement_vector, task_vector)
+
+            # Reward for correct movement
+            reward += movement_along_task
+
+            # Penalize movement in the wrong direction
+            movement_off_task = np.linalg.norm(movement_vector) - movement_along_task
+            reward -= movement_off_task
         else:
             # No movement action active
             pass
@@ -273,9 +292,11 @@ class SimulatedEnvSimplified(gym.Env):
                 task_x=self.current_task[0],
                 task_z=self.current_task[1]
             )
+
         self.cumulative_reward += reward
 
         return observation, reward, terminated, truncated, {}
+
 
     def render(self, mode='human'):
         pass  # No rendering in simplified version
