@@ -10,17 +10,20 @@ logs/
 data/
 scripts/full_ai/ppo_minecraft_tensorboard/
 *.tfevents.*
+*.npz
 
 
 # Ignore virtual environments
 .venv/
 .env/
 venv/
+
 # Ignore model and checkpoint files
 *.pth
 *.zip
 *.dll
 *.pyd
+*.mp4
 
 # Ignore images
 *.png

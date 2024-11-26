@@ -5,7 +5,7 @@ import datetime
 import numpy as np
 import torch as th
 from stable_baselines3 import DQN
-from stable_baselines3.common.vec_env import SubprocVecEnv
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from gymnasium import spaces
@@ -15,38 +15,47 @@ import torch.nn as nn
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Suppress TensorFlow INFO logs
 
 # Import your environment
-from sim_env import SimulatedEnvSimplified  # Updated simplified environment
+from better_env import SimulatedEnvSimplified  # Updated simplified environment
 
 # Configuration and Hyperparameters
-MODEL_PATH_SIMPLIFIED_TRANSFER = "models_simplified_transfer"
-MODEL_PATH_FULL = "models_full"
-LOG_DIR = "tensorboard_logs"
+MODEL_PATH_OLD = "models_full"
+MODEL_PATH_NEW = "models_new"
+LOG_DIR = "tensorboard_logs_new"
 LOG_FILE = "training_data.csv"
 
 # Ensure directories exist
-os.makedirs(MODEL_PATH_SIMPLIFIED_TRANSFER, exist_ok=True)
-os.makedirs(MODEL_PATH_FULL, exist_ok=True)
+os.makedirs(MODEL_PATH_OLD, exist_ok=True)
+os.makedirs(MODEL_PATH_NEW, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # General Parameters
-PARALLEL_ENVS = 16  # Reduced from 8 to 4 to manage memory
-TOTAL_TIMESTEPS = 10_000_000
+PARALLEL_ENVS = 8  # Adjust based on your CPU cores
+TOTAL_TIMESTEPS = 4_000_000
 
 # Training Parameters
 LOW_LR = 1e-4
-HIGH_LR = 1e-3
-BUFFER_SIZE = 20_000  # Reduced from 50_000
-BATCH_SIZE = 128  # Reduced from 128
-GAMMA = 0.92
+HIGH_LR = 5e-3
+BUFFER_SIZE = 20_000
+BATCH_SIZE = 128
+GAMMA = 0.95
 TRAIN_FREQ = 4
 GRADIENT_STEPS = 2
-TARGET_UPDATE_INTERVAL = 1000
-EXPLORATION_FRACTION = 0.4
+TARGET_UPDATE_INTERVAL = 500
+EXPLORATION_FRACTION = 0.2
 EXPLORATION_FINAL_EPS = 0.05
 SAVE_EVERY_STEPS = 500_000
 EVAL_FREQ = 2_000
 EVAL_EPISODES = 5
 VERBOSE = 1
+
+# Configurable Modes
+ENABLE_MIXED_PRECISION = True  # Set to False to disable mixed precision
+ADJUST_NETWORK_ARCHITECTURE = True  # Set to False to use old network architecture
+
+# Device Configuration
+device = th.device("cuda" if th.cuda.is_available() else "cpu")
+if device.type == 'cuda':
+    th.cuda.set_device(0)  # Ensure GPU 0 is used
 
 # Callbacks
 class SaveOnStepCallback(BaseCallback):
@@ -85,37 +94,67 @@ class TimestampedEvalCallback(EvalCallback):
                 print(f"New best model saved with mean reward {self.best_mean_reward:.2f} at {save_path}")
         return result
 
-
 class FullModelFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space):
-        super(FullModelFeatureExtractor, self).__init__(observation_space, features_dim=128)
+        super(FullModelFeatureExtractor, self).__init__(observation_space, features_dim=256)
 
-        # Updated to handle the new `other` size (28 elements)
+        # Adjusted network architecture
         scalar_input_dim = observation_space["other"].shape[0]
-        self.scalar_net = nn.Sequential(
-            nn.Linear(scalar_input_dim, 64),
-            nn.ReLU(),
-            nn.Linear(64, 64),
-            nn.ReLU(),
-        )
+        if ADJUST_NETWORK_ARCHITECTURE:
+            self.scalar_net = nn.Sequential(
+                nn.Linear(scalar_input_dim, 128),
+                nn.ReLU(),
+                nn.Linear(128, 128),
+                nn.ReLU(),
+            )
 
-        image_shape = observation_space["image"].shape
-        self.image_net = nn.Sequential(
-            nn.Conv2d(image_shape[0], 32, kernel_size=8, stride=4),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=4, stride=2),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=3, stride=1),
-            nn.ReLU(),
-            nn.Flatten(),
-        )
+            image_shape = observation_space["image"].shape
+            self.image_net = nn.Sequential(
+                nn.Conv2d(image_shape[0], 64, kernel_size=8, stride=4),
+                nn.ReLU(),
+                nn.Conv2d(64, 128, kernel_size=4, stride=2),
+                nn.ReLU(),
+                nn.Conv2d(128, 128, kernel_size=3, stride=1),
+                nn.ReLU(),
+                nn.Flatten(),
+            )
+        else:
+            # Original architecture
+            self.scalar_net = nn.Sequential(
+                nn.Linear(scalar_input_dim, 64),
+                nn.ReLU(),
+                nn.Linear(64, 64),
+                nn.ReLU(),
+            )
+
+            image_shape = observation_space["image"].shape
+            self.image_net = nn.Sequential(
+                nn.Conv2d(image_shape[0], 32, kernel_size=8, stride=4),
+                nn.ReLU(),
+                nn.Conv2d(32, 64, kernel_size=4, stride=2),
+                nn.ReLU(),
+                nn.Conv2d(64, 64, kernel_size=3, stride=1),
+                nn.ReLU(),
+                nn.Flatten(),
+            )
+
         conv_output_size = self._get_conv_output_size(image_shape)
-        self.fusion_layers = nn.Sequential(
-            nn.Linear(64 + conv_output_size, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-        )
+        fusion_input_size = self.scalar_net[-2].out_features + conv_output_size
+
+        if ADJUST_NETWORK_ARCHITECTURE:
+            self.fusion_layers = nn.Sequential(
+                nn.Linear(fusion_input_size, 256),
+                nn.ReLU(),
+                nn.Linear(256, 256),
+                nn.ReLU(),
+            )
+        else:
+            self.fusion_layers = nn.Sequential(
+                nn.Linear(fusion_input_size, 128),
+                nn.ReLU(),
+                nn.Linear(128, 128),
+                nn.ReLU(),
+            )
 
     def _get_conv_output_size(self, shape):
         dummy_input = th.zeros(1, *shape)
@@ -125,10 +164,10 @@ class FullModelFeatureExtractor(BaseFeaturesExtractor):
     def forward(self, observations):
         scalar_obs = observations["other"]
         scalar_features = self.scalar_net(scalar_obs)
-        
+
         image_obs = observations["image"]
         image_features = self.image_net(image_obs)
-        
+
         combined_input = th.cat([scalar_features, image_features], dim=1)
         fused_features = self.fusion_layers(combined_input)
         return fused_features  # Only return fused features
@@ -162,35 +201,33 @@ def custom_learning_rate_schedule(initial_lr_low, lr_high, total_timesteps, low_
 
     return lr_schedule
 
-
-def transfer_weights(simplified_model, full_model):
+def transfer_weights(old_model, new_model):
     """
-    Transfer weights from the simplified model to the full model, skipping mismatched layers.
+    Transfer weights from the old model to the new model, skipping mismatched layers.
     """
-    simplified_state_dict = simplified_model.policy.state_dict()
-    full_state_dict = full_model.policy.state_dict()
+    old_state_dict = old_model.policy.state_dict()
+    new_state_dict = new_model.policy.state_dict()
 
-    # Iterate over simplified model's state_dict and match with the full model
-    for key, param in simplified_state_dict.items():
-        if key in full_state_dict:
-            if full_state_dict[key].shape == param.shape:
+    # Iterate over old model's state_dict and match with the new model
+    for key, param in old_state_dict.items():
+        if key in new_state_dict:
+            if new_state_dict[key].shape == param.shape:
                 # Transfer weights if shapes match
-                full_state_dict[key] = param
+                new_state_dict[key] = param
                 print(f"Transferred: {key}")
             else:
                 # Skip mismatched layers
-                print(f"Skipped (shape mismatch): {key} ({param.shape} vs {full_state_dict[key].shape})")
+                print(f"Skipped (shape mismatch): {key} ({param.shape} vs {new_state_dict[key].shape})")
 
-    # Load the updated state_dict into the full model
-    full_model.policy.load_state_dict(full_state_dict)
+    # Load the updated state_dict into the new model
+    new_model.policy.load_state_dict(new_state_dict)
     print("Weight transfer completed.")
-
 
 def create_simplified_model(env):
     lr_schedule = custom_learning_rate_schedule(LOW_LR, HIGH_LR, TOTAL_TIMESTEPS)
     policy_kwargs = dict(
         features_extractor_class=FullModelFeatureExtractor,
-        net_arch=[],  # Can be adjusted as needed
+        net_arch=[256, 256, 128] if ADJUST_NETWORK_ARCHITECTURE else [],
     )
     return DQN(
         policy="MultiInputPolicy",
@@ -206,41 +243,63 @@ def create_simplified_model(env):
         exploration_final_eps=EXPLORATION_FINAL_EPS,
         verbose=VERBOSE,
         tensorboard_log=LOG_DIR,
-        device="cuda" if th.cuda.is_available() else "cpu",
+        device=device,
         policy_kwargs=policy_kwargs,
+        optimize_memory_usage=False,
     )
 
 def main():
     print("Select an option:")
-    print("1. Load weights from simplified model and transfer to full model")
-    print("2. Load an existing full model")
-    print("3. Start training the full model from scratch")
+    print("1. Load weights from old model and transfer to new model")
+    print("2. Load an existing new model")
+    print("3. Start training the new model from scratch")
     choice = input("Enter 1, 2, or 3: ").strip()
 
-    env = SubprocVecEnv([make_env_simplified(i, i) for i in range(PARALLEL_ENVS)])
+    # Create training environment
+    env_fns = [make_env_simplified(i, i) for i in range(PARALLEL_ENVS)]
+    env = SubprocVecEnv(env_fns)
+    env = VecMonitor(env)
 
     if choice == "1":
-        # Load weights from simplified model and transfer
-        simplified_model_path = os.path.join(MODEL_PATH_SIMPLIFIED_TRANSFER, "simplified_model.zip")
-        if not os.path.exists(simplified_model_path):
-            print(f"Simplified model not found at '{simplified_model_path}'.")
-            return
-
-        print(f"Loading simplified model from '{simplified_model_path}'...")
-        simplified_model = DQN.load(simplified_model_path, env=None)
-        full_model = create_simplified_model(env)  # Create model with current parameters
-        print("Transferring weights...")
-        transfer_weights(simplified_model, full_model)
-
-    elif choice == "2":
-        # Load an existing model
-        model_files = [f for f in os.listdir(MODEL_PATH_FULL) if f.endswith(".zip")]
+        # Load weights from old model and transfer
+        model_files = [f for f in os.listdir(MODEL_PATH_OLD) if f.endswith(".zip")]
         if not model_files:
-            print(f"No existing models found in '{MODEL_PATH_FULL}'.")
+            print(f"No existing models found in '{MODEL_PATH_OLD}'.")
             env.close()
             return
 
-        print("Available full models:")
+        print("Available old models:")
+        for idx, model_file in enumerate(model_files, start=1):
+            print(f"{idx}. {model_file}")
+
+        while True:
+            try:
+                model_choice = int(input(f"Select the old model to load (1-{len(model_files)}): ")) - 1
+                if 0 <= model_choice < len(model_files):
+                    selected_model_path = os.path.join(MODEL_PATH_OLD, model_files[model_choice])
+                    break
+                else:
+                    print("Invalid choice. Please select a valid number.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+
+        print(f"Loading old model from '{selected_model_path}'...")
+        old_model = DQN.load(selected_model_path, env=None)  # Load model without environment
+
+        # Create a new model with current parameters
+        new_model = create_simplified_model(env)
+        print("Transferring weights from the old model to match current parameters...")
+        transfer_weights(old_model, new_model)
+
+    elif choice == "2":
+        # Load an existing new model
+        model_files = [f for f in os.listdir(MODEL_PATH_NEW) if f.endswith(".zip")]
+        if not model_files:
+            print(f"No existing models found in '{MODEL_PATH_NEW}'.")
+            env.close()
+            return
+
+        print("Available new models:")
         for idx, model_file in enumerate(model_files, start=1):
             print(f"{idx}. {model_file}")
 
@@ -248,51 +307,59 @@ def main():
             try:
                 model_choice = int(input(f"Select the model to load (1-{len(model_files)}): ")) - 1
                 if 0 <= model_choice < len(model_files):
-                    selected_model_path = os.path.join(MODEL_PATH_FULL, model_files[model_choice])
+                    selected_model_path = os.path.join(MODEL_PATH_NEW, model_files[model_choice])
                     break
                 else:
                     print("Invalid choice. Please select a valid number.")
             except ValueError:
                 print("Invalid input. Please enter a number.")
 
-        print(f"Loading full model from '{selected_model_path}'...")
+        print(f"Loading new model from '{selected_model_path}'...")
         old_model = DQN.load(selected_model_path, env=None)  # Load model without environment
 
         # Create a new model with current parameters
-        full_model = create_simplified_model(env)
+        new_model = create_simplified_model(env)
         print("Transferring weights from the loaded model to match current parameters...")
-        transfer_weights(old_model, full_model)
+        transfer_weights(old_model, new_model)
 
     elif choice == "3":
         # Start training from scratch
         print("Starting training from scratch...")
-        full_model = create_simplified_model(env)
+        new_model = create_simplified_model(env)
 
     else:
         print("Invalid choice. Exiting.")
         return
 
     # Create evaluation environment
-    eval_env = SubprocVecEnv([make_env_simplified(0, 0)])
+    eval_env_fn = make_env_simplified(0, 0)
+    eval_env = SubprocVecEnv([eval_env_fn])
+    eval_env = VecMonitor(eval_env)
 
     # Define callbacks
     callbacks = [
-        SaveOnStepCallback(save_freq=SAVE_EVERY_STEPS, save_path=MODEL_PATH_FULL),
+        SaveOnStepCallback(save_freq=SAVE_EVERY_STEPS, save_path=MODEL_PATH_NEW),
         TimestampedEvalCallback(
             eval_env=eval_env,
-            best_model_save_path=MODEL_PATH_FULL,
+            best_model_save_path=MODEL_PATH_NEW,
             log_path=LOG_DIR,
             eval_freq=EVAL_FREQ,
             n_eval_episodes=EVAL_EPISODES,
         ),
     ]
 
-    # Start training
-    full_model.learn(total_timesteps=TOTAL_TIMESTEPS, callback=callbacks)
-    final_model_path = os.path.join(MODEL_PATH_FULL, "final_model.zip")
-    full_model.save(final_model_path)
-    print(f"Training completed. Model saved to '{final_model_path}'.")
+    # Start training with mixed precision if enabled
+    if ENABLE_MIXED_PRECISION and device.type == 'cuda':
+        th.set_float32_matmul_precision('medium')
+        print("Mixed precision training enabled.")
 
+    # Start training
+    new_model.learn(total_timesteps=TOTAL_TIMESTEPS, callback=callbacks)
+    final_model_path = os.path.join(MODEL_PATH_NEW, "final_model.zip")
+    new_model.save(final_model_path)
+    print(f"Training completed. Model saved to '{final_model_path}'.")
 
 if __name__ == "__main__":
     main()
+
+

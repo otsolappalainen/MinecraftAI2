@@ -1,4 +1,4 @@
-#sim_env.py
+# sim_env.py
 
 import gymnasium as gym
 from gymnasium import spaces
@@ -46,6 +46,9 @@ ACTION_DURATION = {
     "move_right": MOVE_DURATION_SIDES,
 }
 
+# Define the constant image globally to share across all instances
+CONSTANT_IMAGE = np.full((IMAGE_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH), 128 / 255.0, dtype=np.float32)
+
 
 class SimulatedEnvSimplified(gym.Env):
     """
@@ -72,7 +75,7 @@ class SimulatedEnvSimplified(gym.Env):
         self.observation_space = spaces.Dict(
             {
                 "image": spaces.Box(
-                    low=0, high=1, shape=(IMAGE_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH), dtype=np.float32
+                    low=0, high=1, shape=CONSTANT_IMAGE.shape, dtype=np.float32
                 ),
                 "other": spaces.Box(low=-np.inf, high=np.inf, shape=(TASK_SIZE + 8,), dtype=np.float32),
             }
@@ -109,8 +112,6 @@ class SimulatedEnvSimplified(gym.Env):
             self.log_writer = csv.writer(self.log_file_handle)
             self.log_writer.writerow(["env_id", "episode_id", "step", "x", "z", "yaw", "pitch", "reward", "task_x", "task_z"])
 
-        # Cached constant image
-        self.constant_image = np.full((IMAGE_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH), 128 / 255.0, dtype=np.float32)
         # Initialize RNG
         self.np_random, self.seed_val = gym.utils.seeding.np_random(None)
 
@@ -127,7 +128,8 @@ class SimulatedEnvSimplified(gym.Env):
             self.log_writer.writerow([self.env_id, episode_id, step, x, z, yaw, pitch, reward, task_x, task_z])
 
     def _get_observation(self):
-        image = self.constant_image  # Use cached constant image
+        # Use the globally defined constant image
+        image = CONSTANT_IMAGE  # Reference to the shared image
         positional_values = np.array([self.x, self.z, self.yaw, self.pitch], dtype=np.float32)  # 4 elements
         scalar_values = np.array([self.hunger, self.health, self.alive], dtype=np.float32)  # 3 elements
         task_values = self.current_task  # TASK_SIZE (20 elements)
@@ -176,7 +178,6 @@ class SimulatedEnvSimplified(gym.Env):
         self.current_task = np.zeros(20, dtype=np.float32)
         self.current_task[:2] = np.array(random.choice(possible_tasks), dtype=np.float32)
 
-
         self._log_step(
             episode_id=0,
             step=self.step_count,
@@ -191,7 +192,6 @@ class SimulatedEnvSimplified(gym.Env):
 
         return self._get_observation(), {}
 
-
     def _simulate_action(self, action_name):
         """Simulate action execution based on the active action."""
         if self.active_action in ["move_forward", "move_backward", "move_left", "move_right"]:
@@ -203,15 +203,15 @@ class SimulatedEnvSimplified(gym.Env):
             # Convert yaw to radians
             yaw_rad = np.radians(self.yaw)
 
-            # Calculate movement direction
+            # Adjusted calculation for movement direction
             if self.active_action == "move_forward":
-                direction = np.array([np.sin(yaw_rad), -np.cos(yaw_rad)])  # Forward aligns with yaw
+                direction = np.array([np.cos(yaw_rad), np.sin(yaw_rad)])  # Forward aligns with yaw
             elif self.active_action == "move_backward":
-                direction = np.array([-np.sin(yaw_rad), np.cos(yaw_rad)])  # Backward opposite to yaw
+                direction = np.array([-np.cos(yaw_rad), -np.sin(yaw_rad)])  # Backward is opposite
             elif self.active_action == "move_left":
-                direction = np.array([-np.cos(yaw_rad), -np.sin(yaw_rad)])  # Left is 90 degrees counterclockwise
+                direction = np.array([-np.sin(yaw_rad), np.cos(yaw_rad)])  # Left is 90 degrees counterclockwise
             elif self.active_action == "move_right":
-                direction = np.array([np.cos(yaw_rad), np.sin(yaw_rad)])  # Right is 90 degrees clockwise
+                direction = np.array([np.sin(yaw_rad), -np.cos(yaw_rad)])  # Right is 90 degrees clockwise
             else:
                 direction = np.array([0.0, 0.0])
 
@@ -276,11 +276,10 @@ class SimulatedEnvSimplified(gym.Env):
             movement_along_task = np.dot(movement_vector, task_vector)
 
             # Reward for correct movement
-            reward += movement_along_task
+            reward = movement_along_task
 
             # Penalize movement in the wrong direction
-            movement_off_task = np.linalg.norm(movement_vector) - movement_along_task
-            reward -= movement_off_task
+            reward += REWARD_PENALTY_STAY_STILL
         else:
             # No movement action active
             pass
@@ -309,7 +308,6 @@ class SimulatedEnvSimplified(gym.Env):
         self.cumulative_reward += reward
 
         return observation, reward, terminated, truncated, {}
-
 
     def render(self, mode='human'):
         pass  # No rendering in simplified version
