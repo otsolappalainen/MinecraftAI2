@@ -7,16 +7,12 @@ from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 import torch.nn as nn
-import multiprocessing
-import logging
-import logging.handlers
-import queue  # Correctly import the queue module
 
 # Suppress TensorFlow logs if TensorFlow is not needed
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Suppress TensorFlow INFO logs
 
 # Import your environment
-from better_env import SimplifiedEnvWithBlankImage  # Updated simplified environment
+from simple_env import SimplifiedEnv  # Updated simplified environment
 
 # Configuration and Hyperparameters
 MODEL_PATH_OLD = "models_full"
@@ -29,23 +25,19 @@ os.makedirs(MODEL_PATH_OLD, exist_ok=True)
 os.makedirs(MODEL_PATH_NEW, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
 
-# Automatically set PARALLEL_ENVS based on available CPU cores
-CPU_COUNT = multiprocessing.cpu_count()
-PARALLEL_ENVS = 16  # Reduced from 16 to 8
-print(f"Using {PARALLEL_ENVS} parallel environments out of {CPU_COUNT} available CPU cores.")
-
 # General Parameters
+PARALLEL_ENVS = 16  # Adjust based on your CPU cores
 TOTAL_TIMESTEPS = 20_000_000
 
 # Training Parameters
-LOW_LR = 1e-5
-HIGH_LR = 1e-4
-BUFFER_SIZE = 10_000  # Further reduced from 10,000
-BATCH_SIZE = 128  # Reduced from 128
+LOW_LR = 1e-4
+HIGH_LR = 5e-4
+BUFFER_SIZE = 30_000
+BATCH_SIZE = 128
 GAMMA = 0.95
-TRAIN_FREQ = 4
+TRAIN_FREQ = 8
 GRADIENT_STEPS = 1
-TARGET_UPDATE_INTERVAL = 1000  # Adjusted from 4000
+TARGET_UPDATE_INTERVAL = 4000
 EXPLORATION_FRACTION = 0.2
 EXPLORATION_FINAL_EPS = 0.05
 SAVE_EVERY_STEPS = 500_000
@@ -55,22 +47,12 @@ VERBOSE = 1
 
 # Configurable Modes
 ENABLE_MIXED_PRECISION = True  # Set to False to disable mixed precision
-ADJUST_NETWORK_ARCHITECTURE = False  # Set to False to always use CNN
+ADJUST_NETWORK_ARCHITECTURE = True  # Set to False to use old network architecture
 
 # Device Configuration
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
 if device.type == 'cuda':
     th.cuda.set_device(0)  # Ensure GPU 0 is used
-    th.backends.cudnn.benchmark = True  # Enable CUDNN benchmarking for speed
-
-# Setup asynchronous logging
-logger = logging.getLogger('env_logger')
-logger.setLevel(logging.INFO)
-log_queue = queue.Queue()  # Use queue.Queue() instead of logging.handlers.Queue()
-handler = logging.handlers.QueueHandler(log_queue)
-logger.addHandler(handler)
-listener = logging.handlers.QueueListener(log_queue, logging.FileHandler(LOG_FILE))
-listener.start()
 
 # Callbacks
 class SaveOnStepCallback(BaseCallback):
@@ -79,13 +61,11 @@ class SaveOnStepCallback(BaseCallback):
         self.save_freq = save_freq
         self.save_path = save_path
         os.makedirs(save_path, exist_ok=True)
-        self.last_save_step = 0
 
     def _on_step(self) -> bool:
-        if self.num_timesteps - self.last_save_step >= self.save_freq:
+        if self.num_timesteps % self.save_freq == 0:
             save_file = os.path.join(self.save_path, f"model_step_{self.num_timesteps}.zip")
             self.model.save(save_file)
-            self.last_save_step = self.num_timesteps
             if self.verbose > 0:
                 print(f"Model saved at step {self.num_timesteps} to {save_file}")
         return True
@@ -114,71 +94,80 @@ class TimestampedEvalCallback(EvalCallback):
 class FullModelFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space):
         # Initialize with a placeholder for features_dim; it will be overwritten
+        # Assuming 'other' is part of the observation and is a Box space
         super(FullModelFeatureExtractor, self).__init__(observation_space, features_dim=256)
 
-        # Scalar observation processing
+        # Extract the dimension of 'other' observations
         scalar_input_dim = observation_space["other"].shape[0]
-        self.scalar_net = nn.Sequential(
-            nn.Linear(scalar_input_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-        )
-        scalar_output_size = 128
 
-        # Always use CNN layers for image processing
-        image_input_channels = observation_space["image"].shape[0]  # Assuming 3 for RGB images
-        self.image_net = nn.Sequential(
-            nn.Conv2d(image_input_channels, 32, kernel_size=8, stride=4),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=4, stride=2),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=3, stride=1),
-            nn.ReLU(),
-            nn.Flatten(),
-        )
-        # Precompute the CNN output size
-        dummy_image = th.zeros(1, *observation_space["image"].shape)
-        conv_output_size = self._get_conv_output_size(dummy_image)
-        self.conv_output_size = conv_output_size  # Store for debugging
+        # Adjusted network architecture
+        if ADJUST_NETWORK_ARCHITECTURE:
+            # Scalar processing layers with 128 neurons each
+            self.scalar_net = nn.Sequential(
+                nn.Linear(scalar_input_dim, 128),
+                nn.ReLU(),
+                nn.Linear(128, 128),
+                nn.ReLU(),
+            )
+            scalar_output_size = 128
 
-        # Fusion layers
-        self.fusion_layers = nn.Sequential(
-            nn.Linear(scalar_output_size + conv_output_size, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-        )
-        self._features_dim = 128
+            # Fusion layers with 256 and 128 neurons
+            # Inject a dummy vector (e.g., zeros) for image CNN output
+            # Here, we define a dummy vector of size 256
+            self.register_buffer('dummy_image_features', th.zeros(256, dtype=th.float32))
 
-        print("Using CNN layers for feature extractor.")
+            self.fusion_layers = nn.Sequential(
+                nn.Linear(scalar_output_size + 256, 256),
+                nn.ReLU(),
+                nn.Linear(256, 128),
+                nn.ReLU(),
+            )
+            final_features_dim = 128
 
-    def _get_conv_output_size(self, dummy_input):
-        """
-        Calculate the output size of the CNN given an input shape.
-        """
-        with th.no_grad():
-            output = self.image_net(dummy_input)
-            return int(np.prod(output.shape[1:]))
+            # Note: Image CNN is not defined to save computational resources
+        else:
+            # Original architecture (if not adjusting)
+            self.scalar_net = nn.Sequential(
+                nn.Linear(scalar_input_dim, 64),
+                nn.ReLU(),
+                nn.Linear(64, 64),
+                nn.ReLU(),
+            )
+            scalar_output_size = 64
+
+            self.fusion_layers = nn.Sequential(
+                nn.Linear(scalar_output_size + 128, 128),
+                nn.ReLU(),
+                nn.Linear(128, 64),
+                nn.ReLU(),
+            )
+            final_features_dim = 64
+
+        self._features_dim = final_features_dim  # Update the features_dim
 
     def forward(self, observations):
-        # Process scalar inputs
         scalar_features = self.scalar_net(observations["other"])
 
-        # Process image inputs through CNN
-        image_features = self.image_net(observations["image"])
+        if ADJUST_NETWORK_ARCHITECTURE:
+            # Create a batch of dummy image features (e.g., zeros)
+            # Shape: (batch_size, 256)
+            batch_size = scalar_features.size(0)
+            dummy_image = self.dummy_image_features.unsqueeze(0).repeat(batch_size, 1).to(scalar_features.device)
 
-        # Concatenate scalar and image features
-        combined_input = th.cat([scalar_features, image_features], dim=1)
+            # Concatenate scalar features with dummy image features
+            combined_input = th.cat([scalar_features, dummy_image], dim=1)
 
-        # Pass through fusion layers
-        fused_features = self.fusion_layers(combined_input)
+            # Pass through fusion layers
+            fused_features = self.fusion_layers(combined_input)
+        else:
+            # Original architecture
+            fused_features = self.fusion_layers(scalar_features)
 
-        return fused_features
+        return fused_features  # Return fused features
 
 def make_env_simplified(env_id, rank, seed=0):
     def _init():
-        env = SimplifiedEnvWithBlankImage(
+        env = SimplifiedEnv(
             log_file=LOG_FILE,
             enable_logging=True,
             env_id=rank
@@ -212,42 +201,20 @@ def transfer_weights(old_model, new_model):
     old_state_dict = old_model.policy.state_dict()
     new_state_dict = new_model.policy.state_dict()
 
-    transferred_layers = []
-    skipped_layers = []
-
     # Iterate over old model's state_dict and match with the new model
     for key, param in old_state_dict.items():
         if key in new_state_dict:
             if new_state_dict[key].shape == param.shape:
                 # Transfer weights if shapes match
                 new_state_dict[key] = param
-                transferred_layers.append(key)
+                print(f"Transferred: {key}")
             else:
                 # Skip mismatched layers
-                skipped_layers.append((key, param.shape, new_state_dict[key].shape))
-        else:
-            skipped_layers.append((key, param.shape, 'Not present in new model'))
+                print(f"Skipped (shape mismatch): {key} ({param.shape} vs {new_state_dict[key].shape})")
 
     # Load the updated state_dict into the new model
     new_model.policy.load_state_dict(new_state_dict)
     print("Weight transfer completed.")
-    print(f"Transferred layers ({len(transferred_layers)}):")
-    for layer in transferred_layers:
-        print(f"  - {layer}")
-    print(f"Skipped layers ({len(skipped_layers)}):")
-    for layer, old_shape, new_shape in skipped_layers:
-        print(f"  - {layer}: {old_shape} -> {new_shape}")
-
-def validate_transfer(old_model, new_model):
-    """
-    Validate that the weights have been transferred correctly.
-    """
-    for key in old_model.policy.state_dict():
-        if key in new_model.policy.state_dict():
-            if new_model.policy.state_dict()[key].equal(old_model.policy.state_dict()[key]):
-                print(f"Validation passed for layer: {key}")
-            else:
-                print(f"Validation failed for layer: {key}")
 
 def create_simplified_model(env):
     lr_schedule = custom_learning_rate_schedule(LOW_LR, HIGH_LR, TOTAL_TIMESTEPS)
@@ -271,7 +238,7 @@ def create_simplified_model(env):
         tensorboard_log=LOG_DIR,
         device=device,
         policy_kwargs=policy_kwargs,
-        optimize_memory_usage=False,  # Disabled to avoid AssertionError
+        optimize_memory_usage=False,
     )
 
 def main():
@@ -292,7 +259,6 @@ def main():
         if not model_files:
             print(f"No existing models found in '{MODEL_PATH_OLD}'.")
             env.close()
-            listener.stop()
             return
 
         print("Available old models:")
@@ -318,16 +284,12 @@ def main():
         print("Transferring weights from the old model to match current parameters...")
         transfer_weights(old_model, new_model)
 
-        # Optional: Validate the transfer
-        validate_transfer(old_model, new_model)
-
     elif choice == "2":
         # Load an existing new model
         model_files = [f for f in os.listdir(MODEL_PATH_NEW) if f.endswith(".zip")]
         if not model_files:
             print(f"No existing models found in '{MODEL_PATH_NEW}'.")
             env.close()
-            listener.stop()
             return
 
         print("Available new models:")
@@ -353,9 +315,6 @@ def main():
         print("Transferring weights from the loaded model to match current parameters...")
         transfer_weights(old_model, new_model)
 
-        # Optional: Validate the transfer
-        validate_transfer(old_model, new_model)
-
     elif choice == "3":
         # Start training from scratch
         print("Starting training from scratch...")
@@ -363,8 +322,6 @@ def main():
 
     else:
         print("Invalid choice. Exiting.")
-        env.close()
-        listener.stop()
         return
 
     # Create evaluation environment
@@ -389,21 +346,11 @@ def main():
         th.set_float32_matmul_precision('medium')
         print("Mixed precision training enabled.")
 
-    try:
-        # Start training
-        new_model.learn(total_timesteps=TOTAL_TIMESTEPS, callback=callbacks)
-        final_model_path = os.path.join(MODEL_PATH_NEW, "final_model.zip")
-        new_model.save(final_model_path)
-        print(f"Training completed. Model saved to '{final_model_path}'.")
-    except th.cuda.OutOfMemoryError:
-        print("CUDA Out of Memory error encountered. Reducing batch size and retrying...")
-        th.cuda.empty_cache()
-        # Optionally, implement a retry mechanism with reduced parameters
-    finally:
-        # Ensure proper closure
-        env.close()
-        eval_env.close()
-        listener.stop()
+    # Start training
+    new_model.learn(total_timesteps=TOTAL_TIMESTEPS, callback=callbacks)
+    final_model_path = os.path.join(MODEL_PATH_NEW, "final_model.zip")
+    new_model.save(final_model_path)
+    print(f"Training completed. Model saved to '{final_model_path}'.")
 
 if __name__ == "__main__":
     main()

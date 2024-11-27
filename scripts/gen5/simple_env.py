@@ -13,19 +13,6 @@ MAX_EPISODE_LENGTH = 500
 # Yaw Range in degrees
 YAW_RANGE = (-180, 180)
 
-# Image Constants
-IMAGE_HEIGHT = 224
-IMAGE_WIDTH = 224
-IMAGE_CHANNELS = 3  # RGB Image
-
-# Define the global blank image as a constant
-# Using a neutral gray color (128/255) for each pixel in RGB
-BLANK_IMAGE = np.full(
-    (IMAGE_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH),
-    128 / 255.0,
-    dtype=np.float32
-)
-
 # Action Definitions
 ACTION_MOVE_FORWARD = 0
 ACTION_MOVE_BACKWARD = 1
@@ -43,10 +30,10 @@ REWARD_PENALTY_STAY_STILL = -0.1  # Penalty for non-movement
 MOVE_DISTANCE_PER_STEP = 0.5  # Desired position change per timestep
 TURN_ANGLE_PER_STEP = 15  # Degrees to turn per step
 
-class SimplifiedEnvWithBlankImage(gym.Env):
+class SimplifiedEnv(gym.Env):
     """
     Simplified environment with 2D omnidirectional movement and randomized initial states.
-    Observation space includes a cached blank image and other status variables.
+    Observation space includes position, task array, and status variables.
     """
     metadata = {"render.modes": ["human"]}
 
@@ -58,23 +45,18 @@ class SimplifiedEnvWithBlankImage(gym.Env):
         enable_logging=True,
         env_id=0,  # Environment ID for logging
     ):
-        super(SimplifiedEnvWithBlankImage, self).__init__()
+        super(SimplifiedEnv, self).__init__()
 
         # Enforce render_mode to "none"
         self.render_mode = "none"
 
-        # Define observation space using Dict for image and other data
+        # Define observation space
+        # Including status variables and task array
         self.observation_space = spaces.Dict({
-            "image": spaces.Box(
-                low=0.0,
-                high=1.0,
-                shape=BLANK_IMAGE.shape,
-                dtype=np.float32
-            ),
             "other": spaces.Box(
                 low=-np.inf,
                 high=np.inf,
-                shape=(8 + TASK_SIZE,),  # x, z, y, sin_yaw, cos_yaw, health, hunger, alive, task (20)
+                shape=(27,),  # x, z, yaw, pitch, health, hunger, alive, task (20)
                 dtype=np.float32,
             ),
         })
@@ -84,7 +66,6 @@ class SimplifiedEnvWithBlankImage(gym.Env):
 
         # Simulation parameters
         self.x = 0.0
-        self.y = 0.0  # Added y attribute
         self.z = 0.0
         self.yaw = 0.0  # Orientation in degrees
         self.pitch = 0.0  # Kept at 0
@@ -140,42 +121,20 @@ class SimplifiedEnvWithBlankImage(gym.Env):
             )
 
     def _get_observation(self):
-        # Normalize x, z, and y coordinates
-        normalized_x = (2 * (self.x + 20000) / 40000) - 1
-        normalized_z = (2 * (self.z + 20000) / 40000) - 1
-        normalized_y = (2 * (self.y + 256) / 512) - 1
-
-        # Encode yaw using sine and cosine
-        yaw_rad = math.radians(self.yaw)
-        sin_yaw = math.sin(yaw_rad)
-        cos_yaw = math.cos(yaw_rad)
-
-        # Normalize health and hunger (range [0, 20])
-        normalized_health = self.health / 20.0
-        normalized_hunger = self.hunger / 20.0
-
-        # Task vector (keep as is or normalize if needed)
-        normalized_task = self.current_task  # Keep as is for simplicity
-
         # Combine all scalar values into 'other'
         other = np.array(
             [
-                normalized_x,
-                normalized_z,
-                normalized_y,
-                sin_yaw,
-                cos_yaw,
-                normalized_health,
-                normalized_hunger,
-                self.alive,  # Binary, no normalization needed
-            ] + normalized_task.tolist(),
+                self.x,
+                self.z,
+                self.yaw,
+                self.pitch,
+                self.health,
+                self.hunger,
+                self.alive
+            ] + self.current_task.tolist(),
             dtype=np.float32
         )
-
-        return {
-            "image": BLANK_IMAGE.copy(),  # Use the global blank image
-            "other": other
-        }
+        return {"other": other}
 
     def reset(self, seed=None, options=None):
         """
@@ -191,9 +150,8 @@ class SimplifiedEnvWithBlankImage(gym.Env):
         if seed is not None:
             self.seed(seed)
 
-        # Randomize initial position
+        # Randomize initial position between -100 and 100
         self.x = self.np_random.uniform(-100, 100)
-        self.y = self.np_random.uniform(-256, 256)  # Randomize y within its range
         self.z = self.np_random.uniform(-100, 100)
         
         # Randomize initial yaw between -180 and 180 degrees
@@ -280,16 +238,14 @@ class SimplifiedEnvWithBlankImage(gym.Env):
             ACTION_TURN_RIGHT: "turn_right",
             ACTION_MOVE_LEFT: "move_left",
             ACTION_MOVE_RIGHT: "move_right",
-            # Add vertical movement actions if needed
-            # ACTION_MOVE_UP: "move_up",
-            # ACTION_MOVE_DOWN: "move_down",
+            # Actions 6-17 are unused and mapped to "no_op"
         }
 
         # Map action index to action name; unused actions do nothing
         action_name = action_map.get(action, "no_op")
 
         # Handle action execution
-        prev_x, prev_z, prev_y = self.x, self.z, self.y
+        prev_x, prev_z = self.x, self.z
         prev_yaw, prev_pitch = self.yaw, self.pitch
 
         if action_name in ["move_forward", "move_backward", "move_left", "move_right"]:
@@ -313,7 +269,6 @@ class SimplifiedEnvWithBlankImage(gym.Env):
         # Calculate movement vector from position change
         delta_x = self.x - prev_x
         delta_z = self.z - prev_z
-        delta_y = self.y - prev_y
         movement_vector = np.array([delta_x, delta_z])
 
         # Normalize task vector (only use first 2 elements)
@@ -333,8 +288,7 @@ class SimplifiedEnvWithBlankImage(gym.Env):
 
         # Check for episode termination
         terminated = self.step_count >= self.max_episode_length
-        out_of_bounds = not (-20000 <= self.x <= 20000 and -256 <= self.y <= 256 and -20000 <= self.z <= 20000)
-        truncated = out_of_bounds
+        truncated = False
 
         # Get observation
         observation = self._get_observation()
@@ -366,4 +320,5 @@ class SimplifiedEnvWithBlankImage(gym.Env):
     def close(self):
         if self.enable_logging and hasattr(self, "log_file_handle") and self.log_file_handle:
             self.log_file_handle.close()
-        super(SimplifiedEnvWithBlankImage, self).close()
+        super(SimplifiedEnv, self).close()
+

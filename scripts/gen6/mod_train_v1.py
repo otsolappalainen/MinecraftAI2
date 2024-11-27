@@ -16,11 +16,11 @@ import queue  # Correctly import the queue module
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Suppress TensorFlow INFO logs
 
 # Import your environment
-from better_env import SimplifiedEnvWithBlankImage  # Updated simplified environment
+from mod_env_v1 import MinecraftEnv  # Updated simplified environment
 
 # Configuration and Hyperparameters
-MODEL_PATH_OLD = "models_full"
-MODEL_PATH_NEW = "models_new_v1"
+MODEL_PATH_OLD = "models_new"
+MODEL_PATH_NEW = "models_full_simple"
 LOG_DIR = "tensorboard_logs_new_v1"
 LOG_FILE = "training_data.csv"
 
@@ -31,7 +31,7 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 # Automatically set PARALLEL_ENVS based on available CPU cores
 CPU_COUNT = multiprocessing.cpu_count()
-PARALLEL_ENVS = 16  # Reduced from 16 to 8
+PARALLEL_ENVS = 16  # Adjusted from 16 to 8 to match available CPU cores
 print(f"Using {PARALLEL_ENVS} parallel environments out of {CPU_COUNT} available CPU cores.")
 
 # General Parameters
@@ -41,15 +41,15 @@ TOTAL_TIMESTEPS = 20_000_000
 LOW_LR = 1e-5
 HIGH_LR = 1e-4
 BUFFER_SIZE = 10_000  # Further reduced from 10,000
-BATCH_SIZE = 128  # Reduced from 128
+BATCH_SIZE = 64  # Reduced from 128
 GAMMA = 0.95
 TRAIN_FREQ = 4
 GRADIENT_STEPS = 1
 TARGET_UPDATE_INTERVAL = 1000  # Adjusted from 4000
-EXPLORATION_FRACTION = 0.2
+EXPLORATION_FRACTION = 0.1
 EXPLORATION_FINAL_EPS = 0.05
 SAVE_EVERY_STEPS = 500_000
-EVAL_FREQ = 5_000
+EVAL_FREQ = 3_000
 EVAL_EPISODES = 20
 VERBOSE = 1
 
@@ -178,7 +178,7 @@ class FullModelFeatureExtractor(BaseFeaturesExtractor):
 
 def make_env_simplified(env_id, rank, seed=0):
     def _init():
-        env = SimplifiedEnvWithBlankImage(
+        env = MinecraftEnv(
             log_file=LOG_FILE,
             enable_logging=True,
             env_id=rank

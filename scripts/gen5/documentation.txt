@@ -1,0 +1,245 @@
+mainly for development purposes:
+
+# SimplifiedEnv Code Context Document
+
+This document provides context and explanation for each code block in the `SimplifiedEnv` class, along with related mathematical concepts.
+
+---
+
+#### **Class Initialization (`__init__`)**
+```plaintext
+- Context:
+  - Sets up the environment's observation and action spaces, simulation parameters, and logging.
+  - Initializes key attributes like position, yaw, pitch, health, hunger, and task array.
+  - Defines the action space (18 discrete actions) and observation space (`other`).
+
+- Mathematics:
+  - The observation space (`other`) is a 27-element vector:
+    - **x, z**: Current position in a 2D plane.
+    - **yaw**: Rotation around the vertical axis (in degrees).
+    - **pitch**: Kept constant at 0.
+    - **health, hunger**: State indicators, both capped at 20.
+    - **alive**: Boolean (1 for alive, 0 for dead).
+    - **task array**: A 20-element vector where the first 2 elements define the target direction. For example:
+      - `[1, 0, 0, ...]`: Positive x-direction.
+      - `[0, 1, 0, ...]`: Positive z-direction.
+      - `[-1, 0, 0, ...]`: Negative x-direction.
+
+
+
+
+reset
+- Context:
+  - Resets the environment to a random initial state.
+  - Randomizes `x`, `z`, and `yaw` within specified ranges.
+  - Selects a random task direction from predefined possibilities.
+
+- Mathematics:
+  - Position (`x, z`): Randomized within [-100, 100].
+  - Yaw (`yaw`): Randomized within [-180, 180].
+  - Task direction (`current_task`):
+    - Predefined directions: Positive/Negative x or z-axis.
+    - For example, if `current_task = [1, 0, 0, ...]`, rewards are given for moving along the positive x-axis.
+
+
+task array
+- Context:
+  - The task array is a 20-element vector defining the reward direction.
+  - Currently, only the first 2 elements are used to represent the target direction in the x-z plane.
+
+- Mathematics:
+  - The reward direction is defined by a normalized vector:
+    - Example: `[1, 0, 0, ...]` represents a movement goal of **1 unit in the positive x direction** and 0 in the z direction.
+    - The vector can be normalized: 
+      task_normalized = task / ||task||
+      Where:
+      ||task|| = sqrt(x^2 + z^2)
+    - A dot product is used later to calculate alignment between the agent's movement and the task vector.
+
+
+Action Space
+- Context:
+  - Defines 18 discrete actions, where only the first 6 are implemented:
+    - **0**: Move forward.
+    - **1**: Move backward.
+    - **2**: Turn left.
+    - **3**: Turn right.
+    - **4**: Move left (strafe).
+    - **5**: Move right (strafe).
+
+- Mathematics:
+  - Movement actions affect position:
+    - Forward/Backward: Adjust `x` and `z` based on yaw.
+    - Left/Right: Adjust perpendicular to the yaw angle.
+  - Turn actions modify `yaw`:
+    - Turn left: Increment yaw by 15°.
+    - Turn right: Decrement yaw by 15°.
+    - Yaw wraps around within [-180, 180] using:
+      yaw = (yaw + 360) % 360 if yaw < -180
+      yaw = (yaw - 360) if yaw > 180
+
+
+movement
+- Context:
+  - Calculates position changes (`x`, `z`) based on the yaw angle and action.
+
+- Mathematics:
+  - Adjusts yaw to align with the coordinate system:
+    - Forward along the **positive x-axis** when `yaw = -90`.
+  - Converts yaw to radians:
+    yaw_rad = yaw * (pi / 180)
+    - Adjusts to match the desired forward direction:
+      yaw_rad_adjusted = yaw_rad - (pi / 2)
+  - Movement direction vector:
+    - Forward: [cos(yaw), sin(yaw)].
+    - Backward: [-cos(yaw), -sin(yaw)].
+    - Left: [-sin(yaw), cos(yaw)].
+    - Right: [sin(yaw), -cos(yaw)].
+
+
+reward calculation
+- Context:
+  - Rewards are based on the agent's movement alignment with the task vector.
+
+- Mathematics:
+  - Calculate the agent's movement vector:
+    movement_vector = [delta_x, delta_z]
+  - Normalize the task vector:
+    task_normalized = task / ||task|| if ||task|| != 0
+  - Project the movement onto the task vector:
+    movement_alignment = movement_vector . task_normalized
+  - Reward:
+    reward = immediate_reward + (movement_alignment * REWARD_SCALE_POSITIVE)
+
+yaw handling
+- Context:
+  - Ensures yaw is wrapped to remain within the range [-180, 180].
+
+- Mathematics:
+  - After each turn:
+    - Wrap yaw using modulo:
+      yaw = (yaw + TURN_ANGLE_PER_STEP) % 360
+    - Adjust to [-180, 180]:
+      if yaw > 180: yaw -= 360
+      if yaw < -180: yaw += 360
+
+
+observation space
+- Context:
+  - Combines all scalar information (position, yaw, task vector, etc.) into a 27-element vector.
+
+- Mathematics:
+  - Observation:
+    other = [x, z, yaw, pitch, health, hunger, alive] + current_task
+
+
+logging
+- Context:
+  - Logs state and reward information into a CSV file every 5 steps.
+
+- Mathematics:
+  - Log format:
+    [env_id, episode_id, step, x, z, yaw, pitch, health, hunger, alive, reward, task_x, task_z]
+
+
+environment reset
+- Context:
+  - Re-initializes the agent's position, yaw, and task direction for a new episode.
+
+- Mathematics:
+  - Randomized initial values:
+    x, z ~ U(-100, 100)
+    yaw ~ U(-180, 180)
+  - Task direction is chosen randomly from predefined options.
+
+
+step execution
+- Context:
+  - Executes a single timestep, applying the chosen action and updating the agent's state and reward.
+
+- Mathematics:
+  - Position update for movement actions:
+    x, z = x + delta_x, z + delta_z
+  - Yaw update for turning actions:
+    yaw = (yaw + TURN_ANGLE_PER_STEP) % 360
+    Adjusted to [-180, 180].
+
+
+
+
+
+
+SIMPLE TRAIN
+
+
+
+### Context Document for Training Code ###
+
+# Logging and Directories
+1. LOG_DIR: Specifies the directory where TensorBoard logs are saved. Logs can be visualized to monitor training progress.
+2. MODEL_PATH_OLD: Stores old models used for weight transfer when resuming training with new architecture.
+3. MODEL_PATH_NEW: Directory for saving models trained in the current run, including checkpoints and the final model.
+4. LOG_FILE: Records training data (e.g., rewards, observations) to a CSV for analysis.
+5. Logging in TensorBoard: Activated with the 'tensorboard_log' parameter in the DQN initialization.
+6. SaveOnStepCallback: Saves the model at fixed intervals (SAVE_EVERY_STEPS). Useful for resuming training.
+7. TimestampedEvalCallback: Tracks the best model based on evaluation rewards. Appends timestamps to model filenames.
+
+# Model Selection Logic
+1. User selects from 3 options in the main function:
+   - Load weights from an old model.
+   - Load an existing trained model from MODEL_PATH_NEW.
+   - Train a new model from scratch.
+2. Weight Transfer: Transfers compatible layers between models, skipping incompatible ones.
+3. Model Files: Automatically lists available models for selection by the user.
+4. Evaluation: Uses SubprocVecEnv and VecMonitor for running parallel evaluation environments.
+
+# Model Structure and Design
+1. FullModelFeatureExtractor:
+   - Scalar Processing:
+       Processes input observations using two layers with 64 neurons each (ReLU activations).
+   - Fusion Layers:
+       Combines scalar output with dummy CNN output (128 zeros). Two layers, 128 -> 64 neurons.
+   - Why Dummy CNN:
+       To maintain the same architecture as a full model (including image processing) but avoid the overhead.
+       This setup can later integrate actual CNN outputs without retraining the decision layers.
+   - Features Dimension:
+       Final dimension of 64 neurons passed to the policy for action selection.
+2. Policy Configuration:
+   - policy_kwargs: Defines feature extractor and architecture for decision layers (64 -> 64 neurons).
+   - Uses MultiInputPolicy to handle multiple input types (e.g., scalar data, CNN output).
+
+# Training Parameters
+1. Hyperparameters:
+   - LOW_LR and HIGH_LR: Learning rate schedule for stable convergence.
+   - BUFFER_SIZE: Replay buffer size for experience storage.
+   - TRAIN_FREQ: Frequency of model updates (steps between updates).
+   - TARGET_UPDATE_INTERVAL: Interval for updating the target network.
+2. Mixed Precision:
+   - ENABLE_MIXED_PRECISION: Reduces memory usage and speeds up training on GPUs.
+
+# Learning Rate Scheduling
+1. custom_learning_rate_schedule:
+   - Adjusts the learning rate dynamically based on progress.
+   - Transitions through low, high, and decay phases.
+
+# Multi-Environment Setup
+1. SubprocVecEnv:
+   - Runs multiple environment instances in parallel for efficient training.
+   - Env instances created by make_env_simplified, each with a unique seed for randomness.
+2. VecMonitor:
+   - Wraps environments to log training metrics for each instance.
+
+# Main Function Workflow
+1. User selects action:
+   - Option 1: Load old model weights and transfer to a new model.
+   - Option 2: Load an existing model for further training.
+   - Option 3: Start training a new model from scratch.
+2. Training:
+   - Learning progresses over TOTAL_TIMESTEPS with periodic model saving and evaluation.
+   - Mixed precision is enabled for GPU efficiency.
+   - Logs are saved to TensorBoard and CSV files for analysis.
+
+# Key Notes
+1. This code is modular, allowing easy modification of the model structure and training logic.
+2. Dummy CNN ensures compatibility with future tasks requiring image input without redesigning the architecture.
+3. TensorBoard logs provide insights into the learning process, while CSV files enable fine-grained analysis.
