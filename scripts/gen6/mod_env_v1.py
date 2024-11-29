@@ -1,3 +1,5 @@
+# File: mod_env_v1.py
+
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
@@ -11,26 +13,57 @@ from PIL import Image
 import pygetwindow as gw
 import logging
 from datetime import datetime
+import math
+
+# Constants
+TASK_SIZE = 20
+ACTION_SPACE_SIZE = 18  # Total number of actions (0-17)
+MAX_EPISODE_LENGTH = 500
+
+# Yaw Range in degrees
+YAW_RANGE = (-180, 180)
+
+# Image Constants
+IMAGE_HEIGHT = 224
+IMAGE_WIDTH = 224
+IMAGE_CHANNELS = 3  # RGB
+
+# Define the global blank image as a constant
+# Using a neutral gray color (128/255) for each pixel in RGB
+BLANK_IMAGE = np.full(
+    (IMAGE_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH),
+    128 / 255.0,
+    dtype=np.float32
+)
+
+# Action Definitions
+ACTION_MOVE_FORWARD = 0
+ACTION_MOVE_BACKWARD = 1
+ACTION_TURN_LEFT = 2
+ACTION_TURN_RIGHT = 3
+ACTION_MOVE_LEFT = 4
+ACTION_MOVE_RIGHT = 5
+# Actions 6-17 are unused
+
+# Reward Definitions
+REWARD_SCALE_POSITIVE = 2.0  # Reward multiplier for positive movement
+REWARD_PENALTY_STAY_STILL = -0.1  # Penalty for non-movement
+
+# Movement Parameters
+MOVE_DISTANCE_PER_STEP = 0.5  # Desired position change per timestep
+TURN_ANGLE_PER_STEP = 15  # Degrees to turn per step
 
 class MinecraftEnv(gym.Env):
     """
-    Gym environment for interacting with Minecraft mod via WebSockets.
+    Gymnasium environment for interacting with Minecraft mod via WebSockets.
     Sends actions to the mod, captures screenshots, processes images,
     and returns observations.
     """
 
-    metadata = {"render.modes": ["human"]}
+    metadata = {"render_modes": ["human"]}
 
     # Hardcoded debug flag
     DEBUG = True
-
-    # Constants
-    IMAGE_HEIGHT = 224
-    IMAGE_WIDTH = 224
-    IMAGE_CHANNELS = 3  # RGB
-
-    ACTION_SPACE_SIZE = 20  # Total number of actions (0-19)
-    OBSERVATION_IMAGE_SHAPE = (IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANNELS)
 
     def __init__(self, ws_uri="ws://localhost:8080"):
         super(MinecraftEnv, self).__init__()
@@ -47,28 +80,20 @@ class MinecraftEnv(gym.Env):
         self.loop.run_until_complete(self._connect())
 
         # Define action and observation spaces
-        self.action_space = spaces.Discrete(self.ACTION_SPACE_SIZE)
+        self.action_space = spaces.Discrete(ACTION_SPACE_SIZE)
         self.observation_space = spaces.Dict({
             "image": spaces.Box(
                 low=0.0,
                 high=1.0,
-                shape=self.OBSERVATION_IMAGE_SHAPE,
+                shape=BLANK_IMAGE.shape,  # (3, 224, 224)
                 dtype=np.float32
             ),
-            "state": spaces.Dict({
-                "x": spaces.Box(low=-20000.0, high=20000.0, shape=(1,), dtype=np.float32),
-                "y": spaces.Box(low=-256.0, high=256.0, shape=(1,), dtype=np.float32),
-                "z": spaces.Box(low=-20000.0, high=20000.0, shape=(1,), dtype=np.float32),
-                "yaw": spaces.Box(low=-180.0, high=180.0, shape=(1,), dtype=np.float32),
-                "pitch": spaces.Box(low=-90.0, high=90.0, shape=(1,), dtype=np.float32),
-                "health": spaces.Box(low=0.0, high=20.0, shape=(1,), dtype=np.float32),
-                "hunger": spaces.Box(low=0.0, high=20.0, shape=(1,), dtype=np.float32),
-                "alive": spaces.Discrete(2),  # 1 for alive, 0 for dead
-                "inventory": spaces.Dict({
-                    str(i): spaces.Box(low=0, high=1000, shape=(1,), dtype=np.int32)
-                    for i in range(9)  # Hotbar slots 0-8
-                })
-            })
+            "other": spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(8 + TASK_SIZE,),  # 8 state variables + 20 task variables
+                dtype=np.float32,
+            )
         })
 
         # Define the region of the Minecraft window for screenshot
@@ -103,7 +128,7 @@ class MinecraftEnv(gym.Env):
                 self.logger.error("Minecraft window not found. Ensure Minecraft is running.")
                 raise Exception("Minecraft window not found.")
             minecraft_window = windows[0]
-            if not minecraft_window.isVisible:
+            if not minecraft_window.visible:
                 self.logger.warning("Minecraft window is not visible. It might be minimized.")
             region = {
                 "top": minecraft_window.top,
@@ -131,22 +156,25 @@ class MinecraftEnv(gym.Env):
                 return img
         except Exception as e:
             self.logger.error(f"Error capturing screenshot: {e}")
-            return np.zeros(self.OBSERVATION_IMAGE_SHAPE, dtype=np.float32)
+            return np.zeros(self.observation_space["image"].shape, dtype=np.float32)
 
     def _process_image(self, image):
         """
         Process the captured image:
         - Resize to the desired dimensions.
         - Normalize pixel values to [0, 1].
+        - Transpose to channels-first format (3, 224, 224).
         """
         try:
-            resized_image = cv2.resize(image, (self.IMAGE_WIDTH, self.IMAGE_HEIGHT))
-            normalized_image = resized_image.astype(np.float32) / 255.0
-            self.logger.debug("Image processed (resized and normalized).")
+            resized_image = cv2.resize(image, (IMAGE_WIDTH, IMAGE_HEIGHT))  # (224, 224, 3)
+            normalized_image = resized_image.astype(np.float32) / 255.0  # (224, 224, 3)
+            # Transpose to (3, 224, 224)
+            normalized_image = np.transpose(normalized_image, (2, 0, 1))
+            self.logger.debug("Image processed (resized, normalized, and transposed).")
             return normalized_image
         except Exception as e:
             self.logger.error(f"Error processing image: {e}")
-            return np.zeros(self.OBSERVATION_IMAGE_SHAPE, dtype=np.float32)
+            return np.zeros(self.observation_space["image"].shape, dtype=np.float32)
 
     def _get_action_mapping(self):
         """Map action indices to action names as per the updated action list."""
@@ -168,34 +196,61 @@ class MinecraftEnv(gym.Env):
             14: "mouse_right_click",
             15: "next_item",
             16: "previous_item",
-            17: "reset 0",
-            18: "reset 1",
-            19: "reset 2",
-            # Add more mappings if necessary
+            17: "no_op"  # Define action 17 as 'no_op' to handle unused actions
         }
 
     def _build_observation(self, image, state):
-        """Construct the observation dictionary."""
+        """Construct the observation dictionary with flattened keys."""
         processed_image = self._process_image(image)
-        # Normalize and format state
-        obs_state = {
-            "x": np.array([state.get("x", 0.0)], dtype=np.float32),
-            "y": np.array([state.get("y", 0.0)], dtype=np.float32),
-            "z": np.array([state.get("z", 0.0)], dtype=np.float32),
-            "yaw": np.array([state.get("yaw", 0.0)], dtype=np.float32),
-            "pitch": np.array([state.get("pitch", 0.0)], dtype=np.float32),
-            "health": np.array([state.get("health", 20.0)], dtype=np.float32),
-            "hunger": np.array([state.get("hunger", 20.0)], dtype=np.float32),
-            "alive": int(state.get("alive", True)),
-            "inventory": {
-                str(i): np.array([state.get("inventory", {}).get(str(i), 0)], dtype=np.int32)
-                for i in range(9)
-            }
-        }
+
+        # Normalize x, z, and y coordinates
+        normalized_x = (2 * (state.get("x", 0.0) + 20000) / 40000) - 1
+        normalized_z = (2 * (state.get("z", 0.0) + 20000) / 40000) - 1
+        normalized_y = (2 * (state.get("y", 0.0) + 256) / 512) - 1
+
+        # Encode yaw using sine and cosine
+        yaw_rad = math.radians(state.get("yaw", 0.0))
+        sin_yaw = math.sin(yaw_rad)
+        cos_yaw = math.cos(yaw_rad)
+
+        # Normalize health and hunger (range [0, 20])
+        normalized_health = state.get("health", 20.0) / 20.0
+        normalized_hunger = state.get("hunger", 20.0) / 20.0
+
+        # Alive status
+        alive = float(state.get("alive", True))  # Convert to float for consistency
+
+        # Task vector (assuming it's part of the state; adjust if necessary)
+        # For simplicity, we'll initialize it as zeros here
+        # Replace this with actual task data if available
+        task_vector = np.zeros(TASK_SIZE, dtype=np.float32)
+        # If task data is part of the state, extract it here
+        # Example:
+        # task_vector = np.array(state.get("task", [0.0]*TASK_SIZE), dtype=np.float32)
+
+        # Combine all scalar values into 'other'
+        other = np.array(
+            [
+                normalized_x,
+                normalized_z,
+                normalized_y,
+                sin_yaw,
+                cos_yaw,
+                normalized_health,
+                normalized_hunger,
+                alive
+            ] + task_vector.tolist(),
+            dtype=np.float32
+        )
+
         observation = {
-            "image": processed_image,
-            "state": obs_state
+            "image": processed_image,  # Shape: (3, 224, 224)
+            "other": other  # Shape: (28,)
         }
+
+        # Log observation shapes
+        self.logger.debug(f"Observation shapes: image={observation['image'].shape}, other={observation['other'].shape}")
+
         return observation
 
     def _send_action(self, action):
@@ -226,149 +281,10 @@ class MinecraftEnv(gym.Env):
                 "yaw": 0.0,
                 "pitch": 0.0,
                 "health": 20.0,
-                "hunger": 20,
+                "hunger": 20.0,
                 "alive": True,
                 "inventory": {str(i): 0 for i in range(9)}
             }
-
-    def _build_observation_with_image(self, image, state):
-        """Build the observation dictionary including the image."""
-        processed_image = self._process_image(image)
-        obs_state = {
-            "x": np.array([state.get("x", 0.0)], dtype=np.float32),
-            "y": np.array([state.get("y", 0.0)], dtype=np.float32),
-            "z": np.array([state.get("z", 0.0)], dtype=np.float32),
-            "yaw": np.array([state.get("yaw", 0.0)], dtype=np.float32),
-            "pitch": np.array([state.get("pitch", 0.0)], dtype=np.float32),
-            "health": np.array([state.get("health", 20.0)], dtype=np.float32),
-            "hunger": np.array([state.get("hunger", 20.0)], dtype=np.float32),
-            "alive": int(state.get("alive", True)),
-            "inventory": {
-                str(i): np.array([state.get("inventory", {}).get(str(i), 0)], dtype=np.int32)
-                for i in range(9)
-            }
-        }
-        observation = {
-            "image": processed_image,
-            "state": obs_state
-        }
-        return observation
-
-    def _build_observation_from_state(self, image, state):
-        """Alternative method to build observation."""
-        processed_image = self._process_image(image)
-        obs_state = {
-            "x": np.array([state.get("x", 0.0)], dtype=np.float32),
-            "y": np.array([state.get("y", 0.0)], dtype=np.float32),
-            "z": np.array([state.get("z", 0.0)], dtype=np.float32),
-            "yaw": np.array([state.get("yaw", 0.0)], dtype=np.float32),
-            "pitch": np.array([state.get("pitch", 0.0)], dtype=np.float32),
-            "health": np.array([state.get("health", 20.0)], dtype=np.float32),
-            "hunger": np.array([state.get("hunger", 20.0)], dtype=np.float32),
-            "alive": int(state.get("alive", True)),
-            "inventory": {
-                str(i): np.array([state.get("inventory", {}).get(str(i), 0)], dtype=np.int32)
-                for i in range(9)
-            }
-        }
-        observation = {
-            "image": processed_image,
-            "state": obs_state
-        }
-        return observation
-
-    def _build_observation_v2(self, image, state):
-        """Another variant to build observation."""
-        processed_image = self._process_image(image)
-        obs_state = {
-            "x": np.array([state["x"]], dtype=np.float32),
-            "y": np.array([state["y"]], dtype=np.float32),
-            "z": np.array([state["z"]], dtype=np.float32),
-            "yaw": np.array([state["yaw"]], dtype=np.float32),
-            "pitch": np.array([state["pitch"]], dtype=np.float32),
-            "health": np.array([state["health"]], dtype=np.float32),
-            "hunger": np.array([state["hunger"]], dtype=np.float32),
-            "alive": int(state["alive"]),
-            "inventory": {
-                str(i): np.array([state["inventory"].get(str(i), 0)], dtype=np.int32)
-                for i in range(9)
-            }
-        }
-        observation = {
-            "image": processed_image,
-            "state": obs_state
-        }
-        return observation
-
-    def _build_observation_final(self, image, state):
-        """Final method to build observation."""
-        processed_image = self._process_image(image)
-        obs_state = {
-            "x": np.array([state.get("x", 0.0)], dtype=np.float32),
-            "y": np.array([state.get("y", 0.0)], dtype=np.float32),
-            "z": np.array([state.get("z", 0.0)], dtype=np.float32),
-            "yaw": np.array([state.get("yaw", 0.0)], dtype=np.float32),
-            "pitch": np.array([state.get("pitch", 0.0)], dtype=np.float32),
-            "health": np.array([state.get("health", 20.0)], dtype=np.float32),
-            "hunger": np.array([state.get("hunger", 20.0)], dtype=np.float32),
-            "alive": int(state.get("alive", True)),
-            "inventory": {
-                str(i): np.array([state.get("inventory", {}).get(str(i), 0)], dtype=np.int32)
-                for i in range(9)
-            }
-        }
-        observation = {
-            "image": processed_image,
-            "state": obs_state
-        }
-        return observation
-
-    def _build_observation_new(self, image, state):
-        """Newest method to build observation."""
-        processed_image = self._process_image(image)
-        obs_state = {
-            "x": np.array([state.get("x", 0.0)], dtype=np.float32),
-            "y": np.array([state.get("y", 0.0)], dtype=np.float32),
-            "z": np.array([state.get("z", 0.0)], dtype=np.float32),
-            "yaw": np.array([state.get("yaw", 0.0)], dtype=np.float32),
-            "pitch": np.array([state.get("pitch", 0.0)], dtype=np.float32),
-            "health": np.array([state.get("health", 20.0)], dtype=np.float32),
-            "hunger": np.array([state.get("hunger", 20.0)], dtype=np.float32),
-            "alive": int(state.get("alive", True)),
-            "inventory": {
-                str(i): np.array([state.get("inventory", {}).get(str(i), 0)], dtype=np.int32)
-                for i in range(9)
-            }
-        }
-        observation = {
-            "image": processed_image,
-            "state": obs_state
-        }
-        return observation
-
-    def _build_observation(self, image, state):
-        """Construct the observation dictionary."""
-        processed_image = self._process_image(image)
-        # Normalize and format state
-        obs_state = {
-            "x": np.array([state.get("x", 0.0)], dtype=np.float32),
-            "y": np.array([state.get("y", 0.0)], dtype=np.float32),
-            "z": np.array([state.get("z", 0.0)], dtype=np.float32),
-            "yaw": np.array([state.get("yaw", 0.0)], dtype=np.float32),
-            "pitch": np.array([state.get("pitch", 0.0)], dtype=np.float32),
-            "health": np.array([state.get("health", 20.0)], dtype=np.float32),
-            "hunger": np.array([state.get("hunger", 20.0)], dtype=np.float32),
-            "alive": int(state.get("alive", True)),
-            "inventory": {
-                str(i): np.array([state.get("inventory", {}).get(str(i), 0)], dtype=np.int32)
-                for i in range(9)
-            }
-        }
-        observation = {
-            "image": processed_image,
-            "state": obs_state
-        }
-        return observation
 
     def step(self, action):
         """
@@ -412,7 +328,7 @@ class MinecraftEnv(gym.Env):
 
         # Define termination condition
         terminated = not state.get("alive", True)
-        truncated = False  # Define truncation conditions if any
+        truncated = False  # You can set conditions for truncation if needed
 
         info = {}
 
@@ -420,24 +336,23 @@ class MinecraftEnv(gym.Env):
 
     def reset(self, seed=None, options=None):
         """
-        Reset the state of the environment and returns an initial observation.
+        Reset the state of the environment and returns an initial observation and info.
 
         Args:
             seed (int, optional): The seed for the environment's random number generator.
-            options (dict, optional): Additional information for resetting the environment.
+            options (dict, optional): Additional options for resetting.
 
         Returns:
             observation (dict): The initial observation.
-            info (dict): Diagnostic information.
+            info (dict): Additional information.
         """
+        super().reset(seed=seed)
+
         if self.DEBUG:
             self.logger.debug(f"Resetting environment at {datetime.now()}")
 
         # Optionally send a reset action to the mod
-        # Here, we choose "reset 1" to teleport to initial coordinates
-        self._send_action(17)  # "reset 0"
-        self._send_action(18)  # "reset 1"
-        self._send_action(19)  # "reset 2"
+        self._send_action(17)  # "no_op"
 
         # Receive the initial state
         state = self._receive_state()
@@ -452,7 +367,7 @@ class MinecraftEnv(gym.Env):
 
         return observation, info
 
-    def render(self, mode="human"):
+    def render(self):
         """Render the environment. Not implemented."""
         pass
 

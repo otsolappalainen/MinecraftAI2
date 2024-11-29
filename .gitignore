@@ -24,6 +24,8 @@ venv/
 *.dll
 *.pyd
 *.mp4
+*.pt
+*.pkl
 
 # Ignore images
 *.png
