@@ -45,10 +45,38 @@ def load_and_visualize_data(pkl_file, num_samples=5):
                     else:
                         print(f"Invalid image shape: {img.shape}")
                 
-                # Display scalar metadata
+                # Display scalar metadata with labels
                 if 'other' in observation:
                     other = observation['other']
-                    print(f"Other Metadata (first 10 values): {other[:10]}")
+                    if len(other) >= 8:
+                        # Assuming the first 8 values correspond to known metadata
+                        x = other[0]
+                        z = other[1]
+                        y = other[2]
+                        sin_yaw = other[3]
+                        cos_yaw = other[4]
+                        health = other[5]
+                        hunger = other[6]
+                        alive = other[7]
+
+                        print(f"Scalar Metadata:")
+                        print(f"x: {x:.2f}")
+                        print(f"z: {z:.2f}")
+                        print(f"y: {y:.2f}")
+                        print(f"sin(yaw): {sin_yaw:.2f}")
+                        print(f"cos(yaw): {cos_yaw:.2f}")
+                        print(f"Health: {health:.2f}")
+                        print(f"Hunger: {hunger:.2f}")
+                        print(f"Alive: {alive}")
+                    else:
+                        print("Insufficient 'other' metadata for labeling.")
+                
+                # Display task array if available
+                if 'task' in observation:
+                    task = observation['task']
+                    print(f"Task Array: {task}")
+                else:
+                    print("Task data not found in observation.")
             else:
                 print("Observation missing in this sample.")
 
@@ -58,5 +86,5 @@ def load_and_visualize_data(pkl_file, num_samples=5):
         print(f"Error reading .pkl file: {e}")
 
 # Specify the path to your .pkl file
-pkl_file_path = r"C:\Users\odezz\source\MinecraftAI2\scripts\gen6\expert_data\session_20241128_213941\expert_data.pkl"  # Update this with your file path
+pkl_file_path = r"C:\Users\odezz\source\MinecraftAI2\scripts\gen6\expert_data\session_20241130_160008\expert_data.pkl"  # Update this with your file path
 load_and_visualize_data(pkl_file_path, num_samples=5)

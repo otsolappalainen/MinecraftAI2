@@ -105,7 +105,8 @@ class ExpertDataset(Dataset):
 
         # Convert observations to tensors
         image = th.tensor(obs['image'], dtype=th.float32)
-        other = th.tensor(obs['other'], dtype=th.float32)
+        # Concatenate 'other' and 'task' into a single scalar tensor
+        other = th.tensor(np.concatenate([obs['other'], obs['task']]), dtype=th.float32)
         action = th.tensor(action, dtype=th.long)
 
         return {'image': image, 'other': other}, action
@@ -173,7 +174,7 @@ def main():
     # Define observation and action spaces based on your data
     observation_space = {
         'image': (3, 224, 224),
-        'other': dataset[0][0]['other'].shape[0]
+        'other': dataset[0][0]['other'].shape[0] + dataset[0][0]['task'].shape[0]  # Combine 'other' and 'task'
     }
     action_space = 18  # Number of actions
 

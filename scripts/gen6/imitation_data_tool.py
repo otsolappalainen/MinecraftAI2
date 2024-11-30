@@ -1,3 +1,5 @@
+# File: data_collection_imitation_compatible.py
+
 import asyncio
 import websockets
 import mss
@@ -15,9 +17,7 @@ import pygame
 from queue import Queue
 import fnmatch
 import ctypes
-import random  # Added for task selection
-
-print(pygame.__version__)  # Debug: Verify Pygame version
+import random  # For task selection
 
 # ------------------------------
 # Configuration and Setup
@@ -59,28 +59,6 @@ ACTION_MAPPING = {
 
 # Reverse mapping: action name to index
 ACTION_NAME_TO_INDEX = {v: k for k, v in ACTION_MAPPING.items()}
-
-# Action list aligned with the provided mapping
-ACTION_LIST = [
-    "move_forward",       # 0
-    "move_backward",      # 1
-    "move_left",          # 2
-    "move_right",         # 3
-    "jump_walk_forward",  # 4
-    "jump",               # 5
-    "sneak",              # 6
-    "look_left",          # 7
-    "look_right",         # 8
-    "look_up",            # 9
-    "look_down",          # 10
-    "turn_left",          # 11
-    "turn_right",         # 12
-    "attack",             # 13
-    "use",                # 14
-    "next_item",          # 15
-    "previous_item",      # 16
-    "no_op"               # 17
-]
 
 # Keyboard action keys mapping: key to action name
 ACTION_KEYS = {
@@ -378,6 +356,9 @@ async def main():
                 prev_x = None
                 prev_z = None
 
+                # Initialize previous observation for next_obs
+                prev_observation = None
+
                 while running:
                     start_time = time.time()
 
@@ -413,7 +394,7 @@ async def main():
 
                     # Get the action index
                     action_index = get_action_index(action_name)
-                    action = ACTION_LIST[action_index]
+                    action = ACTION_MAPPING[action_index]
 
                     # Send action to mod
                     message = {'action': action}
@@ -474,9 +455,9 @@ async def main():
                     alive = float(state.get('alive', True))
 
                     # Normalize as per your environment
-                    normalized_x = x / 100.0
-                    normalized_y = y_coord / 100.0
-                    normalized_z = z / 100.0
+                    normalized_x = x / 20000.0
+                    normalized_y = y_coord / 20000.0
+                    normalized_z = z / 256.0
                     sin_yaw = np.sin(np.deg2rad(yaw))
                     cos_yaw = np.cos(np.deg2rad(yaw))
                     normalized_health = health / 20.0
@@ -496,17 +477,24 @@ async def main():
                     observation = {
                         'image': image_array.astype(np.float32) / 255.0,  # Normalize image
                         'other': other,
-                        'task': task  # Include task in observation
+                        'task': task  # Save task along with observation
                     }
 
-                    # Record data
-                    data_entry = {
-                        'observation': observation,
-                        'action': action_index,
-                        'reward': reward,
-                        'timestamp': start_time
-                    }
-                    data.append(data_entry)
+                    # For BC, we need to store observations, actions, next_observations, dones, infos
+                    # Prepare next_observation for the previous step
+                    if prev_observation is not None:
+                        data_entry = {
+                            'observation': prev_observation,
+                            'action': prev_action_index,
+                            'next_observation': observation,
+                            'done': False,  # Assuming continuous task
+                            'info': {}  # Additional info if needed
+                        }
+                        data.append(data_entry)
+
+                    # Update previous observation and action
+                    prev_observation = observation
+                    prev_action_index = action_index
 
                     iteration += 1
 
