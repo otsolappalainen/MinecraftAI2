@@ -1,5 +1,3 @@
-# File: minecraft_env.py
-
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
@@ -16,6 +14,8 @@ import fnmatch
 import os
 import ctypes
 import logging
+from pynput import keyboard
+from queue import Queue
 
 class MinecraftEnv(gym.Env):
     """
@@ -24,13 +24,10 @@ class MinecraftEnv(gym.Env):
 
     metadata = {'render.modes': ['human']}
 
-    def __init__(self):
+    def __init__(self, task=None):
         super(MinecraftEnv, self).__init__()
 
         # Define action and observation space
-        # They must be gym.spaces objects
-
-        # Action space: Discrete actions as per your action list
         self.ACTION_MAPPING = {
             0: "move_forward",
             1: "move_backward",
@@ -55,10 +52,10 @@ class MinecraftEnv(gym.Env):
         self.action_space = spaces.Discrete(len(self.ACTION_MAPPING))
 
         # Observation space: Image (3, 224, 224), and other data
-        # Define the observation space accordingly
         self.observation_space = spaces.Dict({
             'image': spaces.Box(low=0, high=1, shape=(3, 224, 224), dtype=np.float32),
-            'other': spaces.Box(low=-np.inf, high=np.inf, shape=(8,), dtype=np.float32)
+            'other': spaces.Box(low=-np.inf, high=np.inf, shape=(8,), dtype=np.float32),
+            'task': spaces.Box(low=-np.inf, high=np.inf, shape=(20,), dtype=np.float32)
         })
 
         # Initialize WebSocket connection parameters
@@ -82,6 +79,36 @@ class MinecraftEnv(gym.Env):
         # Start WebSocket connection in a separate thread
         self.start_connection()
 
+        # Initialize task
+        if task is None:
+            self.possible_tasks = [
+                np.array([0, 1] + [0]*18, dtype=np.float32),  # Example task
+            ]
+            self.task = self.possible_tasks[0]
+        else:
+            self.task = np.array(task, dtype=np.float32)
+
+        # Initialize mouse listener (if needed)
+        self.mouse_action_queue = Queue()
+        self.mouse_capture = None  # You can initialize this if needed
+        # self.mouse_capture.start()
+
+        # Initialize keyboard listener (if needed)
+        self.keyboard_listener = None  # You can initialize this if needed
+        # self.keyboard_listener.start()
+
+        # Data directory setup for saving collected data
+        self.DATA_DIR = 'expert_data'
+        os.makedirs(self.DATA_DIR, exist_ok=True)
+
+        # Create a unique session directory
+        self.SESSION_ID = time.strftime('%Y%m%d_%H%M%S')
+        self.SESSION_DIR = os.path.join(self.DATA_DIR, f'session_{self.SESSION_ID}')
+        os.makedirs(self.SESSION_DIR, exist_ok=True)
+
+        # Set up logging
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
     def find_minecraft_window(self):
         """
         Finds the Minecraft window and returns its bounding box.
@@ -104,7 +131,6 @@ class MinecraftEnv(gym.Env):
                             "width": minecraft_window.width,
                             "height": minecraft_window.height,
                         }
-        # If no matching window is found
         raise Exception("Minecraft window not found. Ensure the game is running and visible.")
 
     def start_connection(self):
@@ -131,7 +157,6 @@ class MinecraftEnv(gym.Env):
                 self.connected = True
                 # Keep the connection open
                 async for message in websocket:
-                    # Update the state
                     with self.state_lock:
                         self.state = json.loads(message)
         except Exception as e:
@@ -145,126 +170,54 @@ class MinecraftEnv(gym.Env):
         if self.connected and self.websocket is not None:
             message = {'action': action_name}
             asyncio.run_coroutine_threadsafe(self.websocket.send(json.dumps(message)), self.loop)
-        else:
-            logging.warning("Not connected to WebSocket server.")
-
-    def reset(self, seed=None, options=None):
-        """
-        Resets the environment.
-        """
-        super().reset(seed=seed)
-
-        # Send reset command to the mod
-        self.send_action("reset 0")  # You can adjust the reset type as needed
-        time.sleep(0.5)  # Wait for the game to reset
-
-        # Get initial observation
-        observation = self.get_observation()
-        info = {}  # Additional info if needed
-        return observation, info
 
     def step(self, action):
         """
-        Executes an action in the environment.
+        Executes one step of the environment.
         """
-        action_name = self.ACTION_MAPPING.get(action, "no_op")
+        # Process action
+        action_name = self.ACTION_MAPPING[action]
         self.send_action(action_name)
 
-        # Wait for the state to update
-        time.sleep(0.1)  # Adjust as needed
+        # Capture the current state (image + task data)
+        screenshot = self.capture_screenshot()
 
-        # Get observation
-        observation = self.get_observation()
-
-        # For now, set reward, done, info to placeholders
-        reward = 0  # You can define a reward function based on your goals
-        done = False  # Define termination conditions
-        truncated = False  # Define truncation conditions
-        info = {}
-
-        return observation, reward, done, truncated, info
-
-    def get_observation(self):
-        """
-        Captures the game screen and combines it with other state information.
-        """
-        # Capture screenshot
-        try:
-            sct_img = self.sct.grab(self.minecraft_bounds)
-            img = Image.frombytes('RGB', sct_img.size, sct_img.rgb)
-        except Exception as e:
-            logging.error(f"Error capturing Minecraft window: {e}")
-            # Create a black image as fallback
-            img = Image.new('RGB', (224, 224), color='black')
-
-        img = img.resize((224, 224))
-        image_array = np.array(img).transpose((2, 0, 1))  # Shape: (3, 224, 224)
-        image_array = image_array.astype(np.float32) / 255.0  # Normalize image
-
-        # Get state
-        with self.state_lock:
-            state = self.state
-
-        # If state is not available, create a default state
-        if state is None:
-            state = {
-                'x': 0,
-                'y': 0,
-                'z': 0,
-                'yaw': 0,
-                'pitch': 0,
-                'health': 20,
-                'hunger': 20,
-                'alive': True
-            }
-
-        # Extract and normalize state variables
-        x = state.get('x', 0)
-        y_coord = state.get('y', 0)
-        z = state.get('z', 0)
-        yaw = state.get('yaw', 0)
-        health = state.get('health', 20)
-        hunger = state.get('hunger', 20)
-        alive = float(state.get('alive', True))
-
-        normalized_x = x / 100.0
-        normalized_y = y_coord / 100.0
-        normalized_z = z / 100.0
-        sin_yaw = np.sin(np.deg2rad(yaw))
-        cos_yaw = np.cos(np.deg2rad(yaw))
-        normalized_health = health / 20.0
-        normalized_hunger = hunger / 20.0
-
-        other = np.array([
-            normalized_x,
-            normalized_z,
-            normalized_y,
-            sin_yaw,
-            cos_yaw,
-            normalized_health,
-            normalized_hunger,
-            alive
-        ], dtype=np.float32)
-
-        observation = {
-            'image': image_array,
-            'other': other
+        # Collect state information (e.g., task)
+        state_data = {
+            'image': screenshot,
+            'other': np.zeros(8),  # Replace with actual state data if needed
+            'task': self.task
         }
 
-        return observation
+        # Get reward (for now, dummy reward)
+        reward = 0.0
+        done = False  # Modify based on your stopping condition
+
+        return state_data, reward, done, {}
+
+    def capture_screenshot(self):
+        """
+        Captures a screenshot from the Minecraft window.
+        """
+        screenshot = self.sct.grab(self.minecraft_bounds)
+        image = Image.frombytes('RGB', (screenshot.width, screenshot.height), screenshot.rgb)
+        image = image.resize((224, 224))  # Resize to 224x224 if needed
+        return np.array(image) / 255.0  # Normalize the image
+
+    def reset(self):
+        """
+        Resets the environment to an initial state by sending a no_op action to the WebSocket.
+        """
+        self.send_action("no_op")  # Sending the no_op action to get the starting state
+        time.sleep(1)  # Sleep to allow the state to be updated
+        return {
+            'image': np.zeros((224, 224, 3)),  # Replace with actual image after capturing
+            'other': np.zeros(8),  # Replace with actual state data if available
+            'task': self.task
+        }
 
     def render(self, mode='human'):
-        pass
-
-    def close(self):
         """
-        Closes the environment and the WebSocket connection.
+        Renders the environment (if necessary).
         """
-        self.connected = False
-        if self.websocket is not None:
-            asyncio.run_coroutine_threadsafe(self.websocket.close(), self.loop)
-        if self.loop is not None:
-            self.loop.call_soon_threadsafe(self.loop.stop)
-        if self.connection_thread is not None:
-            self.connection_thread.join()
-        self.sct.close()
+        pass  # Rendering logic if necessary

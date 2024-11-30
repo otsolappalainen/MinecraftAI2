@@ -1,5 +1,3 @@
-# File: train_with_behavioral_cloning_chunked.py
-
 import os
 import glob
 import pickle
@@ -103,9 +101,10 @@ class ExpertDataset(Dataset):
         obs = entry['observation']
         action = entry['action']
 
-        # Convert observations to tensors
+        # Validate the existence of 'task' and concatenate
+        if 'task' not in obs:
+            raise KeyError("'task' key is missing in observation.")
         image = th.tensor(obs['image'], dtype=th.float32)
-        # Concatenate 'other' and 'task' into a single scalar tensor
         other = th.tensor(np.concatenate([obs['other'], obs['task']]), dtype=th.float32)
         action = th.tensor(action, dtype=th.long)
 
@@ -172,9 +171,10 @@ def main():
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
     # Define observation and action spaces based on your data
+    first_sample = dataset[0]
     observation_space = {
         'image': (3, 224, 224),
-        'other': dataset[0][0]['other'].shape[0] + dataset[0][0]['task'].shape[0]  # Combine 'other' and 'task'
+        'other': first_sample[0]['other'].shape[0]  # Dynamically fetch size
     }
     action_space = 18  # Number of actions
 
