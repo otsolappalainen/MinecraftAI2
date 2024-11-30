@@ -25,6 +25,7 @@ def load_and_visualize_data(pkl_file, num_samples=5):
         # Display a few samples
         for idx, sample in enumerate(data[:num_samples]):
             print(f"\n--- Sample {idx + 1} ---")
+            print(f"Action: {sample}")
             action = sample.get('action', None)
             observation = sample.get('observation', None)
             timestamp = sample.get('timestamp', None)
@@ -48,6 +49,7 @@ def load_and_visualize_data(pkl_file, num_samples=5):
                 # Display scalar metadata with labels
                 if 'other' in observation:
                     other = observation['other']
+                    print(f"observation data: {observation}")
                     if len(other) >= 8:
                         # Assuming the first 8 values correspond to known metadata
                         x = other[0]
@@ -86,5 +88,5 @@ def load_and_visualize_data(pkl_file, num_samples=5):
         print(f"Error reading .pkl file: {e}")
 
 # Specify the path to your .pkl file
-pkl_file_path = r"C:\Users\odezz\source\MinecraftAI2\scripts\gen6\expert_data\session_20241130_160008\expert_data.pkl"  # Update this with your file path
+pkl_file_path = r"C:\Users\odezz\source\MinecraftAI2\scripts\gen6\expert_data\session_20241130_160728\expert_data.pkl"  # Update this with your file path
 load_and_visualize_data(pkl_file_path, num_samples=5)

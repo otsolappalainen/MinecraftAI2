@@ -454,11 +454,17 @@ async def main():
                     hunger = state.get('hunger', 20)
                     alive = float(state.get('alive', True))
 
-                    # Normalize as per your environment
+                    # Normalize yaw to [-180, 180] first
+                    yaw = ((yaw + 180) % 360) - 180
+
+                    # Then normalize yaw to [-1, 1]
+                    normalized_yaw = yaw / 180.0
+
+                    # Other normalizations
                     normalized_x = x / 20000.0
-                    normalized_y = y_coord / 20000.0
+                    normalized_y = y_coord / 20000.0 
                     normalized_z = z / 256.0
-                    sin_yaw = np.sin(np.deg2rad(yaw))
+                    sin_yaw = np.sin(np.deg2rad(yaw))  # Keep these for additional features
                     cos_yaw = np.cos(np.deg2rad(yaw))
                     normalized_health = health / 20.0
                     normalized_hunger = hunger / 20.0
@@ -501,7 +507,7 @@ async def main():
                     # Wait for next iteration
                     # Run at 20Hz
                     elapsed_time = time.time() - start_time
-                    sleep_time = max(0, 0.05 - elapsed_time)
+                    sleep_time = max(0, 0.2 - elapsed_time)
 
                     await asyncio.sleep(sleep_time)
     except KeyboardInterrupt:

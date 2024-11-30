@@ -5,9 +5,102 @@ import torch.nn as nn
 import numpy as np
 import gymnasium as gym
 import time
+import asyncio
 
 # Import the MinecraftEnv environment
 from mod_env_v1 import MinecraftEnv
+
+# Add these functions at the top of evaluate_bc_model.py
+
+def validate_observation(obs, episode, step):
+    """Validate observation values and shapes"""
+    try:
+        # Check for NaN/Inf values
+        for key, value in obs.items():
+            if np.any(np.isnan(value)) or np.any(np.isinf(value)):
+                print(f"Warning: {key} contains NaN/Inf values at episode {episode}, step {step}")
+        
+        # Value ranges
+        if not (0 <= obs['image'].min() <= obs['image'].max() <= 255):
+            print(f"Warning: Image values outside expected range at episode {episode}, step {step}")
+            
+        print(f"Observation ranges - Image: [{obs['image'].min():.2f}, {obs['image'].max():.2f}], "
+              f"Other: [{obs['other'].min():.2f}, {obs['other'].max():.2f}]")
+              
+    except Exception as e:
+        print(f"Validation error: {str(e)}")
+
+def print_action_probs(probs, action):
+    """Print action probabilities distribution"""
+    probs = probs.cpu().numpy()[0]
+    sorted_actions = np.argsort(-probs)  # Sort in descending order
+    print("\nTop 5 actions and their probabilities:")
+    for i in range(5):
+        a = sorted_actions[i]
+        p = probs[a]
+        star = "*" if a == action else " "
+        print(f"{star}Action {a}: {p:.4f}")
+
+def analyze_dataset(dataset):
+    """Analyze action distribution in training data"""
+    action_counts = {}
+    total = 0
+    
+    for i in range(len(dataset)):
+        _, action = dataset[i]
+        action = action.item()
+        action_counts[action] = action_counts.get(action, 0) + 1
+        total += 1
+    
+    print("\nAction distribution in training data:")
+    for action, count in sorted(action_counts.items()):
+        percentage = (count / total) * 100
+        print(f"Action {action}: {count} ({percentage:.2f}%)")
+
+def normalize_observations(obs):
+    """Normalize observation values to reasonable ranges"""
+    normalized = {}
+    
+    # Normalize image (already 0-1)
+    normalized['image'] = obs['image']
+    
+    # Create copy of other observations
+    normalized['other'] = obs['other'].copy()
+    
+    # Normalize yaw to [-180, 180]
+    yaw_idx = 0  # Assuming yaw is first value in 'other'
+    normalized['other'][yaw_idx] = ((normalized['other'][yaw_idx] + 180) % 360) - 180
+    
+    # Normalize yaw to [-1, 1]
+    normalized['other'][yaw_idx] = normalized['other'][yaw_idx] / 180.0
+    
+    return normalized
+
+class ObservationStats:
+    def __init__(self):
+        self.step_stats = []
+        
+    def update(self, obs, action_probs, action):
+        stats = {
+            'yaw': obs['other'][0],
+            'action': action,
+            'action_entropy': -(action_probs * action_probs.log()).sum().item(),
+            'max_prob': action_probs.max().item()
+        }
+        self.step_stats.append(stats)
+        
+    def print_summary(self):
+        print("\nObservation Statistics:")
+        print(f"Yaw range: [{min(s['yaw'] for s in self.step_stats):.2f}, {max(s['yaw'] for s in self.step_stats):.2f}]")
+        print(f"Action entropy range: [{min(s['action_entropy'] for s in self.step_stats):.4f}, {max(s['action_entropy'] for s in self.step_stats):.4f}]")
+        
+        action_counts = {}
+        for s in self.step_stats:
+            action_counts[s['action']] = action_counts.get(s['action'], 0) + 1
+        
+        print("\nAction distribution during evaluation:")
+        for action, count in sorted(action_counts.items()):
+            print(f"Action {action}: {count} times ({count/len(self.step_stats)*100:.1f}%)")
 
 # Define the model architecture (same as in your training code)
 class FullModel(nn.Module):
@@ -53,20 +146,26 @@ class FullModel(nn.Module):
 
     def forward(self, observations):
         # Concatenate 'other' and 'task'
+
+        if observations['image'].ndimension() == 4:  # Check if the input is in the wrong shape [batch_size, height, width, channels]
+            observations['image'] = observations['image'].permute(0, 3, 1, 2)  # Change to [batch_size, channels, height, width]
+
         other_combined = th.cat([observations['other'], observations['task']], dim=1)
         scalar_features = self.scalar_net(other_combined)
         image_features = self.image_net(observations['image'])
+
+
         combined_input = th.cat([scalar_features, image_features], dim=1)
         fused_features = self.fusion_layers(combined_input)
         action_logits = self.action_head(fused_features)
         return action_logits
 
-def main():
+async def main():
     # Device configuration
     device = th.device('cuda' if th.cuda.is_available() else 'cpu')
 
     # Load the trained model
-    MODEL_PATH = r"C:\Users\odezz\source\MinecraftAI2\scripts\gen6\models_bc\final_model.pt"
+    MODEL_PATH = r"C:\Users\odezz\source\MinecraftAI2\scripts\gen6\models_bc\model_epoch_10.pth"
 
     # Define observation and action spaces based on your data
     observation_space = {
@@ -86,53 +185,61 @@ def main():
     # Initialize the environment with the task
     env = MinecraftEnv(task=task)
 
-    # Reset the environment
-    obs, info = env.reset()
+    # Reset the environment (this should be awaited)
+    obs, info = await env.reset()  # Await the reset method
 
     # Start the evaluation loop
-    num_episodes = 1
-    max_steps_per_episode = 1000
+    episodes = 5  # Number of episodes to run
+    max_steps_per_episode = 50
+    
+    stats = ObservationStats()  # Initialize observation statistics
 
-    for episode in range(num_episodes):
-        obs, info = env.reset()
+    for episode in range(episodes):
+        obs, info = await env.reset()
         done = False
         total_reward = 0
         steps = 0
+
         while not done and steps < max_steps_per_episode:
-            # Prepare the observation
-            image = obs['image']  # Shape (3, 224, 224)
-            other = obs['other']  # Shape (8,)
-            task_obs = obs['task']  # Shape (20,)
-            # No need to concatenate here since the model does it
-
-            # Convert to tensors and add batch dimension
-            image_tensor = th.tensor(image, dtype=th.float32).unsqueeze(0).to(device)  # Shape (1, 3, 224, 224)
-            other_tensor = th.tensor(other, dtype=th.float32).unsqueeze(0).to(device)  # Shape (1, 8)
-            task_tensor = th.tensor(task_obs, dtype=th.float32).unsqueeze(0).to(device)  # Shape (1, 20)
-
-            observations = {'image': image_tensor, 'other': other_tensor, 'task': task_tensor}
-
-            # Get action logits from the model
+            # Normalize observations
+            norm_obs = normalize_observations(obs)
+            
+            # Validate observations
+            validate_observation(norm_obs, episode, steps)
+            
+            # Prepare input for model
+            observations = {
+                'image': th.FloatTensor(norm_obs['image']).unsqueeze(0).to(device),
+                'other': th.FloatTensor(norm_obs['other']).unsqueeze(0).to(device),
+                'task': th.FloatTensor(task).unsqueeze(0).to(device)
+            }
+            
+            # Get model prediction
             with th.no_grad():
                 action_logits = model(observations)
-                action_probs = th.softmax(action_logits, dim=1)
+                temperature = 1.0  # Define temperature value
+                action_probs = th.softmax(action_logits / temperature, dim=1)  # temperature > 1 makes distribution more uniform
                 action = th.argmax(action_probs, dim=1).item()
-
-            # Take the action in the environment
-            obs, reward, done, truncated, info = env.step(action)
+                
+                # Track statistics
+                stats.update(norm_obs, action_probs[0], action)
+                
+                # Print action probabilities
+                print_action_probs(action_probs, action)
+            
+            # Take action
+            obs, reward, done, truncated, info = await env.step(action)
             total_reward += reward
             steps += 1
 
-            # Optional: Print some information
             print(f"Step {steps}: Action {action}, Reward {reward}, Total Reward {total_reward}")
+            time.sleep(0.2)
 
-            # Sleep to limit the speed
-            time.sleep(0.05)
+        print(f"Episode {episode+1} finished after {steps} with total reward {total_reward}")
 
-        print(f"Episode {episode+1} finished after {steps} steps with total reward {total_reward}")
+    stats.print_summary()  # Print observation statistics summary
 
-    # Close the environment
-    env.close()
+    await env.close()
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
