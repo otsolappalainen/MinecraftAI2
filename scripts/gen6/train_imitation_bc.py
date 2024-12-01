@@ -74,8 +74,29 @@ class ExpertDataset(Dataset):
             yaw = other[yaw_idx] 
             normalized_yaw = ((yaw + 180) % 360) - 180
             other[yaw_idx] = normalized_yaw / 180.0
+            
+            # Get number of blocks broken (first 8 values are metadata, rest are block data)
+            if len(other) > 8:
+                blocks_data = other[8:]
+                num_blocks = len(blocks_data) // 4  # 4 values per block
+                blocks_broken = sum(1 for i in range(num_blocks) if any(blocks_data[i*4:(i+1)*4]))
+            else:
+                blocks_broken = 0
+                
+            # Create new observation vector with just basic data + block count
+            basic_obs = np.array([
+                other[0],  # x
+                other[1],  # z
+                other[2],  # y
+                other[3],  # sin_yaw
+                other[4],  # cos_yaw
+                other[5],  # health
+                other[6],  # hunger
+                other[7],  # alive
+                blocks_broken/5.0  # Normalize block count (max 5 blocks)
+            ], dtype=np.float32)
 
-            other = th.tensor(other, dtype=th.float32)
+            other = th.tensor(basic_obs, dtype=th.float32)
             
             # Create default task vector [0,1,0,0,...] 
             task = th.zeros(20, dtype=th.float32)

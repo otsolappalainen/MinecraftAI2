@@ -83,6 +83,28 @@ def normalize_observations(obs):
     normalized_yaw = ((yaw + 180) % 360) - 180  # Wrap to [-180, 180]
     normalized['other'][yaw_idx] = normalized_yaw / 180.0  # Scale to [-1, 1]
     
+    # Count broken blocks (if present)
+    if len(normalized['other']) > 8:
+        blocks_data = normalized['other'][8:]
+        num_blocks = len(blocks_data) // 4  # 4 values per block
+        blocks_broken = sum(1 for i in range(num_blocks) if any(blocks_data[i*4:(i+1)*4]))
+    else:
+        blocks_broken = 0
+    
+    # Create new observation vector with block count
+    basic_obs = np.array([
+        normalized['other'][0],  # x
+        normalized['other'][1],  # z
+        normalized['other'][2],  # y
+        normalized['other'][3],  # sin_yaw
+        normalized['other'][4],  # cos_yaw
+        normalized['other'][5],  # health
+        normalized['other'][6],  # hunger
+        normalized['other'][7],  # alive
+        blocks_broken/5.0  # Normalize block count (max 5 blocks)
+    ], dtype=np.float32)
+    
+    normalized['other'] = basic_obs
     return normalized
 
 class ObservationStats:
@@ -202,10 +224,10 @@ async def main():
     # Load the trained model
     MODEL_PATH = r"C:\Users\odezz\source\MinecraftAI2\scripts\gen6\models_bc\model_epoch_10.pth"
 
-    # Define observation and action spaces
+    # Update observation space to include block count
     observation_space = {
         'image': (3, 224, 224),
-        'other': 8
+        'other': 9  # 8 basic features + 1 for block count
     }
     action_space = 18
 
@@ -291,7 +313,7 @@ async def main():
             steps += 1
 
             print(f"Step {steps}: Action {action}, Reward {reward}, Total Reward {total_reward}")
-            time.sleep(0.15)
+            time.sleep(0.05)
 
         print(f"Episode {episode+1} finished after {steps} with total reward {total_reward}")
 
