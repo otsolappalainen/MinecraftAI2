@@ -14,7 +14,7 @@ import pickle
 import logging
 import pygetwindow as gw
 import pygame
-from queue import Queue
+from queue import Queue, Empty
 import fnmatch
 import ctypes
 import random  # For task selection
@@ -24,7 +24,7 @@ import random  # For task selection
 # ------------------------------
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Set data directory for saving data
 DATA_DIR = 'expert_data'
@@ -70,19 +70,21 @@ ACTION_KEYS = {
     'shift': 'sneak',
     'q': 'jump_walk_forward',
     'e': 'next_item',
-    'r': 'previous_item',
+    'r': 'previous_item'
 }
 
 # Mouse movement threshold (pixels)
 MOUSE_MOVE_THRESHOLD = 2  # Lower threshold for higher sensitivity
 
 # Variables to store the latest inputs
-pressed_keys = set()
+
 latest_mouse_action = None
 latest_mouse_action_time = None
 
 # Thread-safe queue for mouse actions from the MouseCaptureWindow
 mouse_action_queue = Queue()
+pressed_keys = set()
+pressed_mouse_buttons = set()  # Add this new set
 
 # Lock for synchronizing access to shared variables
 input_lock = threading.Lock()
@@ -131,7 +133,7 @@ def find_minecraft_window():
                 matched_windows = gw.getWindowsWithTitle(title)
                 if matched_windows:
                     minecraft_window = matched_windows[0]
-                    if minecraft_window.isMinimized:
+                    if (minecraft_window.isMinimized):
                         minecraft_window.restore()
                         time.sleep(0.5)  # Give time for window to restore
                     return {
@@ -259,21 +261,22 @@ def on_release(key):
 
 # Mouse listener callbacks
 def on_click(x, y, button, pressed):
-    global latest_mouse_action, latest_mouse_action_time
+    global pressed_mouse_buttons
     with input_lock:
-        if pressed:
-            if button == mouse.Button.left:
-                latest_mouse_action = 'attack'
-                latest_mouse_action_time = time.time()
-                logging.debug("Mouse Listener: Left mouse button clicked.")
-            elif button == mouse.Button.right:
-                latest_mouse_action = 'use'
-                latest_mouse_action_time = time.time()
-                logging.debug("Mouse Listener: Right mouse button clicked.")
-        else:
-            latest_mouse_action = None
-            latest_mouse_action_time = None
-            logging.debug("Mouse Listener: Mouse button released.")
+        if button == mouse.Button.left:
+            if pressed:
+                pressed_mouse_buttons.add('attack')
+                logging.debug("Mouse: Added 'attack' action")
+            else:
+                pressed_mouse_buttons.discard('attack')
+                logging.debug("Mouse: Removed 'attack' action")
+        elif button == mouse.Button.right:
+            if pressed:
+                pressed_mouse_buttons.add('use')
+                logging.debug("Mouse: Added 'use' action")
+            else:
+                pressed_mouse_buttons.discard('use')
+                logging.debug("Mouse: Removed 'use' action")
 
 def on_scroll(x, y, dx, dy):
     pass  # Not used in this script
@@ -291,6 +294,42 @@ def get_action_index(action_name):
     else:
         logging.info(f"Unknown action '{action_name}', defaulting to 'no_op'.")
         return ACTION_NAME_TO_INDEX["no_op"]
+
+# Add before main():
+def get_current_action():
+    with input_lock:
+        # Debug current state
+        logging.debug(f"Current pressed_mouse_buttons: {pressed_mouse_buttons}")
+        
+        # First check mouse queue since movement is high priority
+        try:
+            mouse_action = mouse_action_queue.get_nowait()
+            logging.debug(f"Got mouse movement action: {mouse_action}")
+            return mouse_action
+        except Empty:
+            # Then check mouse buttons
+            if 'attack' in pressed_mouse_buttons:
+                return 'attack'
+            if 'use' in pressed_mouse_buttons:
+                return 'use'
+                
+            # Finally check keyboard
+            if 'w' in pressed_keys:
+                if 'space' in pressed_keys:
+                    return 'jump_walk_forward'
+                return 'move_forward'
+            if 's' in pressed_keys:
+                return 'move_backward'
+            if 'a' in pressed_keys:
+                return 'move_left'
+            if 'd' in pressed_keys:
+                return 'move_right'
+            if 'space' in pressed_keys:
+                return 'jump'
+            if 'shift' in pressed_keys:
+                return 'sneak'
+                
+            return 'no_op'
 
 # ------------------------------
 # Main Data Collection Loop
@@ -360,187 +399,269 @@ async def main():
                 prev_observation = None
 
                 while running:
-                    start_time = time.time()
-
-                    # Check if there are mouse actions from the queue
                     try:
-                        while not mouse_action_queue.empty():
-                            mouse_action = mouse_action_queue.get_nowait()
-                            with input_lock:
-                                latest_mouse_action = mouse_action
-                                latest_mouse_action_time = time.time()
-                                logging.debug(f"Main Loop: Received mouse action '{mouse_action}' from queue.")
-                    except Exception as e:
-                        logging.error(f"Error reading from mouse action queue: {e}")
+                        start_time = time.time()
 
-                    # Determine the current action
-                    with input_lock:
-                        # Keep the latest_mouse_action for a certain duration
-                        if (latest_mouse_action and latest_mouse_action_time and 
-                            (time.time() - latest_mouse_action_time <= MOUSE_ACTION_DURATION)):
+                        # Process mouse movement - keep only latest action
+                        latest_mouse_action = None
+                        while not mouse_action_queue.empty():
+                            latest_mouse_action = mouse_action_queue.get_nowait()
+                            logging.debug(f"Main Loop: Got mouse action '{latest_mouse_action}'")
+
+                        # Determine action with latest mouse movement
+                        if latest_mouse_action:
                             action_name = latest_mouse_action
                         else:
-                            latest_mouse_action = None
-                            latest_mouse_action_time = None
-                            if pressed_keys:
-                                # Get the first pressed key for priority
-                                key = next(iter(pressed_keys))
-                                action_name = ACTION_KEYS.get(key)
-                                if action_name is None:
-                                    action_name = "no_op"
-                                    logging.info(f"Unknown key '{key}', defaulting to 'no_op'.")
-                            else:
-                                action_name = "no_op"
+                            action_name = get_current_action()
+                        
+                        logging.debug(f"Selected action: {action_name}")
 
-                    # Get the action index
-                    action_index = get_action_index(action_name)
-                    action = ACTION_MAPPING[action_index]
-
-                    # Send action to mod
-                    message = {'action': action}
-                    try:
+                        # Send action to server
+                        message = {'action': action_name}
                         await websocket.send(json.dumps(message))
-                    except Exception as e:
-                        logging.error(f"Error sending action to mod: {e}")
 
-                    # Capture screenshot
-                    try:
-                        sct_img = sct.grab(minecraft_bounds)
-                        img = Image.frombytes('RGB', sct_img.size, sct_img.rgb)
-                    except Exception as e:
-                        logging.error(f"Error capturing Minecraft window: {e}")
-                        # Create a black image as fallback
-                        img = Image.new('RGB', (224, 224), color='black')
+                        # Check if there are mouse actions from the queue
+                        try:
+                            while not mouse_action_queue.empty():
+                                mouse_action = mouse_action_queue.get_nowait()
+                                with input_lock:
+                                    latest_mouse_action = mouse_action
+                                    latest_mouse_action_time = time.time()
+                                    logging.debug(f"Main Loop: Received mouse action '{mouse_action}' from queue.")
+                        except Exception as e:
+                            logging.error(f"Error reading from mouse action queue: {e}")
 
-                    img = img.resize((224, 224))
-                    image_array = np.array(img).transpose((2, 0, 1))  # Shape: (3, 224, 224)
+                        # Determine the current action
+                        action_name = get_current_action()
+                        logging.debug(f"Current action selected: {action_name}")
 
-                    # Receive state from mod
-                    try:
-                        response = await websocket.recv()
-                        state = json.loads(response)
-                        logging.debug(f"Received state: {state}")
-                    except Exception as e:
-                        logging.error(f"Error receiving state from mod: {e}")
-                        state = {}
+                        # Get the action index
+                        action_index = get_action_index(action_name)
+                        action = ACTION_MAPPING[action_index]
 
-                    # Extract position
-                    x = state.get('x', 0)
-                    y_coord = state.get('y', 0)
-                    z = state.get('z', 0)
+                        # Send action to mod
+                        message = {'action': action}
+                        try:
+                            await websocket.send(json.dumps(message))
+                        except Exception as e:
+                            logging.error(f"Error sending action to mod: {e}")
 
-                    # Calculate movement vector
-                    if prev_x is not None and prev_z is not None:
-                        delta_x = x - prev_x
-                        delta_z = z - prev_z
-                        movement_vector = np.array([delta_x, delta_z], dtype=np.float32)
-                        # Calculate movement alignment
-                        movement_alignment = np.dot(movement_vector, task_normalized)
-                        # Calculate reward
-                        reward = immediate_reward + (movement_alignment * REWARD_SCALE_POSITIVE)
-                        logging.info(f"Iteration {iteration}: Reward calculated: {reward}")
-                    else:
-                        movement_vector = np.array([0.0, 0.0], dtype=np.float32)
-                        reward = immediate_reward
-                        logging.info(f"Iteration {iteration}: Initial step, reward set to {reward}")
+                        # Capture screenshot
+                        try:
+                            sct_img = sct.grab(minecraft_bounds)
+                            img = Image.frombytes('RGB', sct_img.size, sct_img.rgb)
+                        except Exception as e:
+                            logging.error(f"Error capturing Minecraft window: {e}")
+                            # Create a black image as fallback
+                            img = Image.new('RGB', (224, 224), color='black')
 
-                    # Update previous position
-                    prev_x = x
-                    prev_z = z
+                        img = img.resize((224, 224))
+                        image_array = np.array(img).transpose((2, 0, 1))  # Shape: (3, 224, 224)
 
-                    # Normalize state variables
-                    yaw = state.get('yaw', 0)
-                    health = state.get('health', 20)
-                    hunger = state.get('hunger', 20)
-                    alive = float(state.get('alive', True))
+                        # Receive state from mod
+                        try:
+                            response = await websocket.recv()
+                            state = json.loads(response)
+                            logging.debug(f"Received state: {state}")
+                        except Exception as e:
+                            logging.error(f"Error receiving state from mod: {e}")
+                            state = {}
 
-                    # Normalize yaw to [-180, 180] first
-                    yaw = ((yaw + 180) % 360) - 180
+                        # Extract position
+                        x = state.get('x', 0)
+                        y_coord = state.get('y', 0)
+                        z = state.get('z', 0)
 
-                    # Then normalize yaw to [-1, 1]
-                    normalized_yaw = yaw / 180.0
+                        # Calculate movement vector
+                        if prev_x is not None and prev_z is not None:
+                            delta_x = x - prev_x
+                            delta_z = z - prev_z
+                            movement_vector = np.array([delta_x, delta_z], dtype=np.float32)
+                            # Calculate movement alignment
+                            movement_alignment = np.dot(movement_vector, task_normalized)
+                            # Calculate reward
+                            reward = immediate_reward + (movement_alignment * REWARD_SCALE_POSITIVE)
+                            logging.info(f"Iteration {iteration}: Reward calculated: {reward}")
+                        else:
+                            movement_vector = np.array([0.0, 0.0], dtype=np.float32)
+                            reward = immediate_reward
+                            logging.info(f"Iteration {iteration}: Initial step, reward set to {reward}")
 
-                    # Other normalizations
-                    normalized_x = x / 20000.0
-                    normalized_y = y_coord / 20000.0 
-                    normalized_z = z / 256.0
-                    sin_yaw = np.sin(np.deg2rad(yaw))  # Keep these for additional features
-                    cos_yaw = np.cos(np.deg2rad(yaw))
-                    normalized_health = health / 20.0
-                    normalized_hunger = hunger / 20.0
+                        # Update previous position
+                        prev_x = x
+                        prev_z = z
 
-                    other = np.array([
-                        normalized_x,
-                        normalized_z,
-                        normalized_y,
-                        sin_yaw,
-                        cos_yaw,
-                        normalized_health,
-                        normalized_hunger,
-                        alive
-                    ], dtype=np.float32)
+                        # Normalize state variables
+                        yaw = state.get('yaw', 0)
+                        health = state.get('health', 20)
+                        hunger = state.get('hunger', 20)
+                        alive = float(state.get('alive', True))
 
-                    observation = {
-                        'image': image_array.astype(np.float32) / 255.0,  # Normalize image
-                        'other': other,
-                        'task': task  # Save task along with observation
-                    }
+                        # Normalize yaw to [-180, 180] first
+                        yaw = ((yaw + 180) % 360) - 180
 
-                    # For BC, we need to store observations, actions, next_observations, dones, infos
-                    # Prepare next_observation for the previous step
-                    if prev_observation is not None:
-                        data_entry = {
-                            'observation': prev_observation,
-                            'action': prev_action_index,
-                            'next_observation': observation,
-                            'done': False,  # Assuming continuous task
-                            'info': {}  # Additional info if needed
+                        # Then normalize yaw to [-1, 1]
+                        normalized_yaw = yaw / 180.0
+
+                        # Other normalizations
+                        normalized_x = x / 20000.0
+                        normalized_y = y_coord / 20000.0 
+                        normalized_z = z / 256.0
+                        sin_yaw = np.sin(np.deg2rad(yaw))  # Keep these for additional features
+                        cos_yaw = np.cos(np.deg2rad(yaw))
+                        normalized_health = health / 20.0
+                        normalized_hunger = hunger / 20.0
+
+                        other = np.array([
+                            normalized_x,
+                            normalized_z,
+                            normalized_y,
+                            sin_yaw,
+                            cos_yaw,
+                            normalized_health,
+                            normalized_hunger,
+                            alive
+                        ], dtype=np.float32)
+
+                        observation = {
+                            'image': image_array.astype(np.float32) / 255.0,  # Normalize image
+                            'other': other,
+                            'task': task  # Save task along with observation
                         }
-                        data.append(data_entry)
 
-                    # Update previous observation and action
-                    prev_observation = observation
-                    prev_action_index = action_index
+                        # For BC, we need to store observations, actions, next_observations, dones, infos
+                        # Prepare next_observation for the previous step
+                        if prev_observation is not None:
+                            data_entry = {
+                                'observation': prev_observation,
+                                'action': prev_action_index,
+                                'next_observation': observation,
+                                'done': False,  # Assuming continuous task
+                                'info': {}  # Additional info if needed
+                            }
+                            data.append(data_entry)
 
-                    iteration += 1
+                        # Update previous observation and action
+                        prev_observation = observation
+                        prev_action_index = action_index
 
-                    # Wait for next iteration
-                    # Run at 20Hz
-                    elapsed_time = time.time() - start_time
-                    sleep_time = max(0, 0.2 - elapsed_time)
+                        iteration += 1
 
-                    await asyncio.sleep(sleep_time)
-    except KeyboardInterrupt:
-        logging.info("KeyboardInterrupt detected. Shutting down gracefully.")
+                        # Wait for next iteration
+                        # Run at 20Hz
+                        elapsed_time = time.time() - start_time
+                        sleep_time = max(0, 0.05 - elapsed_time)
+
+                        await asyncio.sleep(sleep_time)
+                    except websockets.exceptions.ConnectionClosed:
+                        logging.info("WebSocket connection closed")
+                        break
+                    except Exception as e:
+                        logging.error(f"Error in main loop: {e}")
+                        break
+
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
     finally:
-        # Save data if not already saved
+        # Graceful shutdown sequence
+        running = False
+        logging.info("Starting graceful shutdown...")
+
+        # Stop input listeners
+        if keyboard_listener:
+            keyboard_listener.stop()
+        if mouse_listener:
+            mouse_listener.stop()
+
+        # Stop mouse capture window
+        if mouse_capture and mouse_capture.is_alive():
+            logging.info("Stopping MouseCaptureWindow...")
+            mouse_capture.running = False
+            mouse_capture.join(timeout=2)
+            
+        # Save collected data
         if data:
             try:
                 with open(os.path.join(SESSION_DIR, 'expert_data.pkl'), 'wb') as f:
                     pickle.dump(data, f)
-                logging.info(f"Data collection complete. Saved data to '{SESSION_DIR}/expert_data.pkl'.")
+                logging.info(f"Saved data to {SESSION_DIR}/expert_data.pkl")
             except Exception as e:
-                logging.error(f"Error saving expert_data.pkl: {e}")
+                logging.error(f"Error saving data: {e}")
 
-        # Stop listeners and mouse capture window
-        running = False
-        try:
-            if keyboard_listener is not None:
-                keyboard_listener.stop()
-            if mouse_listener is not None:
-                mouse_listener.stop()
-            if mouse_capture is not None and mouse_capture.is_alive():
-                mouse_capture.running = False
-                mouse_capture.join(timeout=1)  # Wait briefly for the thread to terminate
-            logging.info("Listeners and MouseCaptureWindow stopped.")
-        except Exception as e:
-            logging.error(f"Error stopping listeners: {e}")
+        logging.info("Shutdown complete")
 
-# ------------------------------
-# Entry Point
-# ------------------------------
+# Add signal handler
+def signal_handler(sig, frame):
+    global running
+    logging.info("Received shutdown signal")
+    running = False
 
 if __name__ == '__main__':
+    import signal
+    signal.signal(signal.SIGINT, signal_handler)
     asyncio.run(main())
+
+# Global variables
+mouse_action_queue = Queue()  # Re-add queue for mouse movement
+pressed_mouse_buttons = set() 
+pressed_keys = set()
+input_lock = threading.Lock()
+
+class MouseCaptureWindow(threading.Thread):
+    def __init__(self, action_queue, threshold=2, window_bounds=None):
+        super().__init__()
+        self.action_queue = action_queue  # Queue for look actions
+        self.threshold = threshold
+        self.running = True
+        self.daemon = True
+        self.window_bounds = window_bounds
+
+    def run(self):
+        # ... existing MouseCaptureWindow init code ...
+        
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    
+            # Get relative mouse movement
+            dx, dy = pygame.mouse.get_rel()
+            if abs(dx) > self.threshold or abs(dy) > self.threshold:
+                if abs(dx) > abs(dy):
+                    action = 'look_right' if dx > 0 else 'look_left'
+                else:
+                    action = 'look_down' if dy > 0 else 'look_up'
+                self.action_queue.put(action)
+                logging.debug(f"MouseCaptureWindow: Added '{action}' to queue")
+
+def get_current_action():
+    with input_lock:
+        logging.debug(f"Current pressed_mouse_buttons: {pressed_mouse_buttons}")
+        
+        # Priority 1: Mouse buttons
+        if 'attack' in pressed_mouse_buttons:
+            return 'attack'
+        if 'use' in pressed_mouse_buttons:
+            return 'use'
+            
+        # Priority 2: Movement keys
+        if 'w' in pressed_keys:
+            if 'space' in pressed_keys:
+                return 'jump_walk_forward'
+            return 'move_forward'
+        if 's' in pressed_keys:
+            return 'move_backward'
+        if 'a' in pressed_keys:
+            return 'move_left'
+        if 'd' in pressed_keys:
+            return 'move_right'
+        if 'space' in pressed_keys:
+            return 'jump'
+        if 'shift' in pressed_keys:
+            return 'sneak'
+            
+        # Priority 3: Mouse movement
+        try:
+            return mouse_action_queue.get_nowait()
+        except Empty:
+            return 'no_op'

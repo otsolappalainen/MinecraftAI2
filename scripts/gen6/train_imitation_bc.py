@@ -22,7 +22,7 @@ EPOCHS = 10
 LEARNING_RATE = 1e-4
 CHUNK_SIZE = 1000  # Number of samples to load at a time
 VERBOSE = True
-LOG_LEVEL = logging.DEBUG  # Change this to logging.INFO for less detailed logs
+LOG_LEVEL = logging.INFO # Change this to logging.INFO for less detailed logs
 
 # Set up logging
 logging.basicConfig(level=LOG_LEVEL, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -35,9 +35,8 @@ os.makedirs(MODEL_SAVE_PATH, exist_ok=True)
 class ExpertDataset(Dataset):
     def __init__(self, data_directories, chunk_size=1000):
         self.data_directories = data_directories
-        self.chunk_size = chunk_size
         self.files = []
-        self.data = []  # Store all data in memory
+        self.data = []
         
         # Collect all expert_data.pkl files
         for directory in self.data_directories:
@@ -45,9 +44,9 @@ class ExpertDataset(Dataset):
             self.files.extend(pkl_files)
 
         if not self.files:
-            raise ValueError("No expert_data.pkl files found in the specified directories.")
+            raise ValueError("No expert_data.pkl files found")
         
-        # Load all files into memory
+        # Load all files
         for file_path in self.files:
             logger.info(f"Loading file: {file_path}")
             with open(file_path, 'rb') as f:
@@ -63,25 +62,53 @@ class ExpertDataset(Dataset):
     def __getitem__(self, idx):
         try:
             entry = self.data[idx]
-            
             obs = entry['observation']
             action = entry['action']
 
-            if 'task' not in obs:
-                raise KeyError(f"'task' key missing in observation for index {idx}")
-            
+            # Create normalized observations
             image = th.tensor(obs['image'], dtype=th.float32)
-            other = th.tensor(np.concatenate([obs['other'], obs['task']]), dtype=th.float32)
-            action = th.tensor(action, dtype=th.long)
-
-            # Verify tensor shapes
-            logger.debug(f"Getting item {idx}: Image shape: {image.shape}, Other shape: {other.shape}, Action: {action.item()}")
+            other = obs['other'].copy()
             
-            return {'image': image, 'other': other}, action
+            # Normalize yaw
+            yaw_idx = 0
+            yaw = other[yaw_idx] 
+            normalized_yaw = ((yaw + 180) % 360) - 180
+            other[yaw_idx] = normalized_yaw / 180.0
+
+            other = th.tensor(other, dtype=th.float32)
+            
+            # Create default task vector [0,1,0,0,...] 
+            task = th.zeros(20, dtype=th.float32)
+            task[1] = 1.0
+
+            return {
+                'image': image,
+                'other': other,
+                'task': task
+            }, th.tensor(action, dtype=th.long)
 
         except Exception as e:
             logger.error(f"Error loading item {idx}: {str(e)}")
             raise
+
+
+def normalize_observations(obs):
+    """Normalize observation values"""
+    normalized = {}
+    
+    # Image already normalized to [0,1]
+    normalized['image'] = obs['image']
+    
+    # Create copy of other observations
+    normalized['other'] = obs['other'].copy()
+    
+    # Normalize yaw to [-180, 180] then to [-1, 1]
+    yaw_idx = 0  # First value in 'other' array
+    yaw = normalized['other'][yaw_idx]
+    normalized_yaw = ((yaw + 180) % 360) - 180  # Wrap to [-180, 180]
+    normalized['other'][yaw_idx] = normalized_yaw / 180.0  # Scale to [-1, 1]
+    
+    return normalized
 
 
 # Define the model architecture
@@ -89,53 +116,83 @@ class FullModel(nn.Module):
     def __init__(self, observation_space, action_space):
         super(FullModel, self).__init__()
         
-        # Image processing network
-        image_input_channels = observation_space['image'][0]
-        self.image_net = nn.Sequential(
-            nn.Conv2d(image_input_channels, 32, kernel_size=8, stride=4),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=4, stride=2),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=3, stride=1),
-            nn.ReLU(),
-            nn.Flatten(),
-        ).to(device)  # Move to device immediately
-
-        # Compute CNN output size
-        with th.no_grad():
-            dummy_input = th.zeros(1, image_input_channels, 224, 224).to(device)
-            conv_output_size = self.image_net(dummy_input).shape[1]
-
-        # Scalar observation processing
-        scalar_input_dim = observation_space['other']
-        scalar_output_size = 128
+        # Calculate correct input dimension (other + task)
+        scalar_input_dim = observation_space['other'] + 20  # 8 other features + 20 task features
+        logger.info(f"Scalar input dim: {scalar_input_dim}")
+        
+        # Scalar observation processing with dropout
         self.scalar_net = nn.Sequential(
             nn.Linear(scalar_input_dim, 128),
             nn.ReLU(),
+            nn.Dropout(p=0.3),
             nn.Linear(128, 128),
             nn.ReLU(),
-        ).to(device)  # Move to device immediately
+            nn.Dropout(p=0.3)
+        )
+        scalar_output_size = 128
 
-        # Fusion layers
+        # Image processing with batch normalization
+        image_input_channels = observation_space['image'][0]
+        self.image_net = nn.Sequential(
+            nn.Conv2d(image_input_channels, 32, kernel_size=8, stride=4),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Dropout2d(p=0.3),
+            nn.Flatten()
+        )
+        
+        # Compute CNN output size
+        with th.no_grad():
+            dummy_input = th.zeros(1, image_input_channels, 224, 224)
+            conv_output_size = self.image_net(dummy_input).shape[1]
+
+        # Add fusion layers
         self.fusion_layers = nn.Sequential(
             nn.Linear(scalar_output_size + conv_output_size, 256),
             nn.ReLU(),
+            nn.Dropout(p=0.3),
             nn.Linear(256, 128),
             nn.ReLU(),
-        ).to(device)  # Move to device immediately
-
+            nn.Dropout(p=0.3)
+        )
+        
         self._features_dim = 128
-        self.action_head = nn.Linear(self._features_dim, action_space).to(device)
+        
+        # Action head with lower initial weights
+        self.action_head = nn.Linear(self._features_dim, action_space)
+        nn.init.normal_(self.action_head.weight, mean=0.0, std=0.01)
 
-    def forward(self, observations):
-        scalar_features = self.scalar_net(observations['other'])
+    def forward(self, observations, eval_mode=False):
+        if not eval_mode:
+            self.train()
+        else:
+            self.eval()
+        
+        # Debug shapes
+        logger.debug(f"Other shape: {observations['other'].shape}")
+        logger.debug(f"Task shape: {observations['task'].shape}")
+        
+        other_combined = th.cat([observations['other'], observations['task']], dim=1)
+        logger.debug(f"Combined input shape: {other_combined.shape}")
+        
+        scalar_features = self.scalar_net(other_combined)
         image_features = self.image_net(observations['image'])
+        
         combined_input = th.cat([scalar_features, image_features], dim=1)
         fused_features = self.fusion_layers(combined_input)
+        
+        if not eval_mode:
+            noise = th.randn_like(fused_features) * 0.1
+            fused_features = fused_features + noise
+            
         action_logits = self.action_head(fused_features)
         return action_logits
-
-
 
 
 def main():
