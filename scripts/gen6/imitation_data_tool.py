@@ -512,21 +512,41 @@ async def main():
                         normalized_health = health / 20.0
                         normalized_hunger = hunger / 20.0
 
-                        other = np.array([
-                            normalized_x,
-                            normalized_z,
-                            normalized_y,
-                            sin_yaw,
-                            cos_yaw,
-                            normalized_health,
-                            normalized_hunger,
-                            alive
-                        ], dtype=np.float32)
+                        # Process broken blocks
+                        max_broken_blocks = 5  # Maximum number of broken blocks to track
+                        broken_blocks_dim = 4  # [blocktype, x, y, z] per block
+                        broken_blocks_array = np.zeros(max_broken_blocks * broken_blocks_dim, dtype=np.float32)
+
+                        # Fill array with normalized block data
+                        broken_blocks = state.get('broken_blocks', [])
+                        for i, block in enumerate(broken_blocks[:max_broken_blocks]):
+                            idx = i * broken_blocks_dim
+                            # Normalize block type (currently always 1)
+                            broken_blocks_array[idx] = block.get('blocktype', 0) / 10.0  
+                            # Normalize coordinates similar to player position
+                            broken_blocks_array[idx + 1] = block.get('blockx', 0) / 20000.0
+                            broken_blocks_array[idx + 2] = block.get('blocky', 0) / 20000.0
+                            broken_blocks_array[idx + 3] = block.get('blockz', 0) / 256.0
+
+                        # Add broken blocks to other observations
+                        other = np.concatenate([
+                            np.array([
+                                normalized_x,
+                                normalized_z, 
+                                normalized_y,
+                                sin_yaw,
+                                cos_yaw,
+                                normalized_health,
+                                normalized_hunger,
+                                alive
+                            ], dtype=np.float32),
+                            broken_blocks_array
+                        ])
 
                         observation = {
-                            'image': image_array.astype(np.float32) / 255.0,  # Normalize image
+                            'image': image_array.astype(np.float32) / 255.0,
                             'other': other,
-                            'task': task  # Save task along with observation
+                            'task': task
                         }
 
                         # For BC, we need to store observations, actions, next_observations, dones, infos
