@@ -17,9 +17,9 @@ if device.type == 'cuda':
 
 # Configuration
 MODEL_SAVE_PATH = "models_bc"
-BATCH_SIZE = 64
-EPOCHS = 10
-LEARNING_RATE = 1e-4
+BATCH_SIZE = 128
+EPOCHS = 20
+LEARNING_RATE = 2e-5
 CHUNK_SIZE = 1000  # Number of samples to load at a time
 VERBOSE = True
 LOG_LEVEL = logging.INFO # Change this to logging.INFO for less detailed logs

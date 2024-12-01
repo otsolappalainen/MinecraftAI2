@@ -44,12 +44,12 @@ def print_action_probs(probs, action):
     """Print action probabilities distribution"""
     probs = probs.cpu().numpy()[0]
     sorted_actions = np.argsort(-probs)  # Sort in descending order
-    print("\nTop 5 actions and their probabilities:")
-    for i in range(5):
-        a = sorted_actions[i]
-        p = probs[a]
-        star = "*" if a == action else " "
-        print(f"{star}Action {a}: {p:.4f}")
+    #print("\nTop 5 actions and their probabilities:")
+    #for i in range(5):
+        #a = sorted_actions[i]
+        #p = probs[a]
+        #star = "*" if a == action else " "
+        #print(f"{star}Action {a}: {p:.4f}")
 
 def analyze_dataset(dataset):
     """Analyze action distribution in training data"""
@@ -121,17 +121,17 @@ class ObservationStats:
         self.step_stats.append(stats)
         
     def print_summary(self):
-        print("\nObservation Statistics:")
-        print(f"Yaw range: [{min(s['yaw'] for s in self.step_stats):.2f}, {max(s['yaw'] for s in self.step_stats):.2f}]")
-        print(f"Action entropy range: [{min(s['action_entropy'] for s in self.step_stats):.4f}, {max(s['action_entropy'] for s in self.step_stats):.4f}]")
+        #print("\nObservation Statistics:")
+        #print(f"Yaw range: [{min(s['yaw'] for s in self.step_stats):.2f}, {max(s['yaw'] for s in self.step_stats):.2f}]")
+        #print(f"Action entropy range: [{min(s['action_entropy'] for s in self.step_stats):.4f}, {max(s['action_entropy'] for s in self.step_stats):.4f}]")
         
         action_counts = {}
         for s in self.step_stats:
             action_counts[s['action']] = action_counts.get(s['action'], 0) + 1
         
-        print("\nAction distribution during evaluation:")
-        for action, count in sorted(action_counts.items()):
-            print(f"Action {action}: {count} times ({count/len(self.step_stats)*100:.1f}%)")
+        #print("\nAction distribution during evaluation:")
+        #for action, count in sorted(action_counts.items()):
+            #print(f"Action {action}: {count} times ({count/len(self.step_stats)*100:.1f}%)")
 
 # Define the model architecture (same as in your training code)
 class FullModel(nn.Module):
@@ -222,7 +222,7 @@ async def main():
     device = th.device('cuda' if th.cuda.is_available() else 'cpu')
 
     # Load the trained model
-    MODEL_PATH = r"C:\Users\odezz\source\MinecraftAI2\scripts\gen6\models_bc\model_epoch_10.pth"
+    MODEL_PATH = r"C:\Users\odezz\source\MinecraftAI2\scripts\gen6\models_bc\model_epoch_20.pth"
 
     # Update observation space to include block count
     observation_space = {
@@ -251,7 +251,7 @@ async def main():
     
     # Initialize statistics
     stats = ObservationStats()
-    temperature = 2.0
+    temperature = 3.0
     episodes = 5
     max_steps_per_episode = 1000
 
@@ -292,14 +292,19 @@ async def main():
             # Get model prediction
             with th.no_grad():
                 action_logits = model(observations)
-                action_probs = th.softmax(action_logits / temperature, dim=1)
                 
-                # Add noise to prevent deterministic behavior
-                if steps > 0:  # Skip first step
-                    noise = th.randn_like(action_probs) * 0.1
-                    action_probs = th.softmax(action_logits / temperature + noise, dim=1)
+                # Apply temperature scaling to make distribution more uniform
+                temperature = 3  # Higher value = more uniform distribution
+                scaled_logits = action_logits / temperature
                 
-                action = th.argmax(action_probs, dim=1).item()
+                # Optional: Boost lower probabilities
+                boost_factor = 0.01  # Adds flat probability to all actions
+                action_probs = th.softmax(scaled_logits, dim=1)
+                action_probs = (1 - boost_factor) * action_probs + boost_factor / action_probs.shape[1]
+                
+                # Sample action from probability distribution
+                action_distribution = th.distributions.Categorical(action_probs)
+                action = action_distribution.sample().item()
                 
                 # Track statistics
                 stats.update(norm_obs, action_probs[0], action)

@@ -210,16 +210,16 @@ class MinecraftEnv(gym.Env):
         Executes one step of the environment.
         """
         action_name = self.ACTION_MAPPING[action]
-        print(f"step called: {action_name}")
+        #print(f"step called: {action_name}")
         # Send action to mod
         await self.send_action(action_name)
         
-        print(f"await self.send_action(action_name) called")
+        #print(f"await self.send_action(action_name) called")
 
         # Capture screenshot
         screenshot = self.capture_screenshot()
 
-        print(f"screenshot captured")
+        #print(f"screenshot captured")
 
         # Wait for the state to be updated via WebSocket (with timeout)
         timeout = 5  # Maximum time to wait for state update
