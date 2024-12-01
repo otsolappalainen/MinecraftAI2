@@ -60,9 +60,18 @@ class MinecraftEnv(gym.Env):
         self.action_space = spaces.Discrete(len(self.ACTION_MAPPING))
 
         # Observation space: Image (3, 224, 224), and other data
+        max_blocks = 5
+        block_features = 4  # blocktype, x, y, z per block
+        basic_features = 8  # x, y, z, health, hunger, pitch, yaw, alive
+
         self.observation_space = spaces.Dict({
             'image': spaces.Box(low=0, high=1, shape=(3, 224, 224), dtype=np.float32),
-            'other': spaces.Box(low=-np.inf, high=np.inf, shape=(8,), dtype=np.float32),
+            'other': spaces.Box(
+                low=-np.inf, 
+                high=np.inf, 
+                shape=(basic_features + max_blocks * block_features,), 
+                dtype=np.float32
+            ),
             'task': spaces.Box(low=-np.inf, high=np.inf, shape=(20,), dtype=np.float32)
         })
 
@@ -156,7 +165,6 @@ class MinecraftEnv(gym.Env):
                 self.connected = True
                 logging.info("Connected to WebSocket server.")
                 
-                # Keep the connection open
                 while self.connected:
                     try:
                         message = await websocket.recv()
@@ -165,14 +173,16 @@ class MinecraftEnv(gym.Env):
                             logging.debug(f"Received state: {self.state}")
                     except websockets.ConnectionClosed:
                         logging.warning("WebSocket connection closed.")
-                        self.connected = False
                         break
                     except Exception as e:
-                        logging.error(f"Error receiving state from mod: {e}")
-                        await asyncio.sleep(0.1)  # Retry receiving state after a short delay
+                        logging.error(f"Error receiving state: {e}")
+                        await asyncio.sleep(0.1)
+        
         except Exception as e:
             logging.error(f"WebSocket connection error: {e}")
+        finally:
             self.connected = False
+            self.websocket = None
 
     def capture_screenshot(self):
         """
@@ -210,41 +220,27 @@ class MinecraftEnv(gym.Env):
         Executes one step of the environment.
         """
         action_name = self.ACTION_MAPPING[action]
-        #print(f"step called: {action_name}")
-        # Send action to mod
         await self.send_action(action_name)
-        
-        #print(f"await self.send_action(action_name) called")
-
-        # Capture screenshot
         screenshot = self.capture_screenshot()
 
-        #print(f"screenshot captured")
-
-        # Wait for the state to be updated via WebSocket (with timeout)
-        timeout = 5  # Maximum time to wait for state update
+        # Wait for state update with timeout
+        timeout = 5
         start_time = time.time()
-
-        # Async loop to wait for state from WebSocket
         while self.state is None and (time.time() - start_time) < timeout:
-            await asyncio.sleep(0.1)  # Non-blocking sleep
+            await asyncio.sleep(0.05)
 
-        # If state is not received in time, return default values
+        # Return default state if no state received
         if self.state is None:
             logging.warning(f"State not received after sending action: {action_name}")
-            state_data = {
-                'image': np.zeros((224, 224, 3), dtype=np.float32),  # Placeholder for image
-                'other': np.zeros(8, dtype=np.float32),  # Placeholder for scalar state data
-                'task': self.task  # Return current task
-            }
-            reward = 0.0
-            done = False
-            truncated = False
-            info = {}
-            return state_data, reward, done, truncated, info
+            return self._get_default_state(), 0.0, False, False, {}
 
-        # Map incoming state to the expected "other" format
-        other = np.array([
+        # Initialize arrays for basic state and broken blocks
+        max_blocks = 5
+        block_features = 4  # blocktype, x, y, z per block
+        basic_features = 8  # x, y, z, health, hunger, pitch, yaw, alive
+
+        # Process basic state data
+        basic_state = np.array([
             self.state.get('x', 0.0),
             self.state.get('y', 0.0),
             self.state.get('z', 0.0),
@@ -255,68 +251,95 @@ class MinecraftEnv(gym.Env):
             self.state.get('alive', 0.0)
         ], dtype=np.float32)
 
-        task = self.state.get('task', self.task)
+        # Process broken blocks data - always ensure 20 values (5 blocks × 4 features)
+        broken_blocks_array = np.zeros(max_blocks * block_features, dtype=np.float32)
+        broken_blocks = self.state.get('broken_blocks', [])
+        
+        for i, block in enumerate(broken_blocks[:max_blocks]):
+            idx = i * block_features
+            broken_blocks_array[idx] = float(block.get('blocktype', 0))
+            broken_blocks_array[idx + 1] = float(block.get('blockx', 0))
+            broken_blocks_array[idx + 2] = float(block.get('blocky', 0))
+            broken_blocks_array[idx + 3] = float(block.get('blockz', 0))
+
+        # Combine basic state and broken blocks data
+        other = np.concatenate([basic_state, broken_blocks_array])
 
         # Return the state in the correct format
         state_data = {
-            'image': screenshot,  # Use the captured screenshot
-            'other': other,       # Use the mapped 'other' data
-            'task': task
+            'image': screenshot,
+            'other': other,  # Will always be 28 values (8 basic + 20 block features)
+            'task': self.state.get('task', self.task)
         }
 
-        reward = 0.0  # Modify with actual reward calculation
-        done = False  # Modify based on your stopping condition
-        truncated = False  # Modify based on your stopping condition
+        reward = 0.0
+        done = False
+        truncated = False
+        info = {'broken_blocks': len(broken_blocks)}
 
-        info = {}  # Add any additional info if needed
         return state_data, reward, done, truncated, info
 
-
-
-
     async def reset(self):
-        """
-        Resets the environment to an initial state by sending a no_op action to the WebSocket.
-        Done flag is always set to False for now.
-        """
-        # Send the no_op action to get the starting state
-        await self.send_action("no_op")
-
-        # Wait for the state to be updated via WebSocket (with timeout)
-        timeout = 2  # Maximum time to wait for state update
-        start_time = time.time()
-
-        while self.state is None and (time.time() - start_time) < timeout:
-            await asyncio.sleep(0.1)  # Non-blocking sleep
-
-        # Capture screenshot for the image
-        screenshot = self.capture_screenshot()
-
-        # Log the state received from the WebSocket (like in the step function)
-        if self.state is not None:
-            logging.debug(f"Received state during reset: {self.state}")
-        else:
-            logging.warning("State not received during reset.")
-
-        # Return the state data or placeholder if state is not updated
-        if self.state is None:
-            logging.warning("State not received during reset.")
+        """Reset the environment"""
+        if not self.connected or self.websocket is None:
+            logging.error("WebSocket not connected")
+            return self._get_default_state(), {}
+        
+        try:
+            with self.state_lock:
+                self.state = None
+                
+            await self.websocket.send('{"action": "reset 2"}')
+            
+            timeout = 2.0
+            start_time = time.time()
+            
+            while self.state is None and (time.time() - start_time) < timeout:
+                await asyncio.sleep(0.1)
+            
+            if self.state is None:
+                logging.warning("Reset: No state received")
+                return self._get_default_state(), {}
+                
+            screenshot = self.capture_screenshot()
+            
+            # Create zeros array for broken blocks (20 values)
+            broken_blocks_array = np.zeros(20, dtype=np.float32)
+            
+            # Basic state with broken blocks array
+            other = np.concatenate([
+                np.array([
+                    self.state.get('x', 0.0),
+                    self.state.get('y', 0.0), 
+                    self.state.get('z', 0.0),
+                    self.state.get('health', 20.0),
+                    self.state.get('hunger', 20.0),
+                    self.state.get('pitch', 0.0),
+                    self.state.get('yaw', 0.0),
+                    self.state.get('alive', 1.0)
+                ], dtype=np.float32),
+                broken_blocks_array  # Add 20 zeros for broken blocks
+            ])
+            
             state_data = {
-                'image': screenshot,  # Capture screenshot if state is not updated
-                'other': np.zeros(8, dtype=np.float32),
+                'image': screenshot,
+                'other': other,  # Will be 28 values (8 basic + 20 zeros)
                 'task': self.task
             }
-            return state_data, {}  # Return state_data and an empty info dictionary
+            
+            return state_data, {}
+            
+        except Exception as e:
+            logging.error(f"Reset error: {e}")
+            return self._get_default_state(), {}
 
-        # Add screenshot to the state and return
-        state_data = {
-            'image': screenshot,  # Include the captured screenshot
-            'other': self.state.get('other', np.zeros(8, dtype=np.float32)),  # Ensure 'other' key exists
-            'task': self.state.get('task', self.task)  # Ensure 'task' key exists
+    def _get_default_state(self):
+        """Return default state when real state cannot be obtained"""
+        return {
+            'image': np.zeros((3, 224, 224), dtype=np.float32),
+            'other': np.zeros(8, dtype=np.float32),
+            'task': self.task
         }
-
-        return state_data, {}  # Return the state with the image and an empty info dictionary
-
 
     def render(self, mode='human'):
         """
@@ -325,12 +348,24 @@ class MinecraftEnv(gym.Env):
         pass  # You can implement visualization code here
 
     def close(self):
-        """
-        Close the environment and WebSocket connection.
-        """
-        self.connected = False
-        if self.websocket is not None:
-            self.websocket.close()
+        """Close the environment"""
+        if self.connected and self.websocket:
+            self.connected = False
+            # Schedule websocket.close() in the event loop
+            future = asyncio.run_coroutine_threadsafe(self.websocket.close(), self.loop)
+            try:
+                future.result(timeout=5)
+            except Exception as e:
+                logging.error(f"Error closing websocket: {e}")
+            self.websocket = None
+
+        # Stop the event loop safely
+        if self.loop.is_running():
+            self.loop.call_soon_threadsafe(self.loop.stop)
+
+        # Join the connection thread
+        if self.connection_thread and self.connection_thread.is_alive():
+            self.connection_thread.join(timeout=1)
 
     def __del__(self):
         """
