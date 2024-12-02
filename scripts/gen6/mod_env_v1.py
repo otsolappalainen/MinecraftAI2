@@ -217,14 +217,16 @@ class MinecraftEnv(gym.Env):
 
     async def step(self, action):
         """
-        Executes one step of the environment.
+        Executes one step of the environment with minimum 60ms duration.
         """
+        step_start = time.time()
+        
         action_name = self.ACTION_MAPPING[action]
         await self.send_action(action_name)
         screenshot = self.capture_screenshot()
 
         # Wait for state update with timeout
-        timeout = 5
+        timeout = 1
         start_time = time.time()
         while self.state is None and (time.time() - start_time) < timeout:
             await asyncio.sleep(0.05)
@@ -234,12 +236,11 @@ class MinecraftEnv(gym.Env):
             logging.warning(f"State not received after sending action: {action_name}")
             return self._get_default_state(), 0.0, False, False, {}
 
-        # Initialize arrays for basic state and broken blocks
+        # Process state data as before...
         max_blocks = 5
-        block_features = 4  # blocktype, x, y, z per block
-        basic_features = 8  # x, y, z, health, hunger, pitch, yaw, alive
+        block_features = 4
+        basic_features = 8
 
-        # Process basic state data
         basic_state = np.array([
             self.state.get('x', 0.0),
             self.state.get('y', 0.0),
@@ -251,7 +252,6 @@ class MinecraftEnv(gym.Env):
             self.state.get('alive', 0.0)
         ], dtype=np.float32)
 
-        # Process broken blocks data - always ensure 20 values (5 blocks × 4 features)
         broken_blocks_array = np.zeros(max_blocks * block_features, dtype=np.float32)
         broken_blocks = self.state.get('broken_blocks', [])
         
@@ -262,22 +262,20 @@ class MinecraftEnv(gym.Env):
             broken_blocks_array[idx + 2] = float(block.get('blocky', 0))
             broken_blocks_array[idx + 3] = float(block.get('blockz', 0))
 
-        # Combine basic state and broken blocks data
         other = np.concatenate([basic_state, broken_blocks_array])
 
-        # Return the state in the correct format
         state_data = {
             'image': screenshot,
-            'other': other,  # Will always be 28 values (8 basic + 20 block features)
+            'other': other,
             'task': self.state.get('task', self.task)
         }
 
-        reward = 0.0
-        done = False
-        truncated = False
-        info = {'broken_blocks': len(broken_blocks)}
+        # Ensure minimum 60ms duration
+        elapsed = time.time() - step_start
+        if elapsed < 0.06:  # 60ms = 0.06s
+            await asyncio.sleep(0.06 - elapsed)
 
-        return state_data, reward, done, truncated, info
+        return state_data, 0.0, False, False, {'broken_blocks': len(broken_blocks)}
 
     async def reset(self):
         """Reset the environment"""

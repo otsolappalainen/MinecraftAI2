@@ -10,11 +10,12 @@ import pickle
 import logging
 from collections import deque
 import websockets
+from datetime import datetime
 
 from mod_env_v1 import MinecraftEnv
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
 # Configuration
@@ -162,71 +163,88 @@ class DataCollector:
                 
                 # Run episode
                 for step in range(STEPS_PER_EPISODE):
-                    # Process step
-                    norm_obs = self.normalize_observation(obs)
-                    action = self.get_model_action(norm_obs, task)
-                    
-                    # Take action
-                    new_obs, reward, done, truncated, info = await env.step(action)
-                    
-
-                    # Validate new observation
-                    if not self.validate_observation(new_obs):
-                        logger.error(f"Invalid observation at step {step}")
-                        break
+                    try:
+                        step_start_time = time.time()
+                        # Process step
+                        norm_obs = self.normalize_observation(obs)
+                        action = self.get_model_action(norm_obs, task)
                         
-                    # Update observation
-                    obs = new_obs
-                    #print(f"obs: {obs}")
-                    
-                    # Store in buffer
-                    self.buffer.append({
-                        'observation': norm_obs,
-                        'action': action,
-                        'next_observation': None,
-                        'done': False,
-                        'info': {}
-                    })
-                    
-                    # Check for valid block breaks
-                    # Extract block data from other array (indices 8 onwards are block data)
-                    blocks_data = obs['other'][8:]  # Get block data portion
-                    print(f"broken blocks this step: {blocks_data}")
-                    
-                    # Reshape into blocks (5 blocks × 4 features)
-                    blocks = blocks_data.reshape(-1, 4)  # Reshape into [num_blocks, 4] array
-                    
-                    # Filter valid blocks (non-zero blocks at valid Y coordinates)
-                    valid_breaks = []
-                    for block in blocks:
-                        if any(block):  # If any value in block is non-zero
-                            blocktype, x, y, z = block
-                            if VALID_Y_RANGE[0] <= y <= VALID_Y_RANGE[1]:  # Denormalize y coordinate
-                                valid_breaks.append({
-                                    'blocktype': blocktype,  # Denormalize
-                                    'blockx': x,
-                                    'blocky': y,
-                                    'blockz': z
-                                })
-                    
-                    print(f"valid broken blocks this step: {valid_breaks}")
-                    
-                    if valid_breaks:
-                        episode_data.extend(list(self.buffer))
-                        self.buffer.clear()
-                    
-                    if done:
-                        break
-                    
-                    await asyncio.sleep(0.16)
+                        # Take action and wait for result
+                        new_obs, reward, done, truncated, info = await env.step(action)
+                        
+                        # Only continue if we got valid observation
+                        if not self.validate_observation(new_obs):
+                            logger.error(f"Invalid observation at step {step}")
+                            await asyncio.sleep(0.1)  # Short delay on error
+                            continue  # Skip this step rather than break
+                            
+                        # Update observation
+                        obs = new_obs
+                        
+                        # Store in buffer
+                        self.buffer.append({
+                            'observation': norm_obs,
+                            'action': action,
+                            'next_observation': None,
+                            'done': False,
+                            'info': {}
+                        })
+                        
+                        # Process block breaks...
+                        # Extract block data from other array (indices 8 onwards are block data)
+                        blocks_data = obs['other'][8:]  # Get block data portion
+                        if np.any(blocks_data):  # Only print if any non-zero values exist
+                            print(f"broken blocks this step: {blocks_data}")
+                        
+                        # Reshape into blocks (5 blocks × 4 features)
+                        blocks = blocks_data.reshape(-1, 4)  # Reshape into [num_blocks, 4] array
+                        
+                        # Filter valid blocks (non-zero blocks at valid Y coordinates)
+                        valid_breaks = []
+                        for block in blocks:
+                            if any(block):  # If any value in block is non-zero
+                                blocktype, x, y, z = block
+                                if VALID_Y_RANGE[0] <= y <= VALID_Y_RANGE[1]:  # Denormalize y coordinate
+                                    valid_breaks.append({
+                                        'blocktype': blocktype,  # Denormalize
+                                        'blockx': x,
+                                        'blocky': y,
+                                        'blockz': z
+                                    })
+                        
+                        if valid_breaks:  # Only print if there are valid breaks
+                            print(f"valid broken blocks this step: {valid_breaks}")
+                        
+                        if valid_breaks:
+                            episode_data.extend(list(self.buffer))
+                            self.buffer.clear()
+                        
+                        if done:
+                            break
+                        
+                        # Dynamic sleep based on processing time
+                        processing_time = time.time() - step_start_time
+                        if processing_time < 0.1:  # Target 70ms minimum between actions
+                            await asyncio.sleep(0.1 - processing_time)
+                            
+                    except Exception as e:
+                        logger.error(f"Error in step {step}: {e}")
+                        await asyncio.sleep(0.1)  # Recovery delay
+                        continue
                 
                 # Save episode data
                 if episode_data:
-                    save_path = os.path.join(DATA_DIR, f'episode_{episode}', 'expert_data.pkl')
+                    # Create timestamp folder name
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    session_folder = f'session_{timestamp}'
+                    
+                    # Create full save path
+                    save_path = os.path.join(DATA_DIR, session_folder, f'episode_{episode}', 'expert_data.pkl')
                     os.makedirs(os.path.dirname(save_path), exist_ok=True)
+                    
                     with open(save_path, 'wb') as f:
                         pickle.dump(episode_data, f)
-                    logger.info(f"Saved {len(episode_data)} samples from episode {episode}")
+                    logger.info(f"Saved {len(episode_data)} samples to {save_path}")
 
             except Exception as e:
                 logger.error(f"Error in episode {episode}: {str(e)}")
