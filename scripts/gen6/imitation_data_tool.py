@@ -18,16 +18,17 @@ from queue import Queue, Empty
 import fnmatch
 import ctypes
 import random  # For task selection
+from datetime import datetime  # For timestamp
 
 # ------------------------------
 # Configuration and Setup
 # ------------------------------
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Set data directory for saving data
-DATA_DIR = 'expert_data'
+DATA_DIR = r'E:\automatic_model_tool_spam'  # Match automatic collector path
 os.makedirs(DATA_DIR, exist_ok=True)
 
 # Create a unique session directory
@@ -513,35 +514,34 @@ async def main():
                         normalized_hunger = hunger / 20.0
 
                         # Process broken blocks
-                        max_broken_blocks = 5  # Maximum number of broken blocks to track
-                        broken_blocks_dim = 4  # [blocktype, x, y, z] per block
-                        broken_blocks_array = np.zeros(max_broken_blocks * broken_blocks_dim, dtype=np.float32)
+                        max_blocks = 5
+                        block_features = 4  # blocktype, x, y, z per block
+                        broken_blocks_array = np.zeros(max_blocks * block_features, dtype=np.float32)
 
-                        # Fill array with normalized block data
                         broken_blocks = state.get('broken_blocks', [])
-                        for i, block in enumerate(broken_blocks[:max_broken_blocks]):
-                            idx = i * broken_blocks_dim
-                            # Normalize block type (currently always 1)
-                            broken_blocks_array[idx] = block.get('blocktype', 0) / 10.0  
-                            # Normalize coordinates similar to player position
+                        for i, block in enumerate(broken_blocks[:max_blocks]):
+                            idx = i * block_features
+                            # Normalize block data
+                            broken_blocks_array[idx] = block.get('blocktype', 0) / 10.0
                             broken_blocks_array[idx + 1] = block.get('blockx', 0) / 20000.0
-                            broken_blocks_array[idx + 2] = block.get('blocky', 0) / 20000.0
-                            broken_blocks_array[idx + 3] = block.get('blockz', 0) / 256.0
+                            broken_blocks_array[idx + 2] = block.get('blocky', 0) / 256.0
+                            broken_blocks_array[idx + 3] = block.get('blockz', 0) / 20000.0
 
-                        # Add broken blocks to other observations
-                        other = np.concatenate([
-                            np.array([
-                                normalized_x,
-                                normalized_z, 
-                                normalized_y,
-                                sin_yaw,
-                                cos_yaw,
-                                normalized_health,
-                                normalized_hunger,
-                                alive
-                            ], dtype=np.float32),
-                            broken_blocks_array
-                        ])
+                        # Create basic state array
+                        basic_obs = np.array([
+                            normalized_x,
+                            normalized_y,
+                            normalized_z,
+                            sin_yaw,
+                            cos_yaw,
+                            normalized_health,
+                            normalized_hunger,
+                            normalized_yaw,  # Store original yaw
+                            alive
+                        ], dtype=np.float32)
+
+                        # Combine basic state with block data
+                        other = np.concatenate([basic_obs, broken_blocks_array])
 
                         observation = {
                             'image': image_array.astype(np.float32) / 255.0,
@@ -570,14 +570,14 @@ async def main():
                         # Wait for next iteration
                         # Run at 20Hz
                         elapsed_time = time.time() - start_time
-                        sleep_time = max(0, 0.05 - elapsed_time)
+                        sleep_time = max(0, 0.07 - elapsed_time)
 
                         await asyncio.sleep(sleep_time)
                     except websockets.exceptions.ConnectionClosed:
                         logging.info("WebSocket connection closed")
                         break
                     except Exception as e:
-                        logging.error(f"Error in main loop: {e}")
+                        logging.error(f"Error in main loop at step {iteration}: {e}", exc_info=True)  # Add full traceback
                         break
 
     except Exception as e:
@@ -601,12 +601,17 @@ async def main():
             
         # Save collected data
         if data:
-            try:
-                with open(os.path.join(SESSION_DIR, 'expert_data.pkl'), 'wb') as f:
-                    pickle.dump(data, f)
-                logging.info(f"Saved data to {SESSION_DIR}/expert_data.pkl")
-            except Exception as e:
-                logging.error(f"Error saving data: {e}")
+            # Create timestamp folder name
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            session_folder = f'session_{timestamp}'
+            
+            # Create full save path matching automatic collector
+            save_path = os.path.join(DATA_DIR, session_folder, 'episode_0', 'expert_data.pkl')
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            
+            with open(save_path, 'wb') as f:
+                pickle.dump(data, f)
+            logging.info(f"Saved {len(data)} samples to {save_path}")
 
         logging.info("Shutdown complete")
 

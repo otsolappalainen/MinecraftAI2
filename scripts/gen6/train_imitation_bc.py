@@ -38,10 +38,11 @@ class ExpertDataset(Dataset):
         self.files = []
         self.data = []
         
-        # Collect all expert_data.pkl files
+        # Collect all expert_data.pkl files recursively
         for directory in self.data_directories:
-            pkl_files = glob.glob(os.path.join(directory, 'expert_data.pkl'))
-            self.files.extend(pkl_files)
+            for root, dirs, files in os.walk(os.path.dirname(directory)):
+                if 'expert_data.pkl' in files:
+                    self.files.append(os.path.join(root, 'expert_data.pkl'))
 
         if not self.files:
             raise ValueError("No expert_data.pkl files found")
@@ -65,42 +66,10 @@ class ExpertDataset(Dataset):
             obs = entry['observation']
             action = entry['action']
 
-            # Create normalized observations
+            # Data is already normalized from collector
             image = th.tensor(obs['image'], dtype=th.float32)
-            other = obs['other'].copy()
-            
-            # Normalize yaw
-            yaw_idx = 0
-            yaw = other[yaw_idx] 
-            normalized_yaw = ((yaw + 180) % 360) - 180
-            other[yaw_idx] = normalized_yaw / 180.0
-            
-            # Get number of blocks broken (first 8 values are metadata, rest are block data)
-            if len(other) > 8:
-                blocks_data = other[8:]
-                num_blocks = len(blocks_data) // 4  # 4 values per block
-                blocks_broken = sum(1 for i in range(num_blocks) if any(blocks_data[i*4:(i+1)*4]))
-            else:
-                blocks_broken = 0
-                
-            # Create new observation vector with just basic data + block count
-            basic_obs = np.array([
-                other[0],  # x
-                other[1],  # z
-                other[2],  # y
-                other[3],  # sin_yaw
-                other[4],  # cos_yaw
-                other[5],  # health
-                other[6],  # hunger
-                other[7],  # alive
-                blocks_broken/5.0  # Normalize block count (max 5 blocks)
-            ], dtype=np.float32)
-
-            other = th.tensor(basic_obs, dtype=th.float32)
-            
-            # Create default task vector [0,1,0,0,...] 
-            task = th.zeros(20, dtype=th.float32)
-            task[1] = 1.0
+            other = th.tensor(obs['other'], dtype=th.float32)  # Full 48-dim vector
+            task = th.tensor(obs['task'], dtype=th.float32)
 
             return {
                 'image': image,
@@ -137,22 +106,21 @@ class FullModel(nn.Module):
     def __init__(self, observation_space, action_space):
         super(FullModel, self).__init__()
         
-        # Calculate correct input dimension (other + task)
-        scalar_input_dim = observation_space['other'] + 20  # 8 other features + 20 task features
+        # Calculate input dim including task vector (48 other + 20 task)
+        scalar_input_dim = observation_space['other'] + 20
         logger.info(f"Scalar input dim: {scalar_input_dim}")
         
-        # Scalar observation processing with dropout
         self.scalar_net = nn.Sequential(
-            nn.Linear(scalar_input_dim, 128),
+            nn.Linear(scalar_input_dim, 256),  # Increased first layer
             nn.ReLU(),
             nn.Dropout(p=0.3),
-            nn.Linear(128, 128),
+            nn.Linear(256, 128),
             nn.ReLU(),
             nn.Dropout(p=0.3)
         )
         scalar_output_size = 128
 
-        # Image processing with batch normalization
+        # Rest of the model remains the same
         image_input_channels = observation_space['image'][0]
         self.image_net = nn.Sequential(
             nn.Conv2d(image_input_channels, 32, kernel_size=8, stride=4),
@@ -218,7 +186,7 @@ class FullModel(nn.Module):
 
 def main():
     data_directories = [
-        r"C:\Users\odezz\source\MinecraftAI2\scripts\gen6\expert_data\session_*"
+        r"E:\automatic_model_tool_spam\session_*"
     ]
     
     logger.info("Initializing dataset and dataloader")
@@ -228,7 +196,7 @@ def main():
     logger.info("Testing direct dataset access...")
     for i in range(min(5, len(dataset))):
         sample = dataset[i]
-        logger.info(f"Sample {i}: Action = {sample[1]}")
+        logger.info(f"Sample {i}: Other shape: {sample[0]['other'].shape}, Action: {sample[1]}")
     
     dataloader = DataLoader(
         dataset, 
@@ -248,7 +216,7 @@ def main():
     first_sample = dataset[0]
     observation_space = {
         'image': (3, 224, 224),
-        'other': first_sample[0]['other'].shape[0]
+        'other': first_sample[0]['other'].shape[0]  # Should be 48
     }
     action_space = 18
 
