@@ -250,7 +250,7 @@ class MinecraftEnv(gym.Env):
         logging.debug(f"Screenshot capture time: {screenshot_elapsed_time:.4f} seconds")
 
         # Wait for state update with timeout
-        timeout = 0.12
+        timeout = 0.15
         try:
             state_start_time = time.time()
             logging.debug("Waiting for state update...")

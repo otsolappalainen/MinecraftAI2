@@ -46,7 +46,7 @@ TRAIN_FREQ = 2
 GRADIENT_STEPS = 1
 TARGET_UPDATE_INTERVAL = 500
 EXPLORATION_FRACTION = 0.001
-EXPLORATION_FINAL_EPS = 0.05
+EXPLORATION_FINAL_EPS = 0.1
 EVAL_FREQ = 2000
 EVAL_EPISODES = 1
 
@@ -276,7 +276,7 @@ class TimestampedEvalCallback(EvalCallback):
         return result
 
 class TopKDQN(DQN):
-    def __init__(self, *args, top_k=8, temperature=0.2, **kwargs):
+    def __init__(self, *args, top_k=4, temperature=0.3, **kwargs):
         super().__init__(*args, **kwargs)
         self.top_k = top_k
         self.temperature = temperature
@@ -385,8 +385,8 @@ def create_new_model(env):
             device=device,
             policy_kwargs=policy_kwargs,
             verbose=1,
-            top_k=8,
-            temperature=0.2
+            top_k=4,
+            temperature=0.3
         )
         
         return model

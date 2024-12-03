@@ -25,7 +25,7 @@ from datetime import datetime  # For timestamp
 # ------------------------------
 
 # Set up logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Set data directory for saving data
 DATA_DIR = r'E:\automatic_model_tool_spam'  # Match automatic collector path
