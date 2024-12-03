@@ -577,8 +577,8 @@ async def main():
                         # Run at 20Hz
                         elapsed_time = time.time() - start_time
                         
-                        if elapsed_time < 0.06:
-                            await asyncio.sleep(0.06 - elapsed_time)
+                        if elapsed_time < 0.12:
+                            await asyncio.sleep(0.12 - elapsed_time)
 
                         
                     except websockets.exceptions.ConnectionClosed:

@@ -6,6 +6,7 @@ from stable_baselines3 import DQN
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+from stable_baselines3.common.vec_env import DummyVecEnv
 import torch.nn as nn
 import multiprocessing
 import logging
@@ -37,16 +38,16 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 # Hyperparameters - matching BC where possible
 TOTAL_TIMESTEPS = 1_000_000
-LEARNING_RATE = 2e-4  # Same as BC
+LEARNING_RATE = 2e-5  # Same as BC
 BUFFER_SIZE = 8_000
 BATCH_SIZE = 128  # Same as BC
 GAMMA = 0.95
-TRAIN_FREQ = 1
+TRAIN_FREQ = 2
 GRADIENT_STEPS = 1
 TARGET_UPDATE_INTERVAL = 500
 EXPLORATION_FRACTION = 0.001
 EXPLORATION_FINAL_EPS = 0.05
-EVAL_FREQ = 1500
+EVAL_FREQ = 2000
 EVAL_EPISODES = 1
 
 # Add save frequency constant
@@ -275,7 +276,7 @@ class TimestampedEvalCallback(EvalCallback):
         return result
 
 class TopKDQN(DQN):
-    def __init__(self, *args, top_k=5, temperature=0.5, **kwargs):
+    def __init__(self, *args, top_k=8, temperature=0.2, **kwargs):
         super().__init__(*args, **kwargs)
         self.top_k = top_k
         self.temperature = temperature
@@ -384,8 +385,8 @@ def create_new_model(env):
             device=device,
             policy_kwargs=policy_kwargs,
             verbose=1,
-            top_k=5,
-            temperature=0.3
+            top_k=8,
+            temperature=0.2
         )
         
         return model
@@ -538,9 +539,9 @@ def main():
     choice = input("Enter 1, 2, or 3: ").strip()
 
     # Create vectorized environment first
-    env = SubprocVecEnv([make_env(i) for i in range(PARALLEL_ENVS)])
+    env = DummyVecEnv([make_env(0)])
     env = VecMonitor(env)
-    eval_env = SubprocVecEnv([make_env(0)])
+    eval_env = DummyVecEnv([make_env(0)])
     eval_env = VecMonitor(eval_env)
 
     print("Environment observation space:", env.observation_space)
@@ -632,9 +633,9 @@ def main():
             eval_env.close()
             
             # Recreate environments
-            env = SubprocVecEnv([make_env(i) for i in range(PARALLEL_ENVS)])
+            env = DummyVecEnv([make_env(0)])
             env = VecMonitor(env)
-            eval_env = SubprocVecEnv([make_env(0)])
+            eval_env = DummyVecEnv([make_env(0)])
             eval_env = VecMonitor(eval_env)
             
             # Update model env reference

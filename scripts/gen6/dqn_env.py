@@ -12,46 +12,8 @@ import mss
 import pygetwindow as gw
 import fnmatch
 import os
-import ctypes
 import logging
-from pynput import keyboard
 from queue import Queue
-
-def run_coroutine(coroutine):
-    """Helper function to run coroutines from sync code"""
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop.run_until_complete(coroutine)
-
-class StepTimer:
-    """Manages timing for environment steps to maintain consistent rate"""
-    def __init__(self, target_step_time=0.1):
-        self.target_step_time = target_step_time
-        self.last_step_time = time.time()
-        self.start_time = self.last_step_time
-        self.step_count = 0
-        
-    async def wait_for_next_step(self):
-        """Calculate and wait required time until next step"""
-        current_time = time.time()
-        elapsed = current_time - self.last_step_time
-        
-        if (elapsed < self.target_step_time):
-            await asyncio.sleep(self.target_step_time - elapsed)
-            
-        self.last_step_time = time.time()
-        self.step_count += 1
-        
-    def get_stats(self):
-        """Get timing statistics"""
-        return {
-            'avg_step_time': (time.time() - self.start_time) / max(1, self.step_count),
-            'total_steps': self.step_count,
-            'total_time': time.time() - self.start_time
-        }
 
 class MinecraftEnv(gym.Env):
     """
@@ -119,46 +81,30 @@ class MinecraftEnv(gym.Env):
         self.connected = False
 
         # Initialize screenshot parameters
-        self.sct = mss.mss()
         self.minecraft_bounds = self.find_minecraft_window()
 
-        # Initialize state variables
-        self.state = None
-
-        # Initialize action and state locks
-        self.action_lock = threading.Lock()
-        self.state_lock = threading.Lock()
+        # Initialize action and state queues
+        self.state_queue = asyncio.Queue()
 
         # Start WebSocket connection in a separate thread
         self.start_connection()
 
         # Initialize task with height targets
-        self.default_task = np.array([0, 0, 132, 133] + [0]*16, dtype=np.float32)
+        self.default_task = np.array([0, 0, -63, -62] + [0]*16, dtype=np.float32)
         self.task = self.default_task if task is None else np.array(task, dtype=np.float32)
-
-        # Initialize mouse listener (if needed)
-        self.mouse_action_queue = Queue()
-        self.mouse_capture = None  # You can initialize this if needed
-        # self.mouse_capture.start()
-
-        # Initialize keyboard listener (if needed)
-        self.keyboard_listener = None  # You can initialize this if needed
-        # self.keyboard_listener.start()
 
         # Set up logging
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-        # Add after existing init code:
+        # Initialize step counters and parameters
         self.steps = 0
-        self.max_episode_steps = 300
-        self.target_height_min = 131
-        self.target_height_max = 133
+        self.max_episode_steps = 400
+        self.target_height_min = -63
+        self.target_height_max = -60
         self.block_break_reward = 3.0
-        self.height_penalty = -0.2
+        self.height_penalty = -0.5
         self.step_penalty = -0.1
 
-        # Add after other init variables:
-        
         # Normalization ranges
         self.coord_range = (-10000, 10000)  # Typical Minecraft coordinate range
         self.height_range = (-256, 256)  # Minecraft height range
@@ -166,12 +112,9 @@ class MinecraftEnv(gym.Env):
         self.health_range = (0, 20)  # Health range
         self.hunger_range = (0, 20)  # Hunger range
 
-        # Add these lines:
+        # Cumulative reward and episode count
         self.cumulative_reward = 0.0
         self.episode_count = 0
-
-        # Add after other init code:
-        self.timer = StepTimer(target_step_time=0.1)
 
     def find_minecraft_window(self):
         """
@@ -224,9 +167,9 @@ class MinecraftEnv(gym.Env):
                 while self.connected:
                     try:
                         message = await websocket.recv()
-                        with self.state_lock:
-                            self.state = json.loads(message)
-                            logging.debug(f"Received state: {self.state}")
+                        state = json.loads(message)
+                        await self.state_queue.put(state)
+                        logging.debug(f"Received state: {state}")
                     except websockets.ConnectionClosed:
                         logging.warning("WebSocket connection closed.")
                         break
@@ -240,35 +183,7 @@ class MinecraftEnv(gym.Env):
             self.connected = False
             self.websocket = None
 
-    def capture_screenshot(self):
-        """
-        Captures a screenshot from the Minecraft window and saves it if required.
-        Returns image in CHW format (PyTorch style).
-        """
-        screenshot = self.sct.grab(self.minecraft_bounds)
-        image = Image.frombytes('RGB', (screenshot.width, screenshot.height), screenshot.rgb)
-        image = image.resize((224, 224))
-        
-        # Convert to numpy array and normalize
-        screenshot_array = np.array(image) / 255.0  # Shape: (H, W, C)
-        
-        # Transpose from HWC to CHW format
-        screenshot_array = screenshot_array.transpose(2, 0, 1)  # Shape: (C, H, W)
-
-        # Save the screenshot if the flag is True
-        if self.save_screenshots:
-            timestamp = time.strftime('%Y%m%d_%H%M%S')
-            screenshot_path = os.path.join(self.screenshot_dir, f"screenshot_{timestamp}.png")
-            image.save(screenshot_path)
-            logging.info(f"Saved screenshot at {screenshot_path}")
-
-        return screenshot_array.astype(np.float32)  # Ensure float32 type
-
-    def send_action(self, action_name):
-        """Synchronous wrapper for async send_action"""
-        return run_coroutine(self._send_action(action_name))
-
-    async def _send_action(self, action_name):
+    async def send_action(self, action_name):
         """Async implementation of send_action"""
         if self.connected and self.websocket is not None:
             message = {'action': action_name}
@@ -305,54 +220,74 @@ class MinecraftEnv(gym.Env):
         ]
 
     def step(self, action):
-        """Synchronous wrapper for async step"""
-        result = run_coroutine(self._step(action))
+        """Gym synchronous step method"""
+        start_time = time.time()
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(self._step(action))
+        elapsed_time = time.time() - start_time
+        logging.debug(f"Step time: {elapsed_time:.4f} seconds")
         return result
 
-    def reset(self, *, seed=None, options=None):
-        """Synchronous wrapper for async reset"""
-        obs, info = run_coroutine(self._reset(seed=seed, options=options))
-        return obs, info
-
     async def _step(self, action):
-        """Async implementation of step"""
         self.steps += 1
         
         action_name = self.ACTION_MAPPING[action]
-        await self._send_action(action_name)
-        screenshot = self.capture_screenshot()
+        
+        # Clear the state queue before sending action
+        while not self.state_queue.empty():
+            self.state_queue.get_nowait()
+
+        # Schedule sending the action in the event loop
+        send_action_start_time = time.time()
+        await self.send_action(action_name)
+        send_action_elapsed_time = time.time() - send_action_start_time
+        logging.debug(f"Send action time: {send_action_elapsed_time:.4f} seconds")
+
+        # Capture screenshot asynchronously
+        screenshot_start_time = time.time()
+        screenshot = await asyncio.to_thread(self.capture_screenshot)
+        screenshot_elapsed_time = time.time() - screenshot_start_time
+        logging.debug(f"Screenshot capture time: {screenshot_elapsed_time:.4f} seconds")
 
         # Wait for state update with timeout
-        timeout = 1
-        start_time = time.time()
-        while self.state is None and (time.time() - start_time) < timeout:
-            await asyncio.sleep(0.02)
+        timeout = 0.12
+        try:
+            state_start_time = time.time()
+            logging.debug("Waiting for state update...")
+            state = await asyncio.wait_for(self.state_queue.get(), timeout)
+            state_elapsed_time = time.time() - state_start_time
+            logging.debug(f"State wait time: {state_elapsed_time:.4f} seconds")
+        except asyncio.TimeoutError:
+            state = None
+            logging.warning(f"State not received after sending action: {action_name}")
 
         # Calculate reward
+        reward_calc_start_time = time.time()
         reward = self.step_penalty  # Default penalty per step
         done = False
-        
-        if self.state is not None:
+        broken_blocks = []
+
+        if state is not None:
             # Get player height
-            player_y = self.state.get('y', 0.0)
+            player_y = state.get('y', 0.0)
             
             # Height penalty if outside target range
             if not (self.target_height_min <= player_y <= self.target_height_max):
                 reward += self.height_penalty
             
             # Reward for breaking blocks at correct height
-            broken_blocks = self.state.get('broken_blocks', [])
+            broken_blocks = state.get('broken_blocks', [])
             for block in broken_blocks:
                 block_y = float(block.get('blocky', 0))
-                if block_y in [132, 133]:
+                if block_y in [-63, -62]:
                     reward += self.block_break_reward
         else:
-            logging.warning(f"State not received after sending action: {action_name}")
+            logging.warning(f"No state received after action: {action_name}")
             
         # Check if episode should end
         done = self.steps >= self.max_episode_steps
         
-        # After reward calculation:
+        # Update cumulative reward
         self.cumulative_reward += reward
         
         # Print progress every 50 steps
@@ -367,18 +302,21 @@ class MinecraftEnv(gym.Env):
             print(f"Final cumulative reward: {self.cumulative_reward:.2f}\n")
             self.episode_count += 1
 
+        reward_calc_elapsed_time = time.time() - reward_calc_start_time
+        logging.debug(f"Reward calculation time: {reward_calc_elapsed_time:.4f} seconds")
+
         # Get observation state
-        if self.state is None:
+        state_prep_start_time = time.time()
+        if state is None:
             state_data = self._get_default_state()
         else:
             max_blocks = 5
             block_features = 4
             
-            basic_state = self.normalize_basic_state(self.state)
+            basic_state = self.normalize_basic_state(state)
             
             # Normalize block data
             broken_blocks_array = np.zeros(max_blocks * block_features, dtype=np.float32)
-            broken_blocks = self.state.get('broken_blocks', [])
             for i, block in enumerate(broken_blocks[:max_blocks]):
                 idx = i * block_features
                 normalized_block = self.normalize_block_data(block)
@@ -389,32 +327,35 @@ class MinecraftEnv(gym.Env):
             state_data = {
                 'image': screenshot,  # Already normalized in capture_screenshot
                 'other': other,
-                'task': self.state.get('task', self.task)  # Already normalized
+                'task': self.task  # Task remains the same
             }
 
-        # Before return, wait for next step timing
-        await self.timer.wait_for_next_step()
-        
-        if self.steps % 50 == 0:
-            stats = self.timer.get_stats()
-            print(f"Timing stats - Avg step: {stats['avg_step_time']:.3f}s, "
-                  f"Total time: {stats['total_time']:.1f}s")
+        state_prep_elapsed_time = time.time() - state_prep_start_time
+        logging.debug(f"State preparation time: {state_prep_elapsed_time:.4f} seconds")
 
         info = {
-            'broken_blocks': len(broken_blocks) if self.state else 0,
+            'broken_blocks': len(broken_blocks),
             'reward_breakdown': {
                 'step_penalty': self.step_penalty,
-                'height_penalty': self.height_penalty if not (self.target_height_min <= self.state.get('y', 0.0) <= self.target_height_max) else 0,
-                'block_breaks': sum(1 for block in (broken_blocks if self.state else []) 
-                                  if float(block.get('blocky', 0)) in [132, 133]) * self.block_break_reward
+                'height_penalty': self.height_penalty if state and not (self.target_height_min <= state.get('y', 0.0) <= self.target_height_max) else 0,
+                'block_breaks': sum(1 for block in broken_blocks if float(block.get('blocky', 0)) in [-63, -62]) * self.block_break_reward
             }
         }
 
         return state_data, reward, done, False, info
 
+    def reset(self, *, seed=None, options=None):
+        """Gym synchronous reset method"""
+        start_time = time.time()
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(self._reset(seed=seed, options=options))
+        elapsed_time = time.time() - start_time
+        logging.debug(f"Reset time: {elapsed_time:.4f} seconds")
+        return result
+
     async def _reset(self, *, seed=None, options=None):
-        """Async implementation of reset"""
         self.steps = 0  # Reset step counter
+        self.cumulative_reward = 0.0
         
         if seed is not None:
             np.random.seed(seed)
@@ -423,30 +364,40 @@ class MinecraftEnv(gym.Env):
             logging.error("WebSocket not connected")
             state_data = self._get_default_state()
             info = {}
-            return state_data, info  # Return tuple instead of dict
-        
+            return state_data, info
+
         try:
-            with self.state_lock:
-                self.state = None
+            # Clear the state queue
+            while not self.state_queue.empty():
+                self.state_queue.get_nowait()
                 
-            await self.websocket.send('{"action": "reset 2"}')
+            # Send reset action
+            await self.send_action("reset 2")
             
             timeout = 2.0
-            start_time = time.time()
-            
-            while self.state is None and (time.time() - start_time) < timeout:
-                await asyncio.sleep(0.1)
-            
-            if self.state is None:
+            try:
+                state_start_time = time.time()
+                state = await asyncio.wait_for(self.state_queue.get(), timeout)
+                state_elapsed_time = time.time() - state_start_time
+                logging.debug(f"State wait time (reset): {state_elapsed_time:.4f} seconds")
+            except asyncio.TimeoutError:
+                state = None
                 logging.warning("Reset: No state received")
                 state_data = self._get_default_state()
                 info = {}
-                return state_data, info  # Return tuple instead of dict
-                
-            screenshot = self.capture_screenshot()
-            broken_blocks_array = np.zeros(20, dtype=np.float32)
+                return state_data, info
+
+            # Capture screenshot asynchronously
+            screenshot_start_time = time.time()
+            screenshot = await asyncio.to_thread(self.capture_screenshot)
+            screenshot_elapsed_time = time.time() - screenshot_start_time
+            logging.debug(f"Screenshot capture time (reset): {screenshot_elapsed_time:.4f} seconds")
             
-            basic_state = self.normalize_basic_state(self.state)
+            # Prepare state data
+            max_blocks = 5
+            block_features = 4
+            broken_blocks_array = np.zeros(max_blocks * block_features, dtype=np.float32)
+            basic_state = self.normalize_basic_state(state)
             other = np.concatenate([basic_state, broken_blocks_array])
             
             state_data = {
@@ -455,16 +406,43 @@ class MinecraftEnv(gym.Env):
                 'task': self.task
             }
             
-            # Reset cumulative reward at start of episode
-            self.cumulative_reward = 0.0
-            
-            return state_data, {}  # Return tuple instead of dict
+            return state_data, {}  # Return state and empty info
             
         except Exception as e:
             logging.error(f"Reset error: {e}")
             state_data = self._get_default_state()
             info = {}
-            return state_data, info  # Return tuple instead of dict
+            return state_data, info
+
+    def capture_screenshot(self):
+        """
+        Captures a screenshot from the Minecraft window and saves it if required.
+        Returns image in CHW format (PyTorch style).
+        """
+        try:
+            with mss.mss() as sct:
+                screenshot = sct.grab(self.minecraft_bounds)
+                image = Image.frombytes('RGB', (screenshot.width, screenshot.height), screenshot.rgb)
+                image = image.resize((224, 224))
+                
+                # Convert to numpy array and normalize
+                screenshot_array = np.array(image) / 255.0  # Shape: (H, W, C)
+                
+                # Transpose from HWC to CHW format
+                screenshot_array = screenshot_array.transpose(2, 0, 1)  # Shape: (C, H, W)
+        
+                # Save the screenshot if the flag is True
+                if self.save_screenshots:
+                    timestamp = time.strftime('%Y%m%d_%H%M%S')
+                    screenshot_path = os.path.join(self.screenshot_dir, f"screenshot_{timestamp}.png")
+                    image.save(screenshot_path)
+                    logging.info(f"Saved screenshot at {screenshot_path}")
+        
+                return screenshot_array.astype(np.float32)  # Ensure float32 type
+        except Exception as e:
+            logging.error(f"Error in capture_screenshot: {e}")
+            # Return a default image to prevent crashing
+            return np.zeros((3, 224, 224), dtype=np.float32)
 
     def _get_default_state(self):
         """Return default state when real state cannot be obtained"""
@@ -475,7 +453,7 @@ class MinecraftEnv(gym.Env):
         
         return {
             'image': np.zeros((3, 224, 224), dtype=np.float32),
-            'other': np.zeros(total_features, dtype=np.float32),  # 28 total features
+            'other': np.zeros(total_features, dtype=np.float32),
             'task': self.default_task
         }
 
