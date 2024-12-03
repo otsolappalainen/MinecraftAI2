@@ -103,10 +103,7 @@ mouse_capture = None
 TASK_SIZE = 20  # Size of the task array
 
 possible_tasks = [
-    [1, 0] + [0]*(TASK_SIZE - 2),   # Positive X direction
-    [-1, 0] + [0]*(TASK_SIZE - 2),  # Negative X direction
-    [0, 1] + [0]*(TASK_SIZE - 2),   # Positive Z direction
-    [0, -1] + [0]*(TASK_SIZE - 2),  # Negative Z direction
+    [0, 0, 132, 133] + [0]*(TASK_SIZE - 4),  # Height target task matching DQN env
 ]
 
 # Reward scaling factors
@@ -403,6 +400,9 @@ async def main():
                     try:
                         start_time = time.time()
 
+                        # Track if we've sent an action this cycle
+                        action_sent = False
+
                         # Process mouse movement - keep only latest action
                         latest_mouse_action = None
                         while not mouse_action_queue.empty():
@@ -417,9 +417,12 @@ async def main():
                         
                         logging.debug(f"Selected action: {action_name}")
 
-                        # Send action to server
-                        message = {'action': action_name}
-                        await websocket.send(json.dumps(message))
+                        # First action send
+                        if not action_sent:
+                            message = {'action': action_name}
+                            await websocket.send(json.dumps(message))
+                            action_sent = True
+                            logging.debug("Action sent in first send")
 
                         # Check if there are mouse actions from the queue
                         try:
@@ -440,12 +443,15 @@ async def main():
                         action_index = get_action_index(action_name)
                         action = ACTION_MAPPING[action_index]
 
-                        # Send action to mod
-                        message = {'action': action}
-                        try:
-                            await websocket.send(json.dumps(message))
-                        except Exception as e:
-                            logging.error(f"Error sending action to mod: {e}")
+                        # Only send if we haven't sent an action this cycle
+                        if not action_sent:
+                            message = {'action': action}
+                            try:
+                                await websocket.send(json.dumps(message))
+                                action_sent = True
+                                logging.debug("Action sent in second send")
+                            except Exception as e:
+                                logging.error(f"Error sending action to mod: {e}")
 
                         # Capture screenshot
                         try:
@@ -570,9 +576,11 @@ async def main():
                         # Wait for next iteration
                         # Run at 20Hz
                         elapsed_time = time.time() - start_time
-                        sleep_time = max(0, 0.07 - elapsed_time)
+                        
+                        if elapsed_time < 0.06:
+                            await asyncio.sleep(0.06 - elapsed_time)
 
-                        await asyncio.sleep(sleep_time)
+                        
                     except websockets.exceptions.ConnectionClosed:
                         logging.info("WebSocket connection closed")
                         break

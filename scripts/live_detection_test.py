@@ -1,11 +1,11 @@
 import cv2
 import numpy as np
-from ultralytics import YOLO
+#from ultralytics import YOLO
 from mss import mss
 
 # Load YOLOv8 model in inference mode
 model_path = r"C:\Users\odezz\source\MinecraftAI2\runs\exp13\weights\best.pt"
-model = YOLO(model_path)
+#model = YOLO(model_path)
 
 # Define the screen capture region (1280x720 centered on a 4K screen)
 monitor = {
@@ -33,13 +33,13 @@ def main():
             frame = capture_screen()
 
             # Perform inference with YOLOv8
-            results = model.predict(source=frame, conf=0.5)
+            #results = model.predict(source=frame, conf=0.5)
 
             # Annotate frame with bounding boxes and labels
-            annotated_frame = results[0].plot()  # Plot detections on the frame
+            #annotated_frame = results[0].plot()  # Plot detections on the frame
 
             # Show the annotated frame
-            cv2.imshow("YOLOv8 Live Detection", annotated_frame)
+            #cv2.imshow("YOLOv8 Live Detection", annotated_frame)
 
             # Exit if 'q' is pressed
             if cv2.waitKey(1) & 0xFF == ord('q'):

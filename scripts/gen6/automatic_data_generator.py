@@ -401,7 +401,7 @@ class DataCollector:
 
 if __name__ == "__main__":
     try:
-        MODEL_PATH = r"C:\Users\odezz\source\MinecraftAI2\scripts\gen6\models_bc\model_epoch_20.pth"
+        MODEL_PATH = r"C:\Users\odezz\source\MinecraftAI2\scripts\gen6\models_bc\model_epoch_10.pth"
         collector = DataCollector(MODEL_PATH)
         
         loop = asyncio.new_event_loop()
