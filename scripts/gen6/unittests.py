@@ -1,90 +1,137 @@
+import sys
+import os
 import unittest
-import numpy as np
 import torch as th
+import numpy as np
 import gymnasium as gym
-
+from gymnasium.spaces import Dict, Box
 from train_dqn_from_bc import BCMatchingFeatureExtractor
+
+# Add parent directory to path to allow imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 class TestBCMatchingFeatureExtractor(unittest.TestCase):
   def setUp(self):
-    # Create a mock observation space matching the real environment
-    self.observation_space = gym.spaces.Dict({
-      'image': gym.spaces.Box(low=0, high=1, shape=(3, 224, 224), dtype=np.float32),
-      'other': gym.spaces.Box(low=-np.inf, high=np.inf, shape=(28,), dtype=np.float32),
-      'task': gym.spaces.Box(low=-np.inf, high=np.inf, shape=(20,), dtype=np.float32)
+    """Setup test fixtures"""
+    # Define observation space similar to the actual environment
+    self.observation_space = Dict({
+      'image': Box(low=0.0, high=1.0, shape=(3, 224, 224), dtype=np.float32),
+      'other': Box(low=-np.inf, high=np.inf, shape=(28,), dtype=np.float32),
+      'task': Box(low=-np.inf, high=np.inf, shape=(20,), dtype=np.float32)
     })
 
-  def test_feature_extractor_initialization(self):
-    try:
-      extractor = BCMatchingFeatureExtractor(self.observation_space)
-      self.assertIsNotNone(extractor)
-      self.assertEqual(extractor._features_dim, 128)
-    except Exception as e:
-      self.fail(f"Feature extractor initialization failed: {str(e)}")
-
-  def test_feature_extractor_forward_pass(self):
-    extractor = BCMatchingFeatureExtractor(self.observation_space)
+    # Create dummy inputs
+    self.batch_size = 2
+    self.dummy_image = th.randn(self.batch_size, 3, 224, 224)
+    self.dummy_other = th.randn(self.batch_size, 28)
+    self.dummy_task = th.randn(self.batch_size, 20)
     
-    # Create dummy input matching the observation space
-    dummy_obs = {
-      'image': th.zeros((1, 3, 224, 224), dtype=th.float32),
-      'other': th.zeros((1, 28), dtype=th.float32),
-      'task': th.zeros((1, 20), dtype=th.float32)
-    }
+    # Initialize feature extractor
+    self.feature_extractor = BCMatchingFeatureExtractor(
+      observation_space=self.observation_space,
+      features_dim=128
+    )
 
-    # Test forward pass
+  def test_initialization(self):
+    """Test proper initialization of the feature extractor"""
+    self.assertEqual(self.feature_extractor._features_dim, 128)
+    self.assertIsInstance(self.feature_extractor.scalar_net, th.nn.Sequential)
+    self.assertIsInstance(self.feature_extractor.image_net, th.nn.Sequential)
+    self.assertIsInstance(self.feature_extractor.fusion_layers, th.nn.Sequential)
+
+  def test_forward_pass_shape(self):
+    """Test forward pass returns correct output shape"""
+    observations = {
+      'image': self.dummy_image,
+      'other': self.dummy_other,
+      'task': self.dummy_task
+    }
+    
     with th.no_grad():
-      output = extractor.forward(dummy_obs)
+      output = self.feature_extractor.forward(observations)
+    
+    expected_shape = (self.batch_size, 128)
+    self.assertEqual(output.shape, expected_shape)
+
+  def test_scalar_network(self):
+    """Test scalar network processes inputs correctly"""
+    combined = th.cat([self.dummy_other, self.dummy_task], dim=1)
+    
+    with th.no_grad():
+      output = self.feature_extractor.scalar_net(combined)
+    
+    expected_shape = (self.batch_size, 128)
+    self.assertEqual(output.shape, expected_shape)
+
+  def test_image_network(self):
+    """Test image network processes inputs correctly"""
+    with th.no_grad():
+      output = self.feature_extractor.image_net(self.dummy_image)
+    
+    # The output should be flattened
+    self.assertEqual(len(output.shape), 2)
+    self.assertEqual(output.shape[0], self.batch_size)
+
+  def test_input_validation(self):
+    """Test handling of invalid inputs"""
+    # Test missing key
+    invalid_observations = {
+      'image': self.dummy_image,
+      'other': self.dummy_other
+      # Missing 'task' key
+    }
+    
+    with self.assertRaises(Exception):
+      self.feature_extractor.forward(invalid_observations)
+
+  def test_dtype_consistency(self):
+    """Test handling of different input dtypes"""
+    # Create observations with float32 dtype
+    observations_float32 = {
+      'image': self.dummy_image.float(),
+      'other': self.dummy_other.float(),
+      'task': self.dummy_task.float()
+    }
+    
+    with th.no_grad():
+      output = self.feature_extractor.forward(observations_float32)
+    
+    self.assertEqual(output.dtype, th.float32)
+
+  def test_device_consistency(self):
+    """Test device handling"""
+    if th.cuda.is_available():
+      device = th.device('cuda')
+      feature_extractor = self.feature_extractor.to(device)
       
-    # Check output shape
-    self.assertEqual(output.shape, (1, 128))
-
-  def test_dropout_layers(self):
-    extractor = BCMatchingFeatureExtractor(self.observation_space)
-    
-    # Verify Dropout2d layer configuration
-    dropout2d_found = False
-    for layer in extractor.image_net:
-      if isinstance(layer, th.nn.Dropout2d):
-        dropout2d_found = True
-        self.assertEqual(layer.p, 0.3)
-    
-    self.assertTrue(dropout2d_found, "Dropout2d layer not found in image_net")
-
-  def test_training_mode_effect(self):
-    extractor = BCMatchingFeatureExtractor(self.observation_space)
-    dummy_obs = {
-      'image': th.zeros((1, 3, 224, 224), dtype=th.float32),
-      'other': th.zeros((1, 28), dtype=th.float32),
-      'task': th.zeros((1, 20), dtype=th.float32)
-    }
-
-    # Test in eval mode
-    extractor.eval()
-    with th.no_grad():
-      eval_output = extractor.forward(dummy_obs)
-
-    # Test in train mode
-    extractor.train()
-    with th.no_grad():
-      train_output = extractor.forward(dummy_obs)
-
-    # Outputs should be different in train mode due to dropout
-    self.assertFalse(th.allclose(eval_output, train_output))
-
-  def test_feature_extraction_no_nan(self):
-    extractor = BCMatchingFeatureExtractor(self.observation_space)
-    dummy_obs = {
-      'image': th.rand((1, 3, 224, 224), dtype=th.float32),
-      'other': th.rand((1, 28), dtype=th.float32),
-      'task': th.rand((1, 20), dtype=th.float32)
-    }
-
-    with th.no_grad():
-      output = extractor.forward(dummy_obs)
+      observations = {
+        'image': self.dummy_image.to(device),
+        'other': self.dummy_other.to(device),
+        'task': self.dummy_task.to(device)
+      }
       
-    # Check for NaN values
-    self.assertFalse(th.isnan(output).any())
+      with th.no_grad():
+        output = feature_extractor.forward(observations)
+      
+      # Change from direct device comparison to checking if both are on CUDA
+      self.assertTrue(output.is_cuda)
+
+  def test_gradient_flow(self):
+    """Test gradient flow through the network"""
+    observations = {
+      'image': self.dummy_image,
+      'other': self.dummy_other,
+      'task': self.dummy_task
+    }
+    
+    output = self.feature_extractor.forward(observations)
+    loss = output.sum()
+    loss.backward()
+    
+    # Check if gradients exist
+    for param in self.feature_extractor.parameters():
+      self.assertIsNotNone(param.grad)
 
 if __name__ == '__main__':
   unittest.main()

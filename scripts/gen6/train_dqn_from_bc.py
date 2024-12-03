@@ -14,24 +14,38 @@ from stable_baselines3.dqn.policies import DQNPolicy
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 import torch.nn as nn
 from stable_baselines3.common.torch_layers import create_mlp
+import random
+import traceback
+from zipfile import ZipFile
+import io
+
+
+
 
 # Configuration
 MODEL_PATH_BC = "models_bc"  # Path to BC models
-MODEL_PATH_DQN = "models_dqn_from_bc"
-LOG_DIR = "tensorboard_logs_dqn_from_bc"
+MODEL_PATH_DQN = r"E:\DQN_BC_MODELS\models_dqn_from_bc"  # Changed to new path
+LOG_DIR_BASE = "tensorboard_logs_dqn_from_bc"
 PARALLEL_ENVS = 1
 
+# Generate a unique timestamp for this run
+RUN_TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+# Create a new LOG_DIR that includes the timestamp
+LOG_DIR = os.path.join(LOG_DIR_BASE, f"run_{RUN_TIMESTAMP}")
+os.makedirs(LOG_DIR, exist_ok=True)
+
 # Hyperparameters - matching BC where possible
-TOTAL_TIMESTEPS = 200_000
-LEARNING_RATE = 2e-6  # Same as BC
-BUFFER_SIZE = 3_000
+TOTAL_TIMESTEPS = 1_000_000
+LEARNING_RATE = 2e-4  # Same as BC
+BUFFER_SIZE = 8_000
 BATCH_SIZE = 128  # Same as BC
-GAMMA = 0.99
+GAMMA = 0.95
 TRAIN_FREQ = 1
 GRADIENT_STEPS = 1
 TARGET_UPDATE_INTERVAL = 500
 EXPLORATION_FRACTION = 0.001
-EXPLORATION_FINAL_EPS = 0.2
+EXPLORATION_FINAL_EPS = 0.05
 EVAL_FREQ = 1500
 EVAL_EPISODES = 1
 
@@ -40,13 +54,13 @@ SAVE_EVERY_STEPS = 5_000  # Save every 100k steps
 
 # Ensure directories exist
 os.makedirs(MODEL_PATH_DQN, exist_ok=True)
-os.makedirs(LOG_DIR, exist_ok=True)
+os.makedirs(LOG_DIR_BASE, exist_ok=True)
 
 # Device configuration
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
 
 # Add at top of file
-DEBUG_MODE = True  # Toggle for verbose logging
+DEBUG_MODE = False  # Toggle for verbose logging
 
 def debug_log(msg):
     if DEBUG_MODE:
@@ -260,6 +274,90 @@ class TimestampedEvalCallback(EvalCallback):
                 print(f"New best model saved with reward {self.best_mean_reward:.2f}")
         return result
 
+class TopKDQN(DQN):
+    def __init__(self, *args, top_k=5, temperature=0.5, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.top_k = top_k
+        self.temperature = temperature
+
+    def _sample_action(self, learning_starts, action_noise=None, n_envs=1):
+        """Sample an action according to the exploration policy."""
+        debug_log(f"Sampling action with learning_starts={learning_starts}, n_envs={n_envs}")
+
+        if self.num_timesteps < learning_starts or np.random.rand() < self.exploration_rate:
+            debug_log(f"Random action for {n_envs} envs")
+            actions = np.array([self.action_space.sample() for _ in range(n_envs)])
+            buffer_actions = actions
+            return actions, buffer_actions
+
+        # Convert last observations to tensors on the device
+        obs_tensor = {
+            key: th.as_tensor(value, device=self.device)
+            for key, value in self._last_obs.items()
+        }
+
+        with th.no_grad():
+            q_values = self.q_net(obs_tensor)
+        debug_log(f"Q-values shape: {q_values.shape}")
+
+        # Convert to NumPy for top-k sampling
+        q_values_np = q_values.cpu().numpy()
+
+        # Get top k actions and their values
+        topk_indices = np.argsort(q_values_np, axis=1)[:, -self.top_k:]
+        topk_values = np.take_along_axis(q_values_np, topk_indices, axis=1)
+
+        # Log top k actions and their Q-values
+        for env_idx in range(n_envs):
+            debug_log("\nTop 5 actions:")
+            for action_idx, q_val in zip(
+                topk_indices[env_idx][::-1], 
+                topk_values[env_idx][::-1]
+            ):
+                debug_log(f"Action {action_idx}: Q-value = {q_val:.4f}")
+
+        # Apply temperature and compute probabilities
+        probs = np.exp(topk_values / self.temperature)
+        probs = probs / probs.sum(axis=1, keepdims=True)
+
+        # Sample actions
+        chosen_actions = np.array([
+            np.random.choice(indices, p=p)
+            for indices, p in zip(topk_indices, probs)
+        ])
+
+        buffer_actions = chosen_actions
+
+        return chosen_actions, buffer_actions
+
+    def predict(self, observation, state=None, episode_start=None, deterministic=False):
+        """Override predict to use the custom action sampling"""
+        debug_log(f"Predict called with deterministic={deterministic}")
+
+        # Store the raw observation (NumPy arrays) for training
+        self._last_obs = observation
+
+        # Convert observation to tensors on device for prediction
+        obs_tensor = {
+            key: th.as_tensor(value, device=self.device)
+            for key, value in observation.items()
+        }
+
+        with th.no_grad():
+            if deterministic:
+                debug_log("Using deterministic prediction")
+                q_values = self.q_net(obs_tensor)
+                actions = q_values.argmax(dim=1).cpu().numpy()
+            else:
+                debug_log("Using stochastic prediction")
+                actions, _ = self._sample_action(
+                    self.learning_starts,
+                    n_envs=obs_tensor[list(obs_tensor.keys())[0]].shape[0]
+                )
+
+        debug_log(f"Predicted actions: {actions}")
+        return actions, None
+
 def create_new_model(env):
     debug_log("Starting model creation...")
     
@@ -270,8 +368,8 @@ def create_new_model(env):
     )
     
     try:
-        model = DQN(
-            policy="MultiInputPolicy",
+        model = TopKDQN(
+            policy=DQNPolicy,
             env=env,
             learning_rate=LEARNING_RATE,
             buffer_size=BUFFER_SIZE,
@@ -282,23 +380,154 @@ def create_new_model(env):
             target_update_interval=TARGET_UPDATE_INTERVAL,
             exploration_fraction=EXPLORATION_FRACTION,
             exploration_final_eps=EXPLORATION_FINAL_EPS,
-            tensorboard_log=LOG_DIR,
+            tensorboard_log=LOG_DIR,  # Use the new LOG_DIR
             device=device,
             policy_kwargs=policy_kwargs,
-            verbose=1
+            verbose=1,
+            top_k=5,
+            temperature=0.3
         )
         
-        # Test model works by doing a prediction
-        dummy_obs = env.reset()
-        with th.no_grad():
-            actions, _ = model.predict(dummy_obs, deterministic=True)
-            debug_log(f"Initial prediction successful - actions: {actions}")
-            
         return model
         
     except Exception as e:
         debug_log(f"Error creating model: {e}")
         debug_log(f"Policy kwargs: {policy_kwargs}")
+        raise
+
+def transfer_weights(old_model, new_model):
+    """
+    Transfer weights from the old model to the new model, skipping mismatched layers.
+    """
+    old_state_dict = old_model.policy.state_dict()
+    new_state_dict = new_model.policy.state_dict()
+
+    transferred_layers = []
+    skipped_layers = []
+
+    # Iterate over old model's state_dict and match with the new model
+    for key, param in old_state_dict.items():
+        if key in new_state_dict:
+            if new_state_dict[key].shape == param.shape:
+                # Transfer weights if shapes match
+                new_state_dict[key] = param
+                transferred_layers.append(key)
+            else:
+                # Skip mismatched layers
+                skipped_layers.append((key, param.shape, new_state_dict[key].shape))
+        else:
+            skipped_layers.append((key, param.shape, 'Not present in new model'))
+
+    # Load the updated state_dict into the new model
+    new_model.policy.load_state_dict(new_state_dict, strict=False)
+    print("Weight transfer completed.")
+    print(f"Transferred layers ({len(transferred_layers)}):")
+    for layer in transferred_layers:
+        print(f"  - {layer}")
+    print(f"Skipped layers ({len(skipped_layers)}):")
+    for layer, old_shape, new_shape in skipped_layers:
+        print(f"  - {layer}: {old_shape} -> {new_shape}")
+
+def read_dqn_model_metadata(model_path):
+    """Read and print contents of DQN model ZIP file without loading tensors"""
+    try:
+        with ZipFile(model_path, 'r') as zip_ref:
+            print("\nZIP file contents:")
+            for info in zip_ref.filelist:
+                print(f"  {info.filename}: {info.file_size} bytes")
+            
+            # Read data.pkl for model metadata
+            if 'data' in zip_ref.namelist():
+                with zip_ref.open('data') as f:
+                    content = f.read()
+                    print("\nModel metadata:", content[:1000], "...")
+                    
+            # Print policy.pth structure
+            if 'policy.pth' in zip_ref.namelist():
+                print("\nPolicy file found")
+    except Exception as e:
+        print(f"Error reading model file: {e}")
+        raise
+
+def raw_transfer_dqn_weights(model_path, new_model):
+    """Transfer weights from DQN ZIP file directly to new model"""
+    print(f"\nTransferring weights from: {model_path}")
+    
+    try:
+        # Get state dict of new model
+        new_state_dict = new_model.policy.state_dict()
+        print("\nNew model layers:")
+        for key, tensor in new_state_dict.items():
+            print(f"  {key}: {tensor.shape}")
+
+        transferred = []
+        skipped = []
+
+        with ZipFile(model_path, 'r') as zip_ref:
+            print("\nZIP contents:")
+            for info in zip_ref.filelist:
+                print(f"  {info.filename}: {info.file_size} bytes")
+
+            # Load policy.pth directly
+            if 'policy.pth' in zip_ref.namelist():
+                with zip_ref.open('policy.pth') as f:
+                    # Load using BytesIO to avoid file system
+                    buffer = io.BytesIO(f.read())
+                    old_state_dict = th.load(buffer, map_location=device)
+                    
+                    print("\nLoaded model layers:")
+                    for key, tensor in old_state_dict.items():
+                        print(f"  {key}: {tensor.shape}")
+
+                    # Direct copy of matching tensors
+                    for key in new_state_dict:
+                        if key in old_state_dict:
+                            if old_state_dict[key].shape == new_state_dict[key].shape:
+                                new_state_dict[key].copy_(old_state_dict[key])
+                                transferred.append(key)
+                            else:
+                                skipped.append((key, old_state_dict[key].shape, new_state_dict[key].shape))
+                        else:
+                            skipped.append((key, "Not found", new_state_dict[key].shape))
+
+        # Load updated weights
+        new_model.policy.load_state_dict(new_state_dict)
+
+        print(f"\nTransferred {len(transferred)} layers:")
+        for layer in transferred:
+            print(f"  + {layer}")
+
+        print(f"\nSkipped {len(skipped)} layers:")
+        for layer, old_shape, new_shape in skipped:
+            print(f"  - {layer}: old={old_shape}, new={new_shape}")
+
+        return new_model
+
+    except Exception as e:
+        print(f"Error during transfer: {e}")
+        print(traceback.format_exc())
+        raise
+
+def load_dqn_model(model_path, env, device):
+    """Create new model and transfer weights from existing DQN"""
+    try:
+        print("Creating fresh model...")
+        new_model = create_new_model(env)
+        
+        print(f"Transferring weights from {model_path}")
+        model = raw_transfer_dqn_weights(model_path, new_model)
+        
+        # Validate model
+        dummy_obs = env.reset()
+        with th.no_grad():
+            actions, _ = model.predict(dummy_obs, deterministic=True)
+            print(f"Model validation - predicted actions: {actions}")
+        
+        return model
+        
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        print(traceback.format_exc())
         raise
 
 def main():
@@ -340,7 +569,7 @@ def main():
             transfer_bc_weights_to_dqn(bc_path, model)
 
     elif choice == "2":
-        # Load DQN weights
+        # Load DQN weights 
         dqn_models = [f for f in os.listdir(MODEL_PATH_DQN) if f.endswith('.zip')]
         if not dqn_models:
             print("No DQN models found. Starting from scratch.")
@@ -349,11 +578,10 @@ def main():
             for idx, name in enumerate(dqn_models, 1):
                 print(f"{idx}. {name}")
             model_idx = int(input("Select model number: ")) - 1
-            model = DQN.load(
-                os.path.join(MODEL_PATH_DQN, dqn_models[model_idx]),
-                env=env,
-                device=device
-            )
+            model_path = os.path.join(MODEL_PATH_DQN, dqn_models[model_idx])
+            
+            print(f"Loading DQN model from {model_path}...")
+            model = load_dqn_model(model_path, env, device)  # Use the modified load_dqn_model function
 
     # Setup callbacks
     callbacks = [
@@ -375,17 +603,19 @@ def main():
     timesteps_done = 0
     while timesteps_done < TOTAL_TIMESTEPS:
         try:
+            debug_log(f"Starting training iteration at timestep {timesteps_done}")
             remaining_timesteps = TOTAL_TIMESTEPS - timesteps_done
             model.learn(
                 total_timesteps=remaining_timesteps,
                 callback=callbacks,
-                tb_log_name="dqn_from_bc",
+                tb_log_name=f"dqn_from_bc_{RUN_TIMESTAMP}",  # Unique tb_log_name
                 reset_num_timesteps=False
             )
-            timesteps_done = TOTAL_TIMESTEPS  # Training completed successfully
+            timesteps_done = TOTAL_TIMESTEPS
 
         except Exception as e:
             print(f"Error during training: {e}")
+            debug_log(f"Stack trace: {traceback.format_exc()}")
             # Save recovery model
             recovery_path = os.path.join(
                 MODEL_PATH_DQN, 

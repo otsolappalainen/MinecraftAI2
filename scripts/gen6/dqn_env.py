@@ -26,6 +26,33 @@ def run_coroutine(coroutine):
         asyncio.set_event_loop(loop)
     return loop.run_until_complete(coroutine)
 
+class StepTimer:
+    """Manages timing for environment steps to maintain consistent rate"""
+    def __init__(self, target_step_time=0.1):
+        self.target_step_time = target_step_time
+        self.last_step_time = time.time()
+        self.start_time = self.last_step_time
+        self.step_count = 0
+        
+    async def wait_for_next_step(self):
+        """Calculate and wait required time until next step"""
+        current_time = time.time()
+        elapsed = current_time - self.last_step_time
+        
+        if (elapsed < self.target_step_time):
+            await asyncio.sleep(self.target_step_time - elapsed)
+            
+        self.last_step_time = time.time()
+        self.step_count += 1
+        
+    def get_stats(self):
+        """Get timing statistics"""
+        return {
+            'avg_step_time': (time.time() - self.start_time) / max(1, self.step_count),
+            'total_steps': self.step_count,
+            'total_time': time.time() - self.start_time
+        }
+
 class MinecraftEnv(gym.Env):
     """
     Custom Environment that interfaces with Minecraft via WebSocket.
@@ -126,8 +153,8 @@ class MinecraftEnv(gym.Env):
         self.max_episode_steps = 300
         self.target_height_min = 131
         self.target_height_max = 133
-        self.block_break_reward = 2.0
-        self.height_penalty = -0.5
+        self.block_break_reward = 3.0
+        self.height_penalty = -0.2
         self.step_penalty = -0.1
 
         # Add after other init variables:
@@ -142,6 +169,9 @@ class MinecraftEnv(gym.Env):
         # Add these lines:
         self.cumulative_reward = 0.0
         self.episode_count = 0
+
+        # Add after other init code:
+        self.timer = StepTimer(target_step_time=0.1)
 
     def find_minecraft_window(self):
         """
@@ -286,7 +316,6 @@ class MinecraftEnv(gym.Env):
 
     async def _step(self, action):
         """Async implementation of step"""
-        step_start = time.time()
         self.steps += 1
         
         action_name = self.ACTION_MAPPING[action]
@@ -297,7 +326,7 @@ class MinecraftEnv(gym.Env):
         timeout = 1
         start_time = time.time()
         while self.state is None and (time.time() - start_time) < timeout:
-            await asyncio.sleep(0.03)
+            await asyncio.sleep(0.02)
 
         # Calculate reward
         reward = self.step_penalty  # Default penalty per step
@@ -363,10 +392,13 @@ class MinecraftEnv(gym.Env):
                 'task': self.state.get('task', self.task)  # Already normalized
             }
 
-        # Ensure minimum 60ms duration
-        elapsed = time.time() - step_start
-        if elapsed < 0.06:
-            await asyncio.sleep(0.06 - elapsed)
+        # Before return, wait for next step timing
+        await self.timer.wait_for_next_step()
+        
+        if self.steps % 50 == 0:
+            stats = self.timer.get_stats()
+            print(f"Timing stats - Avg step: {stats['avg_step_time']:.3f}s, "
+                  f"Total time: {stats['total_time']:.1f}s")
 
         info = {
             'broken_blocks': len(broken_blocks) if self.state else 0,
