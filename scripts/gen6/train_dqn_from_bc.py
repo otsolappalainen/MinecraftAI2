@@ -38,16 +38,16 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 # Hyperparameters - matching BC where possible
 TOTAL_TIMESTEPS = 1_000_000
-LEARNING_RATE = 2e-5  # Same as BC
-BUFFER_SIZE = 8_000
+LEARNING_RATE = 1e-5  # Same as BC
+BUFFER_SIZE = 20_000
 BATCH_SIZE = 128  # Same as BC
 GAMMA = 0.95
-TRAIN_FREQ = 2
+TRAIN_FREQ = 4
 GRADIENT_STEPS = 1
-TARGET_UPDATE_INTERVAL = 500
+TARGET_UPDATE_INTERVAL = 800
 EXPLORATION_FRACTION = 0.001
 EXPLORATION_FINAL_EPS = 0.1
-EVAL_FREQ = 2000
+EVAL_FREQ = 20000
 EVAL_EPISODES = 1
 
 # Add save frequency constant
@@ -276,7 +276,7 @@ class TimestampedEvalCallback(EvalCallback):
         return result
 
 class TopKDQN(DQN):
-    def __init__(self, *args, top_k=4, temperature=0.3, **kwargs):
+    def __init__(self, *args, top_k=5, temperature=0.5, **kwargs):
         super().__init__(*args, **kwargs)
         self.top_k = top_k
         self.temperature = temperature
@@ -385,8 +385,8 @@ def create_new_model(env):
             device=device,
             policy_kwargs=policy_kwargs,
             verbose=1,
-            top_k=4,
-            temperature=0.3
+            top_k=5,
+            temperature=0.5
         )
         
         return model

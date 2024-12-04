@@ -98,7 +98,7 @@ class MinecraftEnv(gym.Env):
 
         # Initialize step counters and parameters
         self.steps = 0
-        self.max_episode_steps = 400
+        self.max_episode_steps = 800
         self.target_height_min = -63
         self.target_height_max = -60
         self.block_break_reward = 3.0
@@ -250,7 +250,7 @@ class MinecraftEnv(gym.Env):
         logging.debug(f"Screenshot capture time: {screenshot_elapsed_time:.4f} seconds")
 
         # Wait for state update with timeout
-        timeout = 0.15
+        timeout = 0.18
         try:
             state_start_time = time.time()
             logging.debug("Waiting for state update...")
