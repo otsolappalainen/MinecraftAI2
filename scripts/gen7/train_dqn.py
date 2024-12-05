@@ -15,14 +15,17 @@ from stable_baselines3.common.torch_layers import create_mlp
 import random
 import traceback
 from zipfile import ZipFile
+import pygetwindow as gw
+import fnmatch
 import io
+import time
 from torch.utils.tensorboard import SummaryWriter
 
 # Configuration
 MODEL_PATH_BC = "models_bc"  # Path to BC models
 MODEL_PATH_DQN = r"E:\DQN_BC_MODELS\models_dqn_from_bc"  # Changed to new path
 LOG_DIR_BASE = "tensorboard_logs_dqn_from_bc"
-PARALLEL_ENVS = 2  # Updated to handle 3 training environments + 1 eval environment
+PARALLEL_ENVS = 4  # Updated to handle 3 training environments + 1 eval environment
 
 # Generate a unique timestamp for this run
 RUN_TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -34,16 +37,16 @@ os.makedirs(LOG_DIR, exist_ok=True)
 # Hyperparameters - matching BC where possible
 TOTAL_TIMESTEPS = 1_000_000
 LEARNING_RATE = 5e-4  # Same as BC
-BUFFER_SIZE = 20_000
+BUFFER_SIZE = 10_000
 BATCH_SIZE = 128  # Same as BC
-GAMMA = 0.95
+GAMMA = 0.99
 TRAIN_FREQ = 4
 GRADIENT_STEPS = 1
-TARGET_UPDATE_INTERVAL = 800
-EXPLORATION_FRACTION = 0.1
-EXPLORATION_FINAL_EPS = 0.2
-EVAL_FREQ = 20000
-EVAL_EPISODES = 1
+TARGET_UPDATE_INTERVAL = 500
+EXPLORATION_FRACTION = 0.2
+EXPLORATION_FINAL_EPS = 0.1
+EVAL_FREQ = 2000
+EVAL_EPISODES = 3
 
 # Add save frequency constant
 SAVE_EVERY_STEPS = 5_000  # Save every 5k steps
@@ -56,20 +59,58 @@ os.makedirs(LOG_DIR_BASE, exist_ok=True)
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
 
 # Add at top of file
-DEBUG_MODE = True  # Toggle for verbose logging
+DEBUG_MODE = False  # Toggle for verbose logging
 
 def debug_log(msg):
     if DEBUG_MODE:
         print(f"[DEBUG] {msg}")
 
-def make_env(rank, is_eval=False):
+def find_minecraft_windows():
+    """Find and sort all Minecraft windows"""
+    patterns = ["Minecraft*", "*1.21.3*", "*Singleplayer*"]
+    all_windows = gw.getAllTitles()
+    matched_windows = []
+    seen_handles = set()
+
+    for title in all_windows:
+        for pattern in patterns:
+            if fnmatch.fnmatch(title, pattern):
+                windows = gw.getWindowsWithTitle(title)
+                for window in windows:
+                    if window._hWnd not in seen_handles:
+                        matched_windows.append(window)
+                        seen_handles.add(window._hWnd)
+
+    if len(matched_windows) < PARALLEL_ENVS:
+        raise Exception(f"Not enough Minecraft windows. Need {PARALLEL_ENVS}, Found: {len(matched_windows)}")
+
+    # Sort windows by their top (y) coordinate
+    return sorted(matched_windows, key=lambda w: w.top)
+
+def make_env(rank, is_eval=False, minecraft_windows=None):
+    """Create environment with assigned window"""
     def _init():
         try:
             if is_eval:
-                uri = "ws://localhost:8080"  # Use the first client for evaluation
+                uri = "ws://localhost:8080"
+                window = minecraft_windows[0]  # Evaluation uses first window
             else:
-                uri = f"ws://localhost:{8081 + rank}"  # Training environments on ports 8081, 8082, etc.
-            env = MinecraftEnv(uri=uri)
+                uri = f"ws://localhost:{8081 + rank}"
+                window = minecraft_windows[rank + 1]  # Training uses subsequent windows
+
+            # Restore window if minimized
+            if window.isMinimized:
+                window.restore()
+                time.sleep(0.1)
+
+            bounds = {
+                "left": window.left,
+                "top": window.top,
+                "width": window.width,
+                "height": window.height,
+            }
+
+            env = MinecraftEnv(uri=uri, window_bounds=bounds)
             return env
         except Exception as e:
             print(f"Error creating {'evaluation' if is_eval else 'training'} environment {rank}: {e}")
@@ -323,7 +364,6 @@ def transfer_weights(old_model, new_model):
                 new_state_dict[key] = param
                 transferred_layers.append(key)
             else:
-                # Skip mismatched layers
                 skipped_layers.append((key, param.shape, new_state_dict[key].shape))
         else:
             skipped_layers.append((key, param.shape, 'Not present in new model'))
@@ -364,7 +404,7 @@ def raw_transfer_dqn_weights(model_path, new_model):
     print(f"\nTransferring weights from: {model_path}")
     
     try:
-        # Get state dict of new model
+        # Get state dict of the new model's policy
         new_state_dict = new_model.policy.state_dict()
         print("\nNew model layers:")
         for key, tensor in new_state_dict.items():
@@ -372,6 +412,7 @@ def raw_transfer_dqn_weights(model_path, new_model):
 
         transferred = []
         skipped = []
+        partially_transferred = []
 
         with ZipFile(model_path, 'r') as zip_ref:
             print("\nZIP contents:")
@@ -381,7 +422,7 @@ def raw_transfer_dqn_weights(model_path, new_model):
             # Load policy.pth directly
             if 'policy.pth' in zip_ref.namelist():
                 with zip_ref.open('policy.pth') as f:
-                    # Load using BytesIO to avoid file system
+                    # Load using BytesIO to avoid file system dependencies
                     buffer = io.BytesIO(f.read())
                     old_state_dict = th.load(buffer, map_location=device)
                     
@@ -389,19 +430,28 @@ def raw_transfer_dqn_weights(model_path, new_model):
                     for key, tensor in old_state_dict.items():
                         print(f"  {key}: {tensor.shape}")
 
-                    # Direct copy of matching tensors
-                    for key in new_state_dict:
-                        if key in old_state_dict:
-                            if old_state_dict[key].shape == new_state_dict[key].shape:
-                                new_state_dict[key].copy_(old_state_dict[key])
-                                transferred.append(key)
+                    # Iterate over the new model's state_dict keys
+                    for new_key in new_state_dict.keys():
+                        if new_key in old_state_dict:
+                            old_tensor = old_state_dict[new_key]
+                            new_tensor = new_state_dict[new_key]
+                            
+                            if old_tensor.shape == new_tensor.shape:
+                                # Direct transfer for matching shapes
+                                new_state_dict[new_key].copy_(old_tensor)
+                                transferred.append(new_key)
+                            elif new_key.startswith("features_extractor.scalar_net") and new_key in old_state_dict:
+                                # Handle partial transfer for scalar_net layers if needed
+                                min_dim = min(old_tensor.shape[1], new_tensor.shape[1])
+                                new_state_dict[new_key][:, :min_dim].copy_(old_tensor[:, :min_dim])
+                                transferred.append(f"{new_key} (partial)")
                             else:
-                                skipped.append((key, old_state_dict[key].shape, new_state_dict[key].shape))
+                                skipped.append((new_key, old_tensor.shape, new_tensor.shape))
                         else:
-                            skipped.append((key, "Not found", new_state_dict[key].shape))
+                            skipped.append((new_key, "Not found in old model", new_state_dict[new_key].shape))
 
-        # Load updated weights
-        new_model.policy.load_state_dict(new_state_dict)
+        # Load the updated state_dict into the new model's policy
+        new_model.policy.load_state_dict(new_state_dict, strict=False)
 
         print(f"\nTransferred {len(transferred)} layers:")
         for layer in transferred:
@@ -419,25 +469,27 @@ def raw_transfer_dqn_weights(model_path, new_model):
         raise
 
 def load_dqn_model(model_path, env, device):
-    """Create new model and transfer weights from existing DQN"""
+    """Load existing DQN model and update learning parameters"""
     try:
-        print("Creating fresh model...")
-        new_model = create_new_model(env)
-        
-        print(f"Transferring weights from {model_path}")
-        model = raw_transfer_dqn_weights(model_path, new_model)
-        
-        # Validate model
-        dummy_obs = env.reset()
-        with th.no_grad():
-            actions, _ = model.predict(dummy_obs, deterministic=True)
-            print(f"Model validation - predicted actions: {actions}")
-        
+        print(f"Loading DQN model from {model_path}...")
+        model = DQN.load(model_path, env=env, device=device)
+        print("Model loaded successfully.")
+
+        # Update learning parameters to current ones
+        model.learning_rate = LEARNING_RATE
+        model.buffer_size = BUFFER_SIZE
+        model.batch_size = BATCH_SIZE
+        model.gamma = GAMMA
+        model.train_freq = TRAIN_FREQ
+        model.gradient_steps = GRADIENT_STEPS
+        model.target_update_interval = TARGET_UPDATE_INTERVAL
+        model.exploration_fraction = EXPLORATION_FRACTION
+        model.exploration_final_eps = EXPLORATION_FINAL_EPS
+
+        print("Updated model with current learning parameters.")
         return model
-        
     except Exception as e:
         print(f"Error loading model: {e}")
-        print(traceback.format_exc())
         raise
 
 class SaveOnStepCallback(BaseCallback):
@@ -512,61 +564,90 @@ def create_new_model(env):
 
 def main():
     print("Select an option:")
-    print("1. Load weights from BC model")
+    print("1. Load weights from a previous DQN model")
     print("2. Load existing DQN model")
     print("3. Start training from scratch")
     choice = input("Enter 1, 2, or 3: ").strip()
 
-    # Create vectorized training environments using SubprocVecEnv
-    train_env_fns = [make_env(i) for i in range(PARALLEL_ENVS)]
+    # Find all Minecraft windows first
+    minecraft_windows = find_minecraft_windows()
+    
+    # Create vectorized environments with window assignments
+    train_env_fns = [make_env(i, minecraft_windows=minecraft_windows) for i in range(PARALLEL_ENVS)]
     train_env = SubprocVecEnv(train_env_fns)
     train_env = VecMonitor(train_env)
     
-    # Create a single evaluation environment using SubprocVecEnv
-    eval_env_fn = [make_env(0, is_eval=True)]
+    # Create evaluation environment
+    eval_env_fn = [make_env(0, is_eval=True, minecraft_windows=minecraft_windows)]
     eval_env = SubprocVecEnv(eval_env_fn)
     eval_env = VecMonitor(eval_env)
 
     print("Training Environment observation space:", train_env.observation_space)
     print("Evaluation Environment observation space:", eval_env.observation_space)
 
-    # Create initial model with better error handling
-    try:
-        model = create_new_model(train_env)
-        print("Feature extractor initialized successfully.")
-    except Exception as e:
-        print(f"Error creating model: {e}")
-        raise
-
     if choice == "1":
-        # Load BC weights
-        bc_models = [f for f in os.listdir(MODEL_PATH_BC) if f.endswith('.pth')]
-        if not bc_models:
-            print("No BC models found. Starting from scratch.")
-        else:
-            print("\nAvailable BC models:")
-            for idx, name in enumerate(bc_models, 1):
-                print(f"{idx}. {name}")
-            model_idx = int(input("Select model number: ")) - 1
-            bc_path = os.path.join(MODEL_PATH_BC, bc_models[model_idx])
-            
-            print("Transferring weights from BC model...")
-            transfer_bc_weights_to_dqn(bc_path, model)
-
-    elif choice == "2":
-        # Load DQN weights 
+        # Load weights from a previous DQN model
         dqn_models = [f for f in os.listdir(MODEL_PATH_DQN) if f.endswith('.zip')]
         if not dqn_models:
-            print("No DQN models found. Starting from scratch.")
+            print("No DQN models found in the default save location. Starting from scratch.")
+            model = create_new_model(train_env)
         else:
             print("\nAvailable DQN models:")
             for idx, name in enumerate(dqn_models, 1):
                 print(f"{idx}. {name}")
-            model_idx = int(input("Select model number: ")) - 1
-            model_path = os.path.join(MODEL_PATH_DQN, dqn_models[model_idx])
-            
-            print(f"Loading DQN model from {model_path}...")
-            model = load_dqn_model(model_path, train_env, device)  # Use the modified load_dqn_model function
+            try:
+                model_idx = int(input("Select the model number to transfer weights from: ")) - 1
+                if model_idx < 0 or model_idx >= len(dqn_models):
+                    raise IndexError("Selected model number is out of range.")
+                selected_model = dqn_models[model_idx]
+                model_path = os.path.join(MODEL_PATH_DQN, selected_model)
+                
+                model = create_new_model(train_env)
+                print(f"Transferring weights from {selected_model}...")
+                raw_transfer_dqn_weights(model_path, model)
+                print("Weight transfer completed successfully.")
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
+                return
+            except IndexError as ie:
+                print(f"Error: {ie}")
+                return
+            except Exception as e:
+                print(f"An unexpected error occurred during weight transfer: {e}")
+                return
+
+    elif choice == "2":
+        # Load existing DQN model 
+        dqn_models = [f for f in os.listdir(MODEL_PATH_DQN) if f.endswith('.zip')]
+        if not dqn_models:
+            print("No DQN models found. Starting from scratch.")
+            model = create_new_model(train_env)
+        else:
+            print("\nAvailable DQN models:")
+            for idx, name in enumerate(dqn_models, 1):
+                print(f"{idx}. {name}")
+            try:
+                model_idx = int(input("Select model number to load: ")) - 1
+                if model_idx < 0 or model_idx >= len(dqn_models):
+                    raise IndexError("Selected model number is out of range.")
+                model_path = os.path.join(MODEL_PATH_DQN, dqn_models[model_idx])
+                
+                print(f"Loading DQN model from {model_path}...")
+                model = load_dqn_model(model_path, train_env, device)  # Use the modified load_dqn_model function
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
+                return
+            except IndexError as ie:
+                print(f"Error: {ie}")
+                return
+            except Exception as e:
+                print(f"Error loading model: {e}")
+                return
+
+    else:
+        # Start training from scratch
+        model = create_new_model(train_env)
+        print("Training from scratch...")
 
     # Setup callbacks
     callbacks = [
@@ -617,11 +698,11 @@ def main():
             eval_env.close()
             
             # Recreate environments
-            train_env_fns = [make_env(i) for i in range(PARALLEL_ENVS)]
+            train_env_fns = [make_env(i, minecraft_windows=minecraft_windows) for i in range(PARALLEL_ENVS)]
             train_env = SubprocVecEnv(train_env_fns)
             train_env = VecMonitor(train_env)
             
-            eval_env_fn = [make_env(0, is_eval=True)]
+            eval_env_fn = [make_env(0, is_eval=True, minecraft_windows=minecraft_windows)]
             eval_env = SubprocVecEnv(eval_env_fn)
             eval_env = VecMonitor(eval_env)
             

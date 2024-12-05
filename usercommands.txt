@@ -41,4 +41,5 @@ python train_model.py --simulate --num_envs 10
         """
 
 tensorboard --logdir=./tensorboard_logs
+tensorboard --logdir=./tensorboard_logs_dqn_from_bc
 
