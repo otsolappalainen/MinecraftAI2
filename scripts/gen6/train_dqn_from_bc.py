@@ -19,9 +19,8 @@ import random
 import traceback
 from zipfile import ZipFile
 import io
-
-
-
+from stable_baselines3.common.callbacks import BaseCallback
+from torch.utils.tensorboard import SummaryWriter
 
 # Configuration
 MODEL_PATH_BC = "models_bc"  # Path to BC models
@@ -38,15 +37,15 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 # Hyperparameters - matching BC where possible
 TOTAL_TIMESTEPS = 1_000_000
-LEARNING_RATE = 1e-5  # Same as BC
+LEARNING_RATE = 5e-4  # Same as BC
 BUFFER_SIZE = 20_000
 BATCH_SIZE = 128  # Same as BC
 GAMMA = 0.95
 TRAIN_FREQ = 4
 GRADIENT_STEPS = 1
 TARGET_UPDATE_INTERVAL = 800
-EXPLORATION_FRACTION = 0.001
-EXPLORATION_FINAL_EPS = 0.1
+EXPLORATION_FRACTION = 0.1
+EXPLORATION_FINAL_EPS = 0.2
 EVAL_FREQ = 20000
 EVAL_EPISODES = 1
 
@@ -66,6 +65,34 @@ DEBUG_MODE = False  # Toggle for verbose logging
 def debug_log(msg):
     if DEBUG_MODE:
         print(f"[DEBUG] {msg}")
+
+
+
+class TensorboardRewardLogger(BaseCallback):
+    def __init__(self, log_dir, verbose=0):
+        super(TensorboardRewardLogger, self).__init__(verbose)
+        self.log_dir = log_dir
+        self.writer = SummaryWriter(log_dir)
+        self.episode_rewards = []
+
+    def _on_step(self):
+        # Check if we are at the end of an episode
+        infos = self.locals.get("infos", [])
+        for info in infos:
+            if "episode" in info:
+                episode_reward = info["episode"]["r"]
+                self.episode_rewards.append(episode_reward)
+                # Log reward to TensorBoard
+                self.writer.add_scalar("Episode Reward", episode_reward, self.num_timesteps)
+                if self.verbose > 0:
+                    print(f"Logged episode reward: {episode_reward}")
+        return True
+
+    def _on_training_end(self):
+        self.writer.close()
+
+
+
 
 class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space, features_dim=128):
@@ -166,10 +193,6 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
             print(f"Error in forward pass: {e}")
             print(f"Observation shapes: {[(k, v.shape) for k, v in observations.items()]}")
             raise e
-
-# Comment out or remove the CustomDQNPolicy class
-# class CustomDQNPolicy(DQNPolicy):
-#     ...
 
 def transfer_bc_weights_to_dqn(bc_model_path, dqn_model):
     try:
@@ -275,90 +298,6 @@ class TimestampedEvalCallback(EvalCallback):
                 print(f"New best model saved with reward {self.best_mean_reward:.2f}")
         return result
 
-class TopKDQN(DQN):
-    def __init__(self, *args, top_k=5, temperature=0.5, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.top_k = top_k
-        self.temperature = temperature
-
-    def _sample_action(self, learning_starts, action_noise=None, n_envs=1):
-        """Sample an action according to the exploration policy."""
-        debug_log(f"Sampling action with learning_starts={learning_starts}, n_envs={n_envs}")
-
-        if self.num_timesteps < learning_starts or np.random.rand() < self.exploration_rate:
-            debug_log(f"Random action for {n_envs} envs")
-            actions = np.array([self.action_space.sample() for _ in range(n_envs)])
-            buffer_actions = actions
-            return actions, buffer_actions
-
-        # Convert last observations to tensors on the device
-        obs_tensor = {
-            key: th.as_tensor(value, device=self.device)
-            for key, value in self._last_obs.items()
-        }
-
-        with th.no_grad():
-            q_values = self.q_net(obs_tensor)
-        debug_log(f"Q-values shape: {q_values.shape}")
-
-        # Convert to NumPy for top-k sampling
-        q_values_np = q_values.cpu().numpy()
-
-        # Get top k actions and their values
-        topk_indices = np.argsort(q_values_np, axis=1)[:, -self.top_k:]
-        topk_values = np.take_along_axis(q_values_np, topk_indices, axis=1)
-
-        # Log top k actions and their Q-values
-        for env_idx in range(n_envs):
-            debug_log("\nTop 5 actions:")
-            for action_idx, q_val in zip(
-                topk_indices[env_idx][::-1], 
-                topk_values[env_idx][::-1]
-            ):
-                debug_log(f"Action {action_idx}: Q-value = {q_val:.4f}")
-
-        # Apply temperature and compute probabilities
-        probs = np.exp(topk_values / self.temperature)
-        probs = probs / probs.sum(axis=1, keepdims=True)
-
-        # Sample actions
-        chosen_actions = np.array([
-            np.random.choice(indices, p=p)
-            for indices, p in zip(topk_indices, probs)
-        ])
-
-        buffer_actions = chosen_actions
-
-        return chosen_actions, buffer_actions
-
-    def predict(self, observation, state=None, episode_start=None, deterministic=False):
-        """Override predict to use the custom action sampling"""
-        debug_log(f"Predict called with deterministic={deterministic}")
-
-        # Store the raw observation (NumPy arrays) for training
-        self._last_obs = observation
-
-        # Convert observation to tensors on device for prediction
-        obs_tensor = {
-            key: th.as_tensor(value, device=self.device)
-            for key, value in observation.items()
-        }
-
-        with th.no_grad():
-            if deterministic:
-                debug_log("Using deterministic prediction")
-                q_values = self.q_net(obs_tensor)
-                actions = q_values.argmax(dim=1).cpu().numpy()
-            else:
-                debug_log("Using stochastic prediction")
-                actions, _ = self._sample_action(
-                    self.learning_starts,
-                    n_envs=obs_tensor[list(obs_tensor.keys())[0]].shape[0]
-                )
-
-        debug_log(f"Predicted actions: {actions}")
-        return actions, None
-
 def create_new_model(env):
     debug_log("Starting model creation...")
     
@@ -369,7 +308,7 @@ def create_new_model(env):
     )
     
     try:
-        model = TopKDQN(
+        model = DQN(
             policy=DQNPolicy,
             env=env,
             learning_rate=LEARNING_RATE,
@@ -384,9 +323,7 @@ def create_new_model(env):
             tensorboard_log=LOG_DIR,  # Use the new LOG_DIR
             device=device,
             policy_kwargs=policy_kwargs,
-            verbose=1,
-            top_k=5,
-            temperature=0.5
+            verbose=1
         )
         
         return model

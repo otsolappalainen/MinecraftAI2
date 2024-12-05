@@ -1,0 +1,1269 @@
+2024-12-05 18:01:11,982 - INFO - Initializing environment...
+2024-12-05 18:01:11,985 - DEBUG - Found window: 'Minecraft* 1.21.3 - Singleplayer' at position (-3, 711)
+2024-12-05 18:01:11,985 - DEBUG - Found window: 'Minecraft* 1.21.3 - Singleplayer' at position (-2, 359)
+2024-12-05 18:01:11,985 - DEBUG - Found window: 'Minecraft* 1.21.3 - Singleplayer' at position (1, 8)
+2024-12-05 18:01:11,988 - DEBUG - Window 0: 'Minecraft* 1.21.3 - Singleplayer' at y=8
+2024-12-05 18:01:11,988 - DEBUG - Window 1: 'Minecraft* 1.21.3 - Singleplayer' at y=359
+2024-12-05 18:01:11,988 - DEBUG - Window 2: 'Minecraft* 1.21.3 - Singleplayer' at y=711
+2024-12-05 18:01:11,989 - DEBUG - Assigned client 0 to window 'Minecraft* 1.21.3 - Singleplayer' at top=8
+2024-12-05 18:01:11,989 - DEBUG - Assigned client 1 to window 'Minecraft* 1.21.3 - Singleplayer' at top=359
+2024-12-05 18:01:11,989 - DEBUG - Assigned client 2 to window 'Minecraft* 1.21.3 - Singleplayer' at top=711
+2024-12-05 18:01:11,989 - DEBUG - find_and_assign_windows time: 5.62 ms
+2024-12-05 18:01:11,989 - DEBUG - Using proactor: IocpProactor
+2024-12-05 18:01:11,990 - DEBUG - Started connection thread for client 0
+2024-12-05 18:01:11,990 - DEBUG - Using proactor: IocpProactor
+2024-12-05 18:01:11,991 - DEBUG - Started connection thread for client 1
+2024-12-05 18:01:11,991 - DEBUG - Using proactor: IocpProactor
+2024-12-05 18:01:11,992 - DEBUG - Started connection thread for client 2
+2024-12-05 18:01:11,992 - DEBUG - start_connections time: 2.56 ms
+2024-12-05 18:01:11,992 - DEBUG - Initialization time: 10.22 ms
+2024-12-05 18:01:12,013 - DEBUG - = connection is CONNECTING
+2024-12-05 18:01:12,014 - DEBUG - = connection is CONNECTING
+2024-12-05 18:01:12,014 - DEBUG - = connection is CONNECTING
+2024-12-05 18:01:12,014 - DEBUG - > GET / HTTP/1.1
+2024-12-05 18:01:12,014 - DEBUG - > GET / HTTP/1.1
+2024-12-05 18:01:12,015 - DEBUG - > GET / HTTP/1.1
+2024-12-05 18:01:12,015 - DEBUG - > Host: localhost:8081
+2024-12-05 18:01:12,015 - DEBUG - > Host: localhost:8080
+2024-12-05 18:01:12,015 - DEBUG - > Host: localhost:8082
+2024-12-05 18:01:12,015 - DEBUG - > Upgrade: websocket
+2024-12-05 18:01:12,015 - DEBUG - > Upgrade: websocket
+2024-12-05 18:01:12,016 - DEBUG - > Upgrade: websocket
+2024-12-05 18:01:12,016 - DEBUG - > Connection: Upgrade
+2024-12-05 18:01:12,016 - DEBUG - > Connection: Upgrade
+2024-12-05 18:01:12,016 - DEBUG - > Connection: Upgrade
+2024-12-05 18:01:12,016 - DEBUG - > Sec-WebSocket-Key: EX0Xwpymx0//XTB17K/Jvg==
+2024-12-05 18:01:12,016 - DEBUG - > Sec-WebSocket-Key: PV4PuTx+RWQ2mKIlORKocw==
+2024-12-05 18:01:12,017 - DEBUG - > Sec-WebSocket-Key: gWL8CWHkhBlIvqs4hPQGgg==
+2024-12-05 18:01:12,017 - DEBUG - > Sec-WebSocket-Version: 13
+2024-12-05 18:01:12,017 - DEBUG - > Sec-WebSocket-Version: 13
+2024-12-05 18:01:12,017 - DEBUG - > Sec-WebSocket-Version: 13
+2024-12-05 18:01:12,017 - DEBUG - > Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+2024-12-05 18:01:12,017 - DEBUG - > Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+2024-12-05 18:01:12,017 - DEBUG - > Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits
+2024-12-05 18:01:12,018 - DEBUG - > User-Agent: Python/3.11 websockets/14.1
+2024-12-05 18:01:12,018 - DEBUG - > User-Agent: Python/3.11 websockets/14.1
+2024-12-05 18:01:12,018 - DEBUG - > User-Agent: Python/3.11 websockets/14.1
+2024-12-05 18:01:12,019 - DEBUG - < HTTP/1.1 101 Web Socket Protocol Handshake
+2024-12-05 18:01:12,019 - DEBUG - < HTTP/1.1 101 Web Socket Protocol Handshake
+2024-12-05 18:01:12,019 - DEBUG - < Connection: Upgrade
+2024-12-05 18:01:12,019 - DEBUG - < Connection: Upgrade
+2024-12-05 18:01:12,019 - DEBUG - < Date: Thu, 05 Dec 2024 16:01:12 GMT
+2024-12-05 18:01:12,020 - DEBUG - < HTTP/1.1 101 Web Socket Protocol Handshake
+2024-12-05 18:01:12,020 - DEBUG - < Date: Thu, 05 Dec 2024 16:01:12 GMT
+2024-12-05 18:01:12,020 - DEBUG - < Sec-WebSocket-Accept: ZNbIUEcjWkAtUUHSa6IQDh6mIeo=
+2024-12-05 18:01:12,020 - DEBUG - < Connection: Upgrade
+2024-12-05 18:01:12,020 - DEBUG - < Sec-WebSocket-Accept: 1e+54GxXIx6e1Szhhpu6SY77vTE=
+2024-12-05 18:01:12,020 - DEBUG - < Server: TooTallNate Java-WebSocket
+2024-12-05 18:01:12,020 - DEBUG - < Date: Thu, 05 Dec 2024 16:01:12 GMT
+2024-12-05 18:01:12,021 - DEBUG - < Server: TooTallNate Java-WebSocket
+2024-12-05 18:01:12,021 - DEBUG - < Upgrade: websocket
+2024-12-05 18:01:12,021 - DEBUG - < Sec-WebSocket-Accept: EFWVqphZ1Ft4mFewi5fdEPnZI+c=
+2024-12-05 18:01:12,021 - DEBUG - < Upgrade: websocket
+2024-12-05 18:01:12,021 - DEBUG - = connection is OPEN
+2024-12-05 18:01:12,021 - DEBUG - < Server: TooTallNate Java-WebSocket
+2024-12-05 18:01:12,021 - DEBUG - = connection is OPEN
+2024-12-05 18:01:12,022 - INFO - Client 1 connected to ws://localhost:8081.
+2024-12-05 18:01:12,022 - DEBUG - < Upgrade: websocket
+2024-12-05 18:01:12,022 - INFO - Client 0 connected to ws://localhost:8080.
+2024-12-05 18:01:12,022 - DEBUG - = connection is OPEN
+2024-12-05 18:01:12,023 - INFO - Client 2 connected to ws://localhost:8082.
+2024-12-05 18:01:12,994 - INFO - Performing initial reset...
+2024-12-05 18:01:12,994 - DEBUG - Using proactor: IocpProactor
+2024-12-05 18:01:12,995 - DEBUG - > TEXT '{"action": "reset 2"}' [21 bytes]
+2024-12-05 18:01:12,995 - DEBUG - Client 0 sent action: reset 2
+2024-12-05 18:01:12,995 - DEBUG - send_action client 0 time: 0.51 ms
+2024-12-05 18:01:13,047 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3734 bytes]
+2024-12-05 18:01:13,048 - DEBUG - Client 0 received state:
+2024-12-05 18:01:14,996 - DEBUG - Client 0 received state on reset.
+2024-12-05 18:01:15,020 - DEBUG - capture_screenshot client 1 time: 23.47 ms
+2024-12-05 18:01:15,026 - DEBUG - capture_screenshot client 0 time: 29.59 ms
+2024-12-05 18:01:15,033 - DEBUG - capture_screenshot client 2 time: 35.72 ms
+2024-12-05 18:01:15,034 - DEBUG - > TEXT '{"action": "reset 2"}' [21 bytes]
+2024-12-05 18:01:15,034 - DEBUG - Client 1 sent action: reset 2
+2024-12-05 18:01:15,034 - DEBUG - send_action client 1 time: 0.52 ms
+2024-12-05 18:01:15,086 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3613 bytes]
+2024-12-05 18:01:15,087 - DEBUG - Client 1 received state:
+2024-12-05 18:01:17,034 - DEBUG - Client 1 received state on reset.
+2024-12-05 18:01:17,040 - DEBUG - capture_screenshot client 0 time: 5.64 ms
+2024-12-05 18:01:17,047 - DEBUG - capture_screenshot client 2 time: 12.34 ms
+2024-12-05 18:01:17,054 - DEBUG - capture_screenshot client 1 time: 18.98 ms
+2024-12-05 18:01:17,054 - DEBUG - > TEXT '{"action": "reset 2"}' [21 bytes]
+2024-12-05 18:01:17,054 - DEBUG - Client 2 sent action: reset 2
+2024-12-05 18:01:17,055 - DEBUG - send_action client 2 time: 0.50 ms
+2024-12-05 18:01:17,107 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:17,107 - DEBUG - Client 2 received state:
+2024-12-05 18:01:19,055 - DEBUG - Client 2 received state on reset.
+2024-12-05 18:01:19,061 - DEBUG - capture_screenshot client 0 time: 5.59 ms
+2024-12-05 18:01:19,068 - DEBUG - capture_screenshot client 2 time: 11.70 ms
+2024-12-05 18:01:19,074 - DEBUG - capture_screenshot client 1 time: 18.83 ms
+2024-12-05 18:01:21,076 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:21,076 - DEBUG - Client 0 sent action: jump_walk_forward
+2024-12-05 18:01:21,076 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:21,076 - DEBUG - > TEXT '{"action": "move_left"}' [23 bytes]
+2024-12-05 18:01:21,076 - DEBUG - Client 1 sent action: move_left
+2024-12-05 18:01:21,077 - DEBUG - send_action client 1 time: 0.87 ms
+2024-12-05 18:01:21,077 - DEBUG - > TEXT '{"action": "next_item"}' [23 bytes]
+2024-12-05 18:01:21,077 - DEBUG - Client 2 sent action: next_item
+2024-12-05 18:01:21,078 - DEBUG - send_action client 2 time: 0.52 ms
+2024-12-05 18:01:21,078 - DEBUG - Sending actions time: 1.89 ms
+2024-12-05 18:01:21,089 - DEBUG - capture_screenshot client 0 time: 11.23 ms
+2024-12-05 18:01:21,096 - DEBUG - capture_screenshot client 1 time: 17.50 ms
+2024-12-05 18:01:21,103 - DEBUG - capture_screenshot client 2 time: 24.20 ms
+2024-12-05 18:01:21,103 - DEBUG - Capturing screenshots time: 25.23 ms
+2024-12-05 18:01:21,179 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3613 bytes]
+2024-12-05 18:01:21,179 - DEBUG - Client 1 received state:
+2024-12-05 18:01:21,180 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:21,180 - DEBUG - Client 2 received state:
+2024-12-05 18:01:21,189 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3734 bytes]
+2024-12-05 18:01:21,189 - DEBUG - Client 0 received state:
+2024-12-05 18:01:21,305 - DEBUG - Client 0 received state.
+2024-12-05 18:01:21,305 - DEBUG - Client 1 received state.
+2024-12-05 18:01:21,305 - DEBUG - Client 2 received state.
+2024-12-05 18:01:21,305 - DEBUG - Receiving states time: 201.94 ms
+2024-12-05 18:01:21,305 - INFO - Client 0 - Step 0/250, Cumulative reward: -0.10
+2024-12-05 18:01:21,306 - INFO - Client 1 - Step 0/250, Cumulative reward: -0.10
+2024-12-05 18:01:21,306 - INFO - Client 2 - Step 0/250, Cumulative reward: -0.10
+2024-12-05 18:01:21,306 - DEBUG - Processing step data time: 0.51 ms
+2024-12-05 18:01:21,306 - DEBUG - _step total time: 230.09 ms
+2024-12-05 18:01:21,306 - DEBUG - Total step time: 230.60 ms
+2024-12-05 18:01:21,484 - INFO - Step 1/40 completed in 230.60ms
+2024-12-05 18:01:21,585 - DEBUG - > TEXT '{"action": "move_right"}' [24 bytes]
+2024-12-05 18:01:21,585 - DEBUG - Client 0 sent action: move_right
+2024-12-05 18:01:21,585 - DEBUG - send_action client 0 time: 0.57 ms
+2024-12-05 18:01:21,585 - DEBUG - > TEXT '{"action": "sneak"}' [19 bytes]
+2024-12-05 18:01:21,586 - DEBUG - Client 1 sent action: sneak
+2024-12-05 18:01:21,586 - DEBUG - send_action client 1 time: 0.51 ms
+2024-12-05 18:01:21,586 - DEBUG - > TEXT '{"action": "move_right"}' [24 bytes]
+2024-12-05 18:01:21,586 - DEBUG - Client 2 sent action: move_right
+2024-12-05 18:01:21,586 - DEBUG - send_action client 2 time: 0.00 ms
+2024-12-05 18:01:21,587 - DEBUG - Sending actions time: 2.12 ms
+2024-12-05 18:01:21,596 - DEBUG - capture_screenshot client 1 time: 9.20 ms
+2024-12-05 18:01:21,602 - DEBUG - capture_screenshot client 0 time: 15.33 ms
+2024-12-05 18:01:21,609 - DEBUG - capture_screenshot client 2 time: 21.97 ms
+2024-12-05 18:01:21,610 - DEBUG - Capturing screenshots time: 23.00 ms
+2024-12-05 18:01:21,687 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3734 bytes]
+2024-12-05 18:01:21,687 - DEBUG - Client 0 received state:
+2024-12-05 18:01:21,688 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3612 bytes]
+2024-12-05 18:01:21,688 - DEBUG - Client 1 received state:
+2024-12-05 18:01:21,689 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:21,689 - DEBUG - Client 2 received state:
+2024-12-05 18:01:21,812 - DEBUG - Client 0 received state.
+2024-12-05 18:01:21,812 - DEBUG - Client 1 received state.
+2024-12-05 18:01:21,812 - DEBUG - Client 2 received state.
+2024-12-05 18:01:21,812 - DEBUG - Receiving states time: 201.95 ms
+2024-12-05 18:01:21,812 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:21,813 - DEBUG - _step total time: 228.12 ms
+2024-12-05 18:01:21,813 - DEBUG - Total step time: 228.63 ms
+2024-12-05 18:01:21,986 - INFO - Step 2/40 completed in 228.63ms
+2024-12-05 18:01:22,087 - DEBUG - > TEXT '{"action": "look_down"}' [23 bytes]
+2024-12-05 18:01:22,088 - DEBUG - Client 0 sent action: look_down
+2024-12-05 18:01:22,088 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:22,088 - DEBUG - > TEXT '{"action": "jump"}' [18 bytes]
+2024-12-05 18:01:22,088 - DEBUG - Client 1 sent action: jump
+2024-12-05 18:01:22,088 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:22,089 - DEBUG - > TEXT '{"action": "look_down"}' [23 bytes]
+2024-12-05 18:01:22,089 - DEBUG - Client 2 sent action: look_down
+2024-12-05 18:01:22,089 - DEBUG - send_action client 2 time: 0.00 ms
+2024-12-05 18:01:22,089 - DEBUG - Sending actions time: 2.02 ms
+2024-12-05 18:01:22,096 - DEBUG - capture_screenshot client 0 time: 6.65 ms
+2024-12-05 18:01:22,103 - DEBUG - capture_screenshot client 1 time: 13.43 ms
+2024-12-05 18:01:22,110 - DEBUG - capture_screenshot client 2 time: 20.12 ms
+2024-12-05 18:01:22,110 - DEBUG - Capturing screenshots time: 21.14 ms
+2024-12-05 18:01:22,190 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3625 bytes]
+2024-12-05 18:01:22,190 - DEBUG - Client 1 received state:
+2024-12-05 18:01:22,191 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3732 bytes]
+2024-12-05 18:01:22,191 - DEBUG - Client 0 received state:
+2024-12-05 18:01:22,193 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:22,193 - DEBUG - Client 2 received state:
+2024-12-05 18:01:22,311 - DEBUG - Client 0 received state.
+2024-12-05 18:01:22,311 - DEBUG - Client 1 received state.
+2024-12-05 18:01:22,312 - DEBUG - Client 2 received state.
+2024-12-05 18:01:22,312 - DEBUG - Receiving states time: 201.58 ms
+2024-12-05 18:01:22,312 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:22,312 - DEBUG - _step total time: 225.25 ms
+2024-12-05 18:01:22,313 - DEBUG - Total step time: 225.75 ms
+2024-12-05 18:01:22,484 - INFO - Step 3/40 completed in 225.75ms
+2024-12-05 18:01:22,585 - DEBUG - > TEXT '{"action": "move_forward"}' [26 bytes]
+2024-12-05 18:01:22,585 - DEBUG - Client 0 sent action: move_forward
+2024-12-05 18:01:22,585 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:22,585 - DEBUG - > TEXT '{"action": "look_left"}' [23 bytes]
+2024-12-05 18:01:22,585 - DEBUG - Client 1 sent action: look_left
+2024-12-05 18:01:22,585 - DEBUG - send_action client 1 time: 0.00 ms
+2024-12-05 18:01:22,585 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:22,586 - DEBUG - Client 2 sent action: jump_walk_forward
+2024-12-05 18:01:22,586 - DEBUG - send_action client 2 time: 0.96 ms
+2024-12-05 18:01:22,586 - DEBUG - Sending actions time: 1.98 ms
+2024-12-05 18:01:22,596 - DEBUG - capture_screenshot client 1 time: 9.33 ms
+2024-12-05 18:01:22,602 - DEBUG - capture_screenshot client 0 time: 15.98 ms
+2024-12-05 18:01:22,610 - DEBUG - capture_screenshot client 2 time: 22.67 ms
+2024-12-05 18:01:22,610 - DEBUG - Capturing screenshots time: 23.70 ms
+2024-12-05 18:01:22,686 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3734 bytes]
+2024-12-05 18:01:22,686 - DEBUG - Client 0 received state:
+2024-12-05 18:01:22,687 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3612 bytes]
+2024-12-05 18:01:22,687 - DEBUG - Client 1 received state:
+2024-12-05 18:01:22,700 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:22,700 - DEBUG - Client 2 received state:
+2024-12-05 18:01:22,811 - DEBUG - Client 0 received state.
+2024-12-05 18:01:22,811 - DEBUG - Client 1 received state.
+2024-12-05 18:01:22,812 - DEBUG - Client 2 received state.
+2024-12-05 18:01:22,812 - DEBUG - Receiving states time: 201.57 ms
+2024-12-05 18:01:22,812 - DEBUG - Processing step data time: 0.51 ms
+2024-12-05 18:01:22,812 - DEBUG - _step total time: 227.76 ms
+2024-12-05 18:01:22,812 - DEBUG - Total step time: 227.76 ms
+2024-12-05 18:01:22,987 - INFO - Step 4/40 completed in 228.44ms
+2024-12-05 18:01:23,088 - DEBUG - > TEXT '{"action": "move_left"}' [23 bytes]
+2024-12-05 18:01:23,088 - DEBUG - Client 0 sent action: move_left
+2024-12-05 18:01:23,088 - DEBUG - send_action client 0 time: 0.00 ms
+2024-12-05 18:01:23,089 - DEBUG - > TEXT '{"action": "no_op"}' [19 bytes]
+2024-12-05 18:01:23,089 - DEBUG - Client 1 sent action: no_op
+2024-12-05 18:01:23,089 - DEBUG - send_action client 1 time: 0.00 ms
+2024-12-05 18:01:23,089 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:23,089 - DEBUG - Client 2 sent action: previous_item
+2024-12-05 18:01:23,090 - DEBUG - send_action client 2 time: 0.00 ms
+2024-12-05 18:01:23,090 - DEBUG - Sending actions time: 1.85 ms
+2024-12-05 18:01:23,096 - DEBUG - capture_screenshot client 2 time: 5.60 ms
+2024-12-05 18:01:23,103 - DEBUG - capture_screenshot client 0 time: 13.39 ms
+2024-12-05 18:01:23,110 - DEBUG - capture_screenshot client 1 time: 20.08 ms
+2024-12-05 18:01:23,110 - DEBUG - Capturing screenshots time: 20.59 ms
+2024-12-05 18:01:23,190 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3733 bytes]
+2024-12-05 18:01:23,190 - DEBUG - Client 0 received state:
+2024-12-05 18:01:23,191 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:23,191 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3612 bytes]
+2024-12-05 18:01:23,191 - DEBUG - Client 2 received state:
+2024-12-05 18:01:23,192 - DEBUG - Client 1 received state:
+2024-12-05 18:01:23,312 - DEBUG - Client 0 received state.
+2024-12-05 18:01:23,312 - DEBUG - Client 1 received state.
+2024-12-05 18:01:23,312 - DEBUG - Client 2 received state.
+2024-12-05 18:01:23,312 - DEBUG - Receiving states time: 201.90 ms
+2024-12-05 18:01:23,313 - DEBUG - Processing step data time: 0.50 ms
+2024-12-05 18:01:23,313 - DEBUG - _step total time: 224.84 ms
+2024-12-05 18:01:23,313 - DEBUG - Total step time: 224.84 ms
+2024-12-05 18:01:23,486 - INFO - Step 5/40 completed in 224.84ms
+2024-12-05 18:01:23,587 - DEBUG - > TEXT '{"action": "no_op"}' [19 bytes]
+2024-12-05 18:01:23,587 - DEBUG - Client 0 sent action: no_op
+2024-12-05 18:01:23,587 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:23,587 - DEBUG - > TEXT '{"action": "move_left"}' [23 bytes]
+2024-12-05 18:01:23,588 - DEBUG - Client 1 sent action: move_left
+2024-12-05 18:01:23,588 - DEBUG - send_action client 1 time: 0.55 ms
+2024-12-05 18:01:23,588 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:23,588 - DEBUG - Client 2 sent action: previous_item
+2024-12-05 18:01:23,588 - DEBUG - send_action client 2 time: 0.51 ms
+2024-12-05 18:01:23,588 - DEBUG - Sending actions time: 1.56 ms
+2024-12-05 18:01:23,596 - DEBUG - capture_screenshot client 0 time: 6.71 ms
+2024-12-05 18:01:23,603 - DEBUG - capture_screenshot client 2 time: 14.39 ms
+2024-12-05 18:01:23,610 - DEBUG - capture_screenshot client 1 time: 21.06 ms
+2024-12-05 18:01:23,610 - DEBUG - Capturing screenshots time: 21.57 ms
+2024-12-05 18:01:23,688 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3734 bytes]
+2024-12-05 18:01:23,689 - DEBUG - Client 0 received state:
+2024-12-05 18:01:23,689 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3612 bytes]
+2024-12-05 18:01:23,690 - DEBUG - Client 1 received state:
+2024-12-05 18:01:23,691 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:23,691 - DEBUG - Client 2 received state:
+2024-12-05 18:01:23,812 - DEBUG - Client 0 received state.
+2024-12-05 18:01:23,812 - DEBUG - Client 1 received state.
+2024-12-05 18:01:23,812 - DEBUG - Client 2 received state.
+2024-12-05 18:01:23,812 - DEBUG - Receiving states time: 201.65 ms
+2024-12-05 18:01:23,812 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:23,813 - DEBUG - _step total time: 225.80 ms
+2024-12-05 18:01:23,813 - DEBUG - Total step time: 226.30 ms
+2024-12-05 18:01:23,991 - INFO - Step 6/40 completed in 226.30ms
+2024-12-05 18:01:24,092 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:24,092 - DEBUG - Client 0 sent action: jump_walk_forward
+2024-12-05 18:01:24,092 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:24,092 - DEBUG - > TEXT '{"action": "turn_left"}' [23 bytes]
+2024-12-05 18:01:24,093 - DEBUG - Client 1 sent action: turn_left
+2024-12-05 18:01:24,093 - DEBUG - send_action client 1 time: 0.54 ms
+2024-12-05 18:01:24,093 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:24,093 - DEBUG - Client 2 sent action: jump_walk_forward
+2024-12-05 18:01:24,093 - DEBUG - send_action client 2 time: 0.51 ms
+2024-12-05 18:01:24,093 - DEBUG - Sending actions time: 1.55 ms
+2024-12-05 18:01:24,103 - DEBUG - capture_screenshot client 2 time: 8.71 ms
+2024-12-05 18:01:24,109 - DEBUG - capture_screenshot client 0 time: 15.43 ms
+2024-12-05 18:01:24,117 - DEBUG - capture_screenshot client 1 time: 22.05 ms
+2024-12-05 18:01:24,117 - DEBUG - Capturing screenshots time: 22.57 ms
+2024-12-05 18:01:24,196 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3612 bytes]
+2024-12-05 18:01:24,196 - DEBUG - Client 1 received state:
+2024-12-05 18:01:24,205 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3735 bytes]
+2024-12-05 18:01:24,205 - DEBUG - Client 0 received state:
+2024-12-05 18:01:24,206 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:24,206 - DEBUG - Client 2 received state:
+2024-12-05 18:01:24,318 - DEBUG - Client 0 received state.
+2024-12-05 18:01:24,318 - DEBUG - Client 1 received state.
+2024-12-05 18:01:24,319 - DEBUG - Client 2 received state.
+2024-12-05 18:01:24,319 - DEBUG - Receiving states time: 201.82 ms
+2024-12-05 18:01:24,319 - DEBUG - Processing step data time: 0.52 ms
+2024-12-05 18:01:24,319 - DEBUG - _step total time: 227.49 ms
+2024-12-05 18:01:24,320 - DEBUG - Total step time: 228.01 ms
+2024-12-05 18:01:24,492 - INFO - Step 7/40 completed in 228.01ms
+2024-12-05 18:01:24,593 - DEBUG - > TEXT '{"action": "no_op"}' [19 bytes]
+2024-12-05 18:01:24,593 - DEBUG - Client 0 sent action: no_op
+2024-12-05 18:01:24,594 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:24,594 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:24,594 - DEBUG - Client 1 sent action: previous_item
+2024-12-05 18:01:24,594 - DEBUG - send_action client 1 time: 0.00 ms
+2024-12-05 18:01:24,594 - DEBUG - > TEXT '{"action": "sneak"}' [19 bytes]
+2024-12-05 18:01:24,595 - DEBUG - Client 2 sent action: sneak
+2024-12-05 18:01:24,595 - DEBUG - send_action client 2 time: 0.99 ms
+2024-12-05 18:01:24,595 - DEBUG - Sending actions time: 2.01 ms
+2024-12-05 18:01:24,603 - DEBUG - capture_screenshot client 2 time: 7.69 ms
+2024-12-05 18:01:24,610 - DEBUG - capture_screenshot client 1 time: 14.51 ms
+2024-12-05 18:01:24,616 - DEBUG - capture_screenshot client 0 time: 21.15 ms
+2024-12-05 18:01:24,617 - DEBUG - Capturing screenshots time: 21.67 ms
+2024-12-05 18:01:24,695 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3733 bytes]
+2024-12-05 18:01:24,695 - DEBUG - Client 0 received state:
+2024-12-05 18:01:24,696 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3612 bytes]
+2024-12-05 18:01:24,696 - DEBUG - Client 1 received state:
+2024-12-05 18:01:24,697 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:24,697 - DEBUG - Client 2 received state:
+2024-12-05 18:01:24,818 - DEBUG - Client 0 received state.
+2024-12-05 18:01:24,818 - DEBUG - Client 1 received state.
+2024-12-05 18:01:24,819 - DEBUG - Client 2 received state.
+2024-12-05 18:01:24,819 - DEBUG - Receiving states time: 201.80 ms
+2024-12-05 18:01:24,819 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:24,819 - DEBUG - _step total time: 225.99 ms
+2024-12-05 18:01:24,819 - DEBUG - Total step time: 225.99 ms
+2024-12-05 18:01:24,990 - INFO - Step 8/40 completed in 226.51ms
+2024-12-05 18:01:25,090 - DEBUG - > TEXT '{"action": "next_item"}' [23 bytes]
+2024-12-05 18:01:25,090 - DEBUG - Client 0 sent action: next_item
+2024-12-05 18:01:25,091 - DEBUG - send_action client 0 time: 0.53 ms
+2024-12-05 18:01:25,091 - DEBUG - > TEXT '{"action": "sneak"}' [19 bytes]
+2024-12-05 18:01:25,091 - DEBUG - Client 1 sent action: sneak
+2024-12-05 18:01:25,091 - DEBUG - send_action client 1 time: 0.51 ms
+2024-12-05 18:01:25,091 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:25,092 - DEBUG - Client 2 sent action: jump_walk_forward
+2024-12-05 18:01:25,092 - DEBUG - send_action client 2 time: 0.51 ms
+2024-12-05 18:01:25,092 - DEBUG - Sending actions time: 1.55 ms
+2024-12-05 18:01:25,102 - DEBUG - capture_screenshot client 0 time: 10.25 ms
+2024-12-05 18:01:25,110 - DEBUG - capture_screenshot client 1 time: 17.47 ms
+2024-12-05 18:01:25,117 - DEBUG - capture_screenshot client 2 time: 24.18 ms
+2024-12-05 18:01:25,117 - DEBUG - Capturing screenshots time: 24.68 ms
+2024-12-05 18:01:25,193 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3733 bytes]
+2024-12-05 18:01:25,193 - DEBUG - Client 0 received state:
+2024-12-05 18:01:25,193 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3612 bytes]
+2024-12-05 18:01:25,193 - DEBUG - Client 1 received state:
+2024-12-05 18:01:25,205 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3557 bytes]
+2024-12-05 18:01:25,205 - DEBUG - Client 2 received state:
+2024-12-05 18:01:25,319 - DEBUG - Client 0 received state.
+2024-12-05 18:01:25,319 - DEBUG - Client 1 received state.
+2024-12-05 18:01:25,319 - DEBUG - Client 2 received state.
+2024-12-05 18:01:25,319 - DEBUG - Receiving states time: 201.91 ms
+2024-12-05 18:01:25,319 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:25,320 - DEBUG - _step total time: 229.68 ms
+2024-12-05 18:01:25,320 - DEBUG - Total step time: 230.19 ms
+2024-12-05 18:01:25,494 - INFO - Step 9/40 completed in 230.19ms
+2024-12-05 18:01:25,594 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:25,595 - DEBUG - Client 0 sent action: previous_item
+2024-12-05 18:01:25,595 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:25,595 - DEBUG - > TEXT '{"action": "turn_right"}' [24 bytes]
+2024-12-05 18:01:25,595 - DEBUG - Client 1 sent action: turn_right
+2024-12-05 18:01:25,595 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:25,596 - DEBUG - > TEXT '{"action": "move_forward"}' [26 bytes]
+2024-12-05 18:01:25,596 - DEBUG - Client 2 sent action: move_forward
+2024-12-05 18:01:25,596 - DEBUG - send_action client 2 time: 0.51 ms
+2024-12-05 18:01:25,596 - DEBUG - Sending actions time: 2.01 ms
+2024-12-05 18:01:25,603 - DEBUG - capture_screenshot client 2 time: 6.14 ms
+2024-12-05 18:01:25,609 - DEBUG - capture_screenshot client 0 time: 13.33 ms
+2024-12-05 18:01:25,616 - DEBUG - capture_screenshot client 1 time: 19.74 ms
+2024-12-05 18:01:25,617 - DEBUG - Capturing screenshots time: 20.76 ms
+2024-12-05 18:01:25,695 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3733 bytes]
+2024-12-05 18:01:25,696 - DEBUG - Client 0 received state:
+2024-12-05 18:01:25,697 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3612 bytes]
+2024-12-05 18:01:25,697 - DEBUG - Client 1 received state:
+2024-12-05 18:01:25,698 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:25,698 - DEBUG - Client 2 received state:
+2024-12-05 18:01:25,818 - DEBUG - Client 0 received state.
+2024-12-05 18:01:25,818 - DEBUG - Client 1 received state.
+2024-12-05 18:01:25,819 - DEBUG - Client 2 received state.
+2024-12-05 18:01:25,819 - DEBUG - Receiving states time: 201.91 ms
+2024-12-05 18:01:25,819 - DEBUG - Processing step data time: 0.51 ms
+2024-12-05 18:01:25,819 - DEBUG - _step total time: 225.19 ms
+2024-12-05 18:01:25,820 - DEBUG - Total step time: 225.71 ms
+2024-12-05 18:01:25,989 - INFO - Step 10/40 completed in 225.71ms
+2024-12-05 18:01:26,090 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:26,090 - DEBUG - Client 0 sent action: previous_item
+2024-12-05 18:01:26,091 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:26,091 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:26,091 - DEBUG - Client 1 sent action: jump_walk_forward
+2024-12-05 18:01:26,091 - DEBUG - send_action client 1 time: 0.00 ms
+2024-12-05 18:01:26,091 - DEBUG - > TEXT '{"action": "turn_left"}' [23 bytes]
+2024-12-05 18:01:26,091 - DEBUG - Client 2 sent action: turn_left
+2024-12-05 18:01:26,091 - DEBUG - send_action client 2 time: 0.94 ms
+2024-12-05 18:01:26,092 - DEBUG - Sending actions time: 1.94 ms
+2024-12-05 18:01:26,103 - DEBUG - capture_screenshot client 1 time: 11.22 ms
+2024-12-05 18:01:26,110 - DEBUG - capture_screenshot client 0 time: 17.36 ms
+2024-12-05 18:01:26,117 - DEBUG - capture_screenshot client 2 time: 24.57 ms
+2024-12-05 18:01:26,117 - DEBUG - Capturing screenshots time: 25.08 ms
+2024-12-05 18:01:26,192 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3733 bytes]
+2024-12-05 18:01:26,192 - DEBUG - Client 0 received state:
+2024-12-05 18:01:26,193 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:26,194 - DEBUG - Client 2 received state:
+2024-12-05 18:01:26,203 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3625 bytes]
+2024-12-05 18:01:26,203 - DEBUG - Client 1 received state:
+2024-12-05 18:01:26,319 - DEBUG - Client 0 received state.
+2024-12-05 18:01:26,319 - DEBUG - Client 1 received state.
+2024-12-05 18:01:26,319 - DEBUG - Client 2 received state.
+2024-12-05 18:01:26,319 - DEBUG - Receiving states time: 202.00 ms
+2024-12-05 18:01:26,319 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:26,320 - DEBUG - _step total time: 229.55 ms
+2024-12-05 18:01:26,320 - DEBUG - Total step time: 229.55 ms
+2024-12-05 18:01:26,493 - INFO - Step 11/40 completed in 230.06ms
+2024-12-05 18:01:26,593 - DEBUG - > TEXT '{"action": "look_right"}' [24 bytes]
+2024-12-05 18:01:26,593 - DEBUG - Client 0 sent action: look_right
+2024-12-05 18:01:26,593 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:26,593 - DEBUG - > TEXT '{"action": "move_forward"}' [26 bytes]
+2024-12-05 18:01:26,594 - DEBUG - Client 1 sent action: move_forward
+2024-12-05 18:01:26,594 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:26,595 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:26,595 - DEBUG - Client 2 sent action: jump_walk_forward
+2024-12-05 18:01:26,595 - DEBUG - send_action client 2 time: 0.00 ms
+2024-12-05 18:01:26,595 - DEBUG - Sending actions time: 2.02 ms
+2024-12-05 18:01:26,603 - DEBUG - capture_screenshot client 1 time: 7.64 ms
+2024-12-05 18:01:26,610 - DEBUG - capture_screenshot client 0 time: 14.77 ms
+2024-12-05 18:01:26,617 - DEBUG - capture_screenshot client 2 time: 21.39 ms
+2024-12-05 18:01:26,617 - DEBUG - Capturing screenshots time: 21.90 ms
+2024-12-05 18:01:26,695 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3733 bytes]
+2024-12-05 18:01:26,695 - DEBUG - Client 0 received state:
+2024-12-05 18:01:26,696 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3612 bytes]
+2024-12-05 18:01:26,696 - DEBUG - Client 1 received state:
+2024-12-05 18:01:26,707 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:26,708 - DEBUG - Client 2 received state:
+2024-12-05 18:01:26,819 - DEBUG - Client 0 received state.
+2024-12-05 18:01:26,819 - DEBUG - Client 1 received state.
+2024-12-05 18:01:26,819 - DEBUG - Client 2 received state.
+2024-12-05 18:01:26,819 - DEBUG - Receiving states time: 201.98 ms
+2024-12-05 18:01:26,819 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:26,820 - DEBUG - _step total time: 226.92 ms
+2024-12-05 18:01:26,820 - DEBUG - Total step time: 227.44 ms
+2024-12-05 18:01:26,993 - INFO - Step 12/40 completed in 227.44ms
+2024-12-05 18:01:27,094 - DEBUG - > TEXT '{"action": "look_down"}' [23 bytes]
+2024-12-05 18:01:27,094 - DEBUG - Client 0 sent action: look_down
+2024-12-05 18:01:27,095 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:27,095 - DEBUG - > TEXT '{"action": "attack"}' [20 bytes]
+2024-12-05 18:01:27,095 - DEBUG - Client 1 sent action: attack
+2024-12-05 18:01:27,095 - DEBUG - send_action client 1 time: 0.00 ms
+2024-12-05 18:01:27,095 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:27,096 - DEBUG - Client 2 sent action: jump_walk_forward
+2024-12-05 18:01:27,096 - DEBUG - send_action client 2 time: 0.99 ms
+2024-12-05 18:01:27,096 - DEBUG - Sending actions time: 2.01 ms
+2024-12-05 18:01:27,103 - DEBUG - capture_screenshot client 0 time: 6.67 ms
+2024-12-05 18:01:27,109 - DEBUG - capture_screenshot client 2 time: 13.31 ms
+2024-12-05 18:01:27,117 - DEBUG - capture_screenshot client 1 time: 20.45 ms
+2024-12-05 18:01:27,119 - DEBUG - Capturing screenshots time: 23.01 ms
+2024-12-05 18:01:27,195 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3734 bytes]
+2024-12-05 18:01:27,196 - DEBUG - Client 0 received state:
+2024-12-05 18:01:27,196 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3612 bytes]
+2024-12-05 18:01:27,197 - DEBUG - Client 1 received state:
+2024-12-05 18:01:27,208 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:27,209 - DEBUG - Client 2 received state:
+2024-12-05 18:01:27,321 - DEBUG - Client 0 received state.
+2024-12-05 18:01:27,321 - DEBUG - Client 1 received state.
+2024-12-05 18:01:27,321 - DEBUG - Client 2 received state.
+2024-12-05 18:01:27,321 - DEBUG - Receiving states time: 202.22 ms
+2024-12-05 18:01:27,321 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:27,322 - DEBUG - _step total time: 227.74 ms
+2024-12-05 18:01:27,322 - DEBUG - Total step time: 228.26 ms
+2024-12-05 18:01:27,493 - INFO - Step 13/40 completed in 228.26ms
+2024-12-05 18:01:27,594 - DEBUG - > TEXT '{"action": "turn_left"}' [23 bytes]
+2024-12-05 18:01:27,594 - DEBUG - Client 0 sent action: turn_left
+2024-12-05 18:01:27,594 - DEBUG - send_action client 0 time: 0.00 ms
+2024-12-05 18:01:27,595 - DEBUG - > TEXT '{"action": "turn_right"}' [24 bytes]
+2024-12-05 18:01:27,595 - DEBUG - Client 1 sent action: turn_right
+2024-12-05 18:01:27,595 - DEBUG - send_action client 1 time: 0.84 ms
+2024-12-05 18:01:27,595 - DEBUG - > TEXT '{"action": "look_up"}' [21 bytes]
+2024-12-05 18:01:27,595 - DEBUG - Client 2 sent action: look_up
+2024-12-05 18:01:27,595 - DEBUG - send_action client 2 time: 0.00 ms
+2024-12-05 18:01:27,596 - DEBUG - Sending actions time: 1.86 ms
+2024-12-05 18:01:27,602 - DEBUG - capture_screenshot client 0 time: 6.62 ms
+2024-12-05 18:01:27,609 - DEBUG - capture_screenshot client 1 time: 13.40 ms
+2024-12-05 18:01:27,617 - DEBUG - capture_screenshot client 2 time: 20.52 ms
+2024-12-05 18:01:27,617 - DEBUG - Capturing screenshots time: 21.54 ms
+2024-12-05 18:01:27,696 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3734 bytes]
+2024-12-05 18:01:27,696 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3612 bytes]
+2024-12-05 18:01:27,696 - DEBUG - Client 0 received state:
+2024-12-05 18:01:27,697 - DEBUG - Client 1 received state:
+2024-12-05 18:01:27,697 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:27,697 - DEBUG - Client 2 received state:
+2024-12-05 18:01:27,818 - DEBUG - Client 0 received state.
+2024-12-05 18:01:27,818 - DEBUG - Client 1 received state.
+2024-12-05 18:01:27,819 - DEBUG - Client 2 received state.
+2024-12-05 18:01:27,819 - DEBUG - Receiving states time: 201.71 ms
+2024-12-05 18:01:27,819 - DEBUG - Processing step data time: 0.51 ms
+2024-12-05 18:01:27,819 - DEBUG - _step total time: 225.62 ms
+2024-12-05 18:01:27,820 - DEBUG - Total step time: 226.14 ms
+2024-12-05 18:01:27,992 - INFO - Step 14/40 completed in 226.14ms
+2024-12-05 18:01:28,093 - DEBUG - > TEXT '{"action": "look_up"}' [21 bytes]
+2024-12-05 18:01:28,094 - DEBUG - Client 0 sent action: look_up
+2024-12-05 18:01:28,094 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:28,094 - DEBUG - > TEXT '{"action": "no_op"}' [19 bytes]
+2024-12-05 18:01:28,094 - DEBUG - Client 1 sent action: no_op
+2024-12-05 18:01:28,094 - DEBUG - send_action client 1 time: 0.00 ms
+2024-12-05 18:01:28,094 - DEBUG - > TEXT '{"action": "look_right"}' [24 bytes]
+2024-12-05 18:01:28,095 - DEBUG - Client 2 sent action: look_right
+2024-12-05 18:01:28,095 - DEBUG - send_action client 2 time: 0.96 ms
+2024-12-05 18:01:28,095 - DEBUG - Sending actions time: 1.98 ms
+2024-12-05 18:01:28,103 - DEBUG - capture_screenshot client 0 time: 7.68 ms
+2024-12-05 18:01:28,109 - DEBUG - capture_screenshot client 2 time: 13.76 ms
+2024-12-05 18:01:28,117 - DEBUG - capture_screenshot client 1 time: 21.40 ms
+2024-12-05 18:01:28,117 - DEBUG - Capturing screenshots time: 21.91 ms
+2024-12-05 18:01:28,195 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3733 bytes]
+2024-12-05 18:01:28,195 - DEBUG - Client 0 received state:
+2024-12-05 18:01:28,196 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3612 bytes]
+2024-12-05 18:01:28,196 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:28,196 - DEBUG - Client 1 received state:
+2024-12-05 18:01:28,197 - DEBUG - Client 2 received state:
+2024-12-05 18:01:28,318 - DEBUG - Client 0 received state.
+2024-12-05 18:01:28,318 - DEBUG - Client 1 received state.
+2024-12-05 18:01:28,319 - DEBUG - Client 2 received state.
+2024-12-05 18:01:28,319 - DEBUG - Receiving states time: 201.81 ms
+2024-12-05 18:01:28,319 - DEBUG - Processing step data time: 0.51 ms
+2024-12-05 18:01:28,319 - DEBUG - _step total time: 226.21 ms
+2024-12-05 18:01:28,320 - DEBUG - Total step time: 226.73 ms
+2024-12-05 18:01:28,492 - INFO - Step 15/40 completed in 226.73ms
+2024-12-05 18:01:28,592 - DEBUG - > TEXT '{"action": "move_left"}' [23 bytes]
+2024-12-05 18:01:28,593 - DEBUG - Client 0 sent action: move_left
+2024-12-05 18:01:28,593 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:28,593 - DEBUG - > TEXT '{"action": "move_left"}' [23 bytes]
+2024-12-05 18:01:28,593 - DEBUG - Client 1 sent action: move_left
+2024-12-05 18:01:28,593 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:28,594 - DEBUG - > TEXT '{"action": "next_item"}' [23 bytes]
+2024-12-05 18:01:28,594 - DEBUG - Client 2 sent action: next_item
+2024-12-05 18:01:28,594 - DEBUG - send_action client 2 time: 0.50 ms
+2024-12-05 18:01:28,594 - DEBUG - Sending actions time: 2.02 ms
+2024-12-05 18:01:28,603 - DEBUG - capture_screenshot client 0 time: 8.96 ms
+2024-12-05 18:01:28,611 - DEBUG - capture_screenshot client 1 time: 16.17 ms
+2024-12-05 18:01:28,617 - DEBUG - capture_screenshot client 2 time: 21.79 ms
+2024-12-05 18:01:28,617 - DEBUG - Capturing screenshots time: 22.82 ms
+2024-12-05 18:01:28,694 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3735 bytes]
+2024-12-05 18:01:28,695 - DEBUG - Client 0 received state:
+2024-12-05 18:01:28,695 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3613 bytes]
+2024-12-05 18:01:28,695 - DEBUG - Client 1 received state:
+2024-12-05 18:01:28,696 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:28,696 - DEBUG - Client 2 received state:
+2024-12-05 18:01:28,819 - DEBUG - Client 0 received state.
+2024-12-05 18:01:28,819 - DEBUG - Client 1 received state.
+2024-12-05 18:01:28,819 - DEBUG - Client 2 received state.
+2024-12-05 18:01:28,819 - DEBUG - Receiving states time: 201.96 ms
+2024-12-05 18:01:28,819 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:28,820 - DEBUG - _step total time: 227.31 ms
+2024-12-05 18:01:28,820 - DEBUG - Total step time: 227.82 ms
+2024-12-05 18:01:28,992 - INFO - Step 16/40 completed in 227.82ms
+2024-12-05 18:01:29,093 - DEBUG - > TEXT '{"action": "look_left"}' [23 bytes]
+2024-12-05 18:01:29,093 - DEBUG - Client 0 sent action: look_left
+2024-12-05 18:01:29,093 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:29,093 - DEBUG - > TEXT '{"action": "move_right"}' [24 bytes]
+2024-12-05 18:01:29,093 - DEBUG - Client 1 sent action: move_right
+2024-12-05 18:01:29,094 - DEBUG - send_action client 1 time: 0.67 ms
+2024-12-05 18:01:29,094 - DEBUG - > TEXT '{"action": "no_op"}' [19 bytes]
+2024-12-05 18:01:29,094 - DEBUG - Client 2 sent action: no_op
+2024-12-05 18:01:29,094 - DEBUG - send_action client 2 time: 0.52 ms
+2024-12-05 18:01:29,094 - DEBUG - Sending actions time: 1.69 ms
+2024-12-05 18:01:29,103 - DEBUG - capture_screenshot client 0 time: 8.67 ms
+2024-12-05 18:01:29,110 - DEBUG - capture_screenshot client 2 time: 14.91 ms
+2024-12-05 18:01:29,117 - DEBUG - capture_screenshot client 1 time: 21.79 ms
+2024-12-05 18:01:29,117 - DEBUG - Capturing screenshots time: 22.30 ms
+2024-12-05 18:01:29,194 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3735 bytes]
+2024-12-05 18:01:29,195 - DEBUG - Client 0 received state:
+2024-12-05 18:01:29,195 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:29,195 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3613 bytes]
+2024-12-05 18:01:29,195 - DEBUG - Client 2 received state:
+2024-12-05 18:01:29,196 - DEBUG - Client 1 received state:
+2024-12-05 18:01:29,318 - DEBUG - Client 0 received state.
+2024-12-05 18:01:29,318 - DEBUG - Client 1 received state.
+2024-12-05 18:01:29,318 - DEBUG - Client 2 received state.
+2024-12-05 18:01:29,319 - DEBUG - Receiving states time: 201.65 ms
+2024-12-05 18:01:29,319 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:29,319 - DEBUG - _step total time: 226.66 ms
+2024-12-05 18:01:29,320 - DEBUG - Total step time: 227.17 ms
+2024-12-05 18:01:29,492 - INFO - Step 17/40 completed in 227.17ms
+2024-12-05 18:01:29,593 - DEBUG - > TEXT '{"action": "look_right"}' [24 bytes]
+2024-12-05 18:01:29,594 - DEBUG - Client 0 sent action: look_right
+2024-12-05 18:01:29,594 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:29,594 - DEBUG - > TEXT '{"action": "look_up"}' [21 bytes]
+2024-12-05 18:01:29,594 - DEBUG - Client 1 sent action: look_up
+2024-12-05 18:01:29,594 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:29,594 - DEBUG - > TEXT '{"action": "look_up"}' [21 bytes]
+2024-12-05 18:01:29,595 - DEBUG - Client 2 sent action: look_up
+2024-12-05 18:01:29,595 - DEBUG - send_action client 2 time: 0.50 ms
+2024-12-05 18:01:29,595 - DEBUG - Sending actions time: 2.01 ms
+2024-12-05 18:01:29,603 - DEBUG - capture_screenshot client 1 time: 7.65 ms
+2024-12-05 18:01:29,609 - DEBUG - capture_screenshot client 2 time: 14.34 ms
+2024-12-05 18:01:29,617 - DEBUG - capture_screenshot client 0 time: 21.53 ms
+2024-12-05 18:01:29,617 - DEBUG - Capturing screenshots time: 22.04 ms
+2024-12-05 18:01:29,694 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3734 bytes]
+2024-12-05 18:01:29,695 - DEBUG - Client 0 received state:
+2024-12-05 18:01:29,695 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3614 bytes]
+2024-12-05 18:01:29,695 - DEBUG - Client 1 received state:
+2024-12-05 18:01:29,695 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3561 bytes]
+2024-12-05 18:01:29,696 - DEBUG - Client 2 received state:
+2024-12-05 18:01:29,819 - DEBUG - Client 0 received state.
+2024-12-05 18:01:29,819 - DEBUG - Client 1 received state.
+2024-12-05 18:01:29,819 - DEBUG - Client 2 received state.
+2024-12-05 18:01:29,819 - DEBUG - Receiving states time: 201.89 ms
+2024-12-05 18:01:29,819 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:29,820 - DEBUG - _step total time: 226.45 ms
+2024-12-05 18:01:29,820 - DEBUG - Total step time: 226.45 ms
+2024-12-05 18:01:29,991 - INFO - Step 18/40 completed in 226.96ms
+2024-12-05 18:01:30,092 - DEBUG - > TEXT '{"action": "look_up"}' [21 bytes]
+2024-12-05 18:01:30,092 - DEBUG - Client 0 sent action: look_up
+2024-12-05 18:01:30,092 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:30,092 - DEBUG - > TEXT '{"action": "jump"}' [18 bytes]
+2024-12-05 18:01:30,092 - DEBUG - Client 1 sent action: jump
+2024-12-05 18:01:30,092 - DEBUG - send_action client 1 time: 0.00 ms
+2024-12-05 18:01:30,093 - DEBUG - > TEXT '{"action": "move_left"}' [23 bytes]
+2024-12-05 18:01:30,093 - DEBUG - Client 2 sent action: move_left
+2024-12-05 18:01:30,093 - DEBUG - send_action client 2 time: 0.00 ms
+2024-12-05 18:01:30,094 - DEBUG - Sending actions time: 1.86 ms
+2024-12-05 18:01:30,103 - DEBUG - capture_screenshot client 2 time: 8.78 ms
+2024-12-05 18:01:30,110 - DEBUG - capture_screenshot client 1 time: 15.97 ms
+2024-12-05 18:01:30,116 - DEBUG - capture_screenshot client 0 time: 22.64 ms
+2024-12-05 18:01:30,117 - DEBUG - Capturing screenshots time: 23.16 ms
+2024-12-05 18:01:30,193 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3734 bytes]
+2024-12-05 18:01:30,194 - DEBUG - Client 0 received state:
+2024-12-05 18:01:30,194 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3627 bytes]
+2024-12-05 18:01:30,195 - DEBUG - Client 1 received state:
+2024-12-05 18:01:30,195 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3561 bytes]
+2024-12-05 18:01:30,195 - DEBUG - Client 2 received state:
+2024-12-05 18:01:30,318 - DEBUG - Client 0 received state.
+2024-12-05 18:01:30,318 - DEBUG - Client 1 received state.
+2024-12-05 18:01:30,318 - DEBUG - Client 2 received state.
+2024-12-05 18:01:30,319 - DEBUG - Receiving states time: 201.88 ms
+2024-12-05 18:01:30,319 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:30,319 - DEBUG - _step total time: 227.42 ms
+2024-12-05 18:01:30,319 - DEBUG - Total step time: 227.42 ms
+2024-12-05 18:01:30,491 - INFO - Step 19/40 completed in 227.93ms
+2024-12-05 18:01:30,592 - DEBUG - > TEXT '{"action": "move_forward"}' [26 bytes]
+2024-12-05 18:01:30,592 - DEBUG - Client 0 sent action: move_forward
+2024-12-05 18:01:30,592 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:30,592 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:30,593 - DEBUG - Client 1 sent action: jump_walk_forward
+2024-12-05 18:01:30,593 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:30,593 - DEBUG - > TEXT '{"action": "jump"}' [18 bytes]
+2024-12-05 18:01:30,593 - DEBUG - Client 2 sent action: jump
+2024-12-05 18:01:30,593 - DEBUG - send_action client 2 time: 0.51 ms
+2024-12-05 18:01:30,594 - DEBUG - Sending actions time: 2.02 ms
+2024-12-05 18:01:30,603 - DEBUG - capture_screenshot client 1 time: 9.34 ms
+2024-12-05 18:01:30,609 - DEBUG - capture_screenshot client 2 time: 14.95 ms
+2024-12-05 18:01:30,616 - DEBUG - capture_screenshot client 0 time: 22.14 ms
+2024-12-05 18:01:30,617 - DEBUG - Capturing screenshots time: 22.65 ms
+2024-12-05 18:01:30,694 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3734 bytes]
+2024-12-05 18:01:30,694 - DEBUG - Client 0 received state:
+2024-12-05 18:01:30,696 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3573 bytes]
+2024-12-05 18:01:30,696 - DEBUG - Client 2 received state:
+2024-12-05 18:01:30,704 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3614 bytes]
+2024-12-05 18:01:30,704 - DEBUG - Client 1 received state:
+2024-12-05 18:01:30,818 - DEBUG - Client 0 received state.
+2024-12-05 18:01:30,818 - DEBUG - Client 1 received state.
+2024-12-05 18:01:30,818 - DEBUG - Client 2 received state.
+2024-12-05 18:01:30,818 - DEBUG - Receiving states time: 201.79 ms
+2024-12-05 18:01:30,818 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:30,818 - DEBUG - _step total time: 226.47 ms
+2024-12-05 18:01:30,819 - DEBUG - Total step time: 226.98 ms
+2024-12-05 18:01:30,993 - INFO - Step 20/40 completed in 226.98ms
+2024-12-05 18:01:31,093 - DEBUG - > TEXT '{"action": "turn_left"}' [23 bytes]
+2024-12-05 18:01:31,093 - DEBUG - Client 0 sent action: turn_left
+2024-12-05 18:01:31,094 - DEBUG - send_action client 0 time: 0.51 ms
+2024-12-05 18:01:31,094 - DEBUG - > TEXT '{"action": "move_right"}' [24 bytes]
+2024-12-05 18:01:31,094 - DEBUG - Client 1 sent action: move_right
+2024-12-05 18:01:31,094 - DEBUG - send_action client 1 time: 0.51 ms
+2024-12-05 18:01:31,094 - DEBUG - > TEXT '{"action": "move_right"}' [24 bytes]
+2024-12-05 18:01:31,095 - DEBUG - Client 2 sent action: move_right
+2024-12-05 18:01:31,095 - DEBUG - send_action client 2 time: 0.51 ms
+2024-12-05 18:01:31,095 - DEBUG - Sending actions time: 1.52 ms
+2024-12-05 18:01:31,103 - DEBUG - capture_screenshot client 0 time: 7.64 ms
+2024-12-05 18:01:31,110 - DEBUG - capture_screenshot client 2 time: 14.31 ms
+2024-12-05 18:01:31,116 - DEBUG - capture_screenshot client 1 time: 20.91 ms
+2024-12-05 18:01:31,117 - DEBUG - Capturing screenshots time: 21.43 ms
+2024-12-05 18:01:31,195 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3736 bytes]
+2024-12-05 18:01:31,195 - DEBUG - Client 0 received state:
+2024-12-05 18:01:31,196 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3612 bytes]
+2024-12-05 18:01:31,196 - DEBUG - Client 1 received state:
+2024-12-05 18:01:31,196 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:31,197 - DEBUG - Client 2 received state:
+2024-12-05 18:01:31,318 - DEBUG - Client 0 received state.
+2024-12-05 18:01:31,318 - DEBUG - Client 1 received state.
+2024-12-05 18:01:31,319 - DEBUG - Client 2 received state.
+2024-12-05 18:01:31,319 - DEBUG - Receiving states time: 201.82 ms
+2024-12-05 18:01:31,319 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:31,319 - DEBUG - _step total time: 225.79 ms
+2024-12-05 18:01:31,320 - DEBUG - Total step time: 226.30 ms
+2024-12-05 18:01:31,494 - INFO - Step 21/40 completed in 226.30ms
+2024-12-05 18:01:31,594 - DEBUG - > TEXT '{"action": "look_up"}' [21 bytes]
+2024-12-05 18:01:31,594 - DEBUG - Client 0 sent action: look_up
+2024-12-05 18:01:31,595 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:31,595 - DEBUG - > TEXT '{"action": "look_up"}' [21 bytes]
+2024-12-05 18:01:31,595 - DEBUG - Client 1 sent action: look_up
+2024-12-05 18:01:31,595 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:31,595 - DEBUG - > TEXT '{"action": "move_left"}' [23 bytes]
+2024-12-05 18:01:31,596 - DEBUG - Client 2 sent action: move_left
+2024-12-05 18:01:31,596 - DEBUG - send_action client 2 time: 0.50 ms
+2024-12-05 18:01:31,596 - DEBUG - Sending actions time: 1.50 ms
+2024-12-05 18:01:31,603 - DEBUG - capture_screenshot client 0 time: 6.63 ms
+2024-12-05 18:01:31,610 - DEBUG - capture_screenshot client 1 time: 13.31 ms
+2024-12-05 18:01:31,616 - DEBUG - capture_screenshot client 2 time: 19.95 ms
+2024-12-05 18:01:31,617 - DEBUG - Capturing screenshots time: 20.46 ms
+2024-12-05 18:01:31,696 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3737 bytes]
+2024-12-05 18:01:31,696 - DEBUG - Client 0 received state:
+2024-12-05 18:01:31,697 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3561 bytes]
+2024-12-05 18:01:31,697 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3615 bytes]
+2024-12-05 18:01:31,698 - DEBUG - Client 2 received state:
+2024-12-05 18:01:31,698 - DEBUG - Client 1 received state:
+2024-12-05 18:01:31,818 - DEBUG - Client 0 received state.
+2024-12-05 18:01:31,818 - DEBUG - Client 1 received state.
+2024-12-05 18:01:31,818 - DEBUG - Client 2 received state.
+2024-12-05 18:01:31,819 - DEBUG - Receiving states time: 201.95 ms
+2024-12-05 18:01:31,819 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:31,819 - DEBUG - _step total time: 224.94 ms
+2024-12-05 18:01:31,819 - DEBUG - Total step time: 224.94 ms
+2024-12-05 18:01:31,991 - INFO - Step 22/40 completed in 225.45ms
+2024-12-05 18:01:32,024 - DEBUG - % sending keepalive ping
+2024-12-05 18:01:32,024 - DEBUG - > PING 6c c4 e1 ea [binary, 4 bytes]
+2024-12-05 18:01:32,025 - DEBUG - < PONG 6c c4 e1 ea [binary, 4 bytes]
+2024-12-05 18:01:32,025 - DEBUG - % received keepalive pong
+2024-12-05 18:01:32,026 - DEBUG - % sending keepalive ping
+2024-12-05 18:01:32,026 - DEBUG - % sending keepalive ping
+2024-12-05 18:01:32,026 - DEBUG - > PING fc 6d b7 a7 [binary, 4 bytes]
+2024-12-05 18:01:32,026 - DEBUG - > PING fc ca b7 d2 [binary, 4 bytes]
+2024-12-05 18:01:32,027 - DEBUG - < PONG fc 6d b7 a7 [binary, 4 bytes]
+2024-12-05 18:01:32,027 - DEBUG - < PONG fc ca b7 d2 [binary, 4 bytes]
+2024-12-05 18:01:32,027 - DEBUG - % received keepalive pong
+2024-12-05 18:01:32,027 - DEBUG - % received keepalive pong
+2024-12-05 18:01:32,092 - DEBUG - > TEXT '{"action": "look_left"}' [23 bytes]
+2024-12-05 18:01:32,092 - DEBUG - Client 0 sent action: look_left
+2024-12-05 18:01:32,092 - DEBUG - send_action client 0 time: 0.00 ms
+2024-12-05 18:01:32,092 - DEBUG - > TEXT '{"action": "look_down"}' [23 bytes]
+2024-12-05 18:01:32,093 - DEBUG - Client 1 sent action: look_down
+2024-12-05 18:01:32,093 - DEBUG - send_action client 1 time: 0.74 ms
+2024-12-05 18:01:32,093 - DEBUG - > TEXT '{"action": "look_down"}' [23 bytes]
+2024-12-05 18:01:32,093 - DEBUG - Client 2 sent action: look_down
+2024-12-05 18:01:32,093 - DEBUG - send_action client 2 time: 0.52 ms
+2024-12-05 18:01:32,094 - DEBUG - Sending actions time: 1.78 ms
+2024-12-05 18:01:32,103 - DEBUG - capture_screenshot client 1 time: 9.21 ms
+2024-12-05 18:01:32,110 - DEBUG - capture_screenshot client 0 time: 15.88 ms
+2024-12-05 18:01:32,117 - DEBUG - capture_screenshot client 2 time: 23.04 ms
+2024-12-05 18:01:32,117 - DEBUG - Capturing screenshots time: 23.04 ms
+2024-12-05 18:01:32,194 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3737 bytes]
+2024-12-05 18:01:32,195 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3559 bytes]
+2024-12-05 18:01:32,195 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3614 bytes]
+2024-12-05 18:01:32,195 - DEBUG - Client 0 received state:
+2024-12-05 18:01:32,195 - DEBUG - Client 2 received state:
+2024-12-05 18:01:32,196 - DEBUG - Client 1 received state:
+2024-12-05 18:01:32,318 - DEBUG - Client 0 received state.
+2024-12-05 18:01:32,318 - DEBUG - Client 1 received state.
+2024-12-05 18:01:32,318 - DEBUG - Client 2 received state.
+2024-12-05 18:01:32,319 - DEBUG - Receiving states time: 201.64 ms
+2024-12-05 18:01:32,319 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:32,319 - DEBUG - _step total time: 227.49 ms
+2024-12-05 18:01:32,320 - DEBUG - Total step time: 228.00 ms
+2024-12-05 18:01:32,493 - INFO - Step 23/40 completed in 228.00ms
+2024-12-05 18:01:32,593 - DEBUG - > TEXT '{"action": "attack"}' [20 bytes]
+2024-12-05 18:01:32,593 - DEBUG - Client 0 sent action: attack
+2024-12-05 18:01:32,594 - DEBUG - send_action client 0 time: 0.51 ms
+2024-12-05 18:01:32,594 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:32,594 - DEBUG - Client 1 sent action: previous_item
+2024-12-05 18:01:32,594 - DEBUG - send_action client 1 time: 0.51 ms
+2024-12-05 18:01:32,594 - DEBUG - > TEXT '{"action": "jump"}' [18 bytes]
+2024-12-05 18:01:32,595 - DEBUG - Client 2 sent action: jump
+2024-12-05 18:01:32,595 - DEBUG - send_action client 2 time: 0.51 ms
+2024-12-05 18:01:32,595 - DEBUG - Sending actions time: 1.53 ms
+2024-12-05 18:01:32,603 - DEBUG - capture_screenshot client 1 time: 8.11 ms
+2024-12-05 18:01:32,609 - DEBUG - capture_screenshot client 2 time: 14.23 ms
+2024-12-05 18:01:32,617 - DEBUG - capture_screenshot client 0 time: 21.39 ms
+2024-12-05 18:01:32,617 - DEBUG - Capturing screenshots time: 21.90 ms
+2024-12-05 18:01:32,698 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3614 bytes]
+2024-12-05 18:01:32,701 - DEBUG - Client 1 received state:
+2024-12-05 18:01:32,705 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3737 bytes]
+2024-12-05 18:01:32,705 - DEBUG - Client 0 received state:
+2024-12-05 18:01:32,708 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3572 bytes]
+2024-12-05 18:01:32,708 - DEBUG - Client 2 received state:
+2024-12-05 18:01:32,818 - DEBUG - Client 0 received state.
+2024-12-05 18:01:32,818 - DEBUG - Client 1 received state.
+2024-12-05 18:01:32,819 - DEBUG - Client 2 received state.
+2024-12-05 18:01:32,819 - DEBUG - Receiving states time: 201.61 ms
+2024-12-05 18:01:32,819 - DEBUG - Processing step data time: 0.50 ms
+2024-12-05 18:01:32,819 - DEBUG - _step total time: 226.05 ms
+2024-12-05 18:01:32,819 - DEBUG - Total step time: 226.05 ms
+2024-12-05 18:01:32,996 - INFO - Step 24/40 completed in 226.64ms
+2024-12-05 18:01:33,097 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:33,098 - DEBUG - Client 0 sent action: jump_walk_forward
+2024-12-05 18:01:33,098 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:33,098 - DEBUG - > TEXT '{"action": "turn_left"}' [23 bytes]
+2024-12-05 18:01:33,098 - DEBUG - Client 1 sent action: turn_left
+2024-12-05 18:01:33,098 - DEBUG - send_action client 1 time: 0.00 ms
+2024-12-05 18:01:33,099 - DEBUG - > TEXT '{"action": "move_left"}' [23 bytes]
+2024-12-05 18:01:33,099 - DEBUG - Client 2 sent action: move_left
+2024-12-05 18:01:33,099 - DEBUG - send_action client 2 time: 0.00 ms
+2024-12-05 18:01:33,099 - DEBUG - Sending actions time: 1.91 ms
+2024-12-05 18:01:33,110 - DEBUG - capture_screenshot client 1 time: 11.22 ms
+2024-12-05 18:01:33,116 - DEBUG - capture_screenshot client 0 time: 17.43 ms
+2024-12-05 18:01:33,124 - DEBUG - capture_screenshot client 2 time: 24.07 ms
+2024-12-05 18:01:33,124 - DEBUG - Capturing screenshots time: 25.10 ms
+2024-12-05 18:01:33,199 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3614 bytes]
+2024-12-05 18:01:33,200 - DEBUG - Client 1 received state:
+2024-12-05 18:01:33,200 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3559 bytes]
+2024-12-05 18:01:33,201 - DEBUG - Client 2 received state:
+2024-12-05 18:01:33,210 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3735 bytes]
+2024-12-05 18:01:33,210 - DEBUG - Client 0 received state:
+2024-12-05 18:01:33,326 - DEBUG - Client 0 received state.
+2024-12-05 18:01:33,326 - DEBUG - Client 1 received state.
+2024-12-05 18:01:33,326 - DEBUG - Client 2 received state.
+2024-12-05 18:01:33,326 - DEBUG - Receiving states time: 201.88 ms
+2024-12-05 18:01:33,326 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:33,327 - DEBUG - _step total time: 229.41 ms
+2024-12-05 18:01:33,327 - DEBUG - Total step time: 229.41 ms
+2024-12-05 18:01:33,501 - INFO - Step 25/40 completed in 229.92ms
+2024-12-05 18:01:33,602 - DEBUG - > TEXT '{"action": "move_left"}' [23 bytes]
+2024-12-05 18:01:33,602 - DEBUG - Client 0 sent action: move_left
+2024-12-05 18:01:33,602 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:33,602 - DEBUG - > TEXT '{"action": "turn_right"}' [24 bytes]
+2024-12-05 18:01:33,603 - DEBUG - Client 1 sent action: turn_right
+2024-12-05 18:01:33,603 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:33,603 - DEBUG - > TEXT '{"action": "turn_right"}' [24 bytes]
+2024-12-05 18:01:33,603 - DEBUG - Client 2 sent action: turn_right
+2024-12-05 18:01:33,603 - DEBUG - send_action client 2 time: 0.50 ms
+2024-12-05 18:01:33,603 - DEBUG - Sending actions time: 1.50 ms
+2024-12-05 18:01:33,610 - DEBUG - capture_screenshot client 1 time: 6.17 ms
+2024-12-05 18:01:33,616 - DEBUG - capture_screenshot client 2 time: 12.82 ms
+2024-12-05 18:01:33,624 - DEBUG - capture_screenshot client 0 time: 19.96 ms
+2024-12-05 18:01:33,624 - DEBUG - Capturing screenshots time: 20.47 ms
+2024-12-05 18:01:33,703 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3736 bytes]
+2024-12-05 18:01:33,704 - DEBUG - Client 0 received state:
+2024-12-05 18:01:33,704 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:33,704 - DEBUG - Client 2 received state:
+2024-12-05 18:01:33,705 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3614 bytes]
+2024-12-05 18:01:33,705 - DEBUG - Client 1 received state:
+2024-12-05 18:01:33,825 - DEBUG - Client 0 received state.
+2024-12-05 18:01:33,825 - DEBUG - Client 1 received state.
+2024-12-05 18:01:33,825 - DEBUG - Client 2 received state.
+2024-12-05 18:01:33,826 - DEBUG - Receiving states time: 201.87 ms
+2024-12-05 18:01:33,826 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:33,826 - DEBUG - _step total time: 224.86 ms
+2024-12-05 18:01:33,826 - DEBUG - Total step time: 224.86 ms
+2024-12-05 18:01:34,001 - INFO - Step 26/40 completed in 225.38ms
+2024-12-05 18:01:34,101 - DEBUG - > TEXT '{"action": "move_forward"}' [26 bytes]
+2024-12-05 18:01:34,101 - DEBUG - Client 0 sent action: move_forward
+2024-12-05 18:01:34,102 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:34,102 - DEBUG - > TEXT '{"action": "sneak"}' [19 bytes]
+2024-12-05 18:01:34,102 - DEBUG - Client 1 sent action: sneak
+2024-12-05 18:01:34,102 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:34,103 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:34,103 - DEBUG - Client 2 sent action: previous_item
+2024-12-05 18:01:34,103 - DEBUG - send_action client 2 time: 0.50 ms
+2024-12-05 18:01:34,103 - DEBUG - Sending actions time: 2.00 ms
+2024-12-05 18:01:34,110 - DEBUG - capture_screenshot client 1 time: 6.68 ms
+2024-12-05 18:01:34,117 - DEBUG - capture_screenshot client 2 time: 12.83 ms
+2024-12-05 18:01:34,124 - DEBUG - capture_screenshot client 0 time: 20.54 ms
+2024-12-05 18:01:34,124 - DEBUG - Capturing screenshots time: 20.54 ms
+2024-12-05 18:01:34,203 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3736 bytes]
+2024-12-05 18:01:34,204 - DEBUG - Client 0 received state:
+2024-12-05 18:01:34,204 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3614 bytes]
+2024-12-05 18:01:34,204 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:34,205 - DEBUG - Client 1 received state:
+2024-12-05 18:01:34,205 - DEBUG - Client 2 received state:
+2024-12-05 18:01:34,326 - DEBUG - Client 0 received state.
+2024-12-05 18:01:34,326 - DEBUG - Client 1 received state.
+2024-12-05 18:01:34,326 - DEBUG - Client 2 received state.
+2024-12-05 18:01:34,326 - DEBUG - Receiving states time: 201.75 ms
+2024-12-05 18:01:34,326 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:34,327 - DEBUG - _step total time: 225.33 ms
+2024-12-05 18:01:34,327 - DEBUG - Total step time: 225.84 ms
+2024-12-05 18:01:34,499 - INFO - Step 27/40 completed in 225.84ms
+2024-12-05 18:01:34,599 - DEBUG - > TEXT '{"action": "turn_right"}' [24 bytes]
+2024-12-05 18:01:34,599 - DEBUG - Client 0 sent action: turn_right
+2024-12-05 18:01:34,600 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:34,600 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:34,600 - DEBUG - Client 1 sent action: jump_walk_forward
+2024-12-05 18:01:34,600 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:34,601 - DEBUG - > TEXT '{"action": "use"}' [17 bytes]
+2024-12-05 18:01:34,601 - DEBUG - Client 2 sent action: use
+2024-12-05 18:01:34,601 - DEBUG - send_action client 2 time: 0.51 ms
+2024-12-05 18:01:34,601 - DEBUG - Sending actions time: 1.51 ms
+2024-12-05 18:01:34,610 - DEBUG - capture_screenshot client 0 time: 8.18 ms
+2024-12-05 18:01:34,617 - DEBUG - capture_screenshot client 2 time: 15.35 ms
+2024-12-05 18:01:34,624 - DEBUG - capture_screenshot client 1 time: 22.53 ms
+2024-12-05 18:01:34,624 - DEBUG - Capturing screenshots time: 23.04 ms
+2024-12-05 18:01:34,701 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3736 bytes]
+2024-12-05 18:01:34,702 - DEBUG - Client 0 received state:
+2024-12-05 18:01:34,703 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:34,703 - DEBUG - Client 2 received state:
+2024-12-05 18:01:34,713 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3615 bytes]
+2024-12-05 18:01:34,713 - DEBUG - Client 1 received state:
+2024-12-05 18:01:34,826 - DEBUG - Client 0 received state.
+2024-12-05 18:01:34,826 - DEBUG - Client 1 received state.
+2024-12-05 18:01:34,826 - DEBUG - Client 2 received state.
+2024-12-05 18:01:34,826 - DEBUG - Receiving states time: 201.65 ms
+2024-12-05 18:01:34,826 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:34,827 - DEBUG - _step total time: 226.72 ms
+2024-12-05 18:01:34,827 - DEBUG - Total step time: 227.23 ms
+2024-12-05 18:01:34,997 - INFO - Step 28/40 completed in 227.23ms
+2024-12-05 18:01:35,098 - DEBUG - > TEXT '{"action": "no_op"}' [19 bytes]
+2024-12-05 18:01:35,098 - DEBUG - Client 0 sent action: no_op
+2024-12-05 18:01:35,098 - DEBUG - send_action client 0 time: 0.00 ms
+2024-12-05 18:01:35,099 - DEBUG - > TEXT '{"action": "look_left"}' [23 bytes]
+2024-12-05 18:01:35,099 - DEBUG - Client 1 sent action: look_left
+2024-12-05 18:01:35,099 - DEBUG - send_action client 1 time: 1.00 ms
+2024-12-05 18:01:35,099 - DEBUG - > TEXT '{"action": "use"}' [17 bytes]
+2024-12-05 18:01:35,099 - DEBUG - Client 2 sent action: use
+2024-12-05 18:01:35,100 - DEBUG - send_action client 2 time: 0.51 ms
+2024-12-05 18:01:35,100 - DEBUG - Sending actions time: 2.03 ms
+2024-12-05 18:01:35,110 - DEBUG - capture_screenshot client 0 time: 10.25 ms
+2024-12-05 18:01:35,117 - DEBUG - capture_screenshot client 2 time: 16.32 ms
+2024-12-05 18:01:35,124 - DEBUG - capture_screenshot client 1 time: 23.42 ms
+2024-12-05 18:01:35,124 - DEBUG - Capturing screenshots time: 24.44 ms
+2024-12-05 18:01:35,200 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3616 bytes]
+2024-12-05 18:01:35,200 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3736 bytes]
+2024-12-05 18:01:35,201 - DEBUG - Client 1 received state:
+2024-12-05 18:01:35,201 - DEBUG - Client 0 received state:
+2024-12-05 18:01:35,201 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:35,202 - DEBUG - Client 2 received state:
+2024-12-05 18:01:35,325 - DEBUG - Client 0 received state.
+2024-12-05 18:01:35,325 - DEBUG - Client 1 received state.
+2024-12-05 18:01:35,325 - DEBUG - Client 2 received state.
+2024-12-05 18:01:35,326 - DEBUG - Receiving states time: 201.75 ms
+2024-12-05 18:01:35,326 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:35,326 - DEBUG - _step total time: 228.74 ms
+2024-12-05 18:01:35,326 - DEBUG - Total step time: 228.74 ms
+2024-12-05 18:01:35,498 - INFO - Step 29/40 completed in 229.25ms
+2024-12-05 18:01:35,599 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:35,599 - DEBUG - Client 0 sent action: jump_walk_forward
+2024-12-05 18:01:35,599 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:35,599 - DEBUG - > TEXT '{"action": "move_forward"}' [26 bytes]
+2024-12-05 18:01:35,600 - DEBUG - Client 1 sent action: move_forward
+2024-12-05 18:01:35,600 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:35,600 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:35,600 - DEBUG - Client 2 sent action: previous_item
+2024-12-05 18:01:35,600 - DEBUG - send_action client 2 time: 0.51 ms
+2024-12-05 18:01:35,600 - DEBUG - Sending actions time: 1.52 ms
+2024-12-05 18:01:35,611 - DEBUG - capture_screenshot client 1 time: 9.72 ms
+2024-12-05 18:01:35,617 - DEBUG - capture_screenshot client 0 time: 15.87 ms
+2024-12-05 18:01:35,623 - DEBUG - capture_screenshot client 2 time: 22.54 ms
+2024-12-05 18:01:35,624 - DEBUG - Capturing screenshots time: 23.06 ms
+2024-12-05 18:01:35,701 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3616 bytes]
+2024-12-05 18:01:35,702 - DEBUG - Client 1 received state:
+2024-12-05 18:01:35,702 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:35,702 - DEBUG - Client 2 received state:
+2024-12-05 18:01:35,711 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3737 bytes]
+2024-12-05 18:01:35,711 - DEBUG - Client 0 received state:
+2024-12-05 18:01:35,825 - DEBUG - Client 0 received state.
+2024-12-05 18:01:35,825 - DEBUG - Client 1 received state.
+2024-12-05 18:01:35,825 - DEBUG - Client 2 received state.
+2024-12-05 18:01:35,826 - DEBUG - Receiving states time: 201.70 ms
+2024-12-05 18:01:35,826 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:35,826 - DEBUG - _step total time: 227.30 ms
+2024-12-05 18:01:35,826 - DEBUG - Total step time: 227.30 ms
+2024-12-05 18:01:35,998 - INFO - Step 30/40 completed in 227.81ms
+2024-12-05 18:01:36,098 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:36,098 - DEBUG - Client 0 sent action: previous_item
+2024-12-05 18:01:36,099 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:36,099 - DEBUG - > TEXT '{"action": "look_down"}' [23 bytes]
+2024-12-05 18:01:36,099 - DEBUG - Client 1 sent action: look_down
+2024-12-05 18:01:36,099 - DEBUG - send_action client 1 time: 0.54 ms
+2024-12-05 18:01:36,099 - DEBUG - > TEXT '{"action": "no_op"}' [19 bytes]
+2024-12-05 18:01:36,100 - DEBUG - Client 2 sent action: no_op
+2024-12-05 18:01:36,100 - DEBUG - send_action client 2 time: 0.52 ms
+2024-12-05 18:01:36,100 - DEBUG - Sending actions time: 1.56 ms
+2024-12-05 18:01:36,110 - DEBUG - capture_screenshot client 1 time: 9.21 ms
+2024-12-05 18:01:36,117 - DEBUG - capture_screenshot client 0 time: 16.47 ms
+2024-12-05 18:01:36,124 - DEBUG - capture_screenshot client 2 time: 23.09 ms
+2024-12-05 18:01:36,124 - DEBUG - Capturing screenshots time: 24.12 ms
+2024-12-05 18:01:36,200 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3737 bytes]
+2024-12-05 18:01:36,200 - DEBUG - Client 0 received state:
+2024-12-05 18:01:36,200 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3615 bytes]
+2024-12-05 18:01:36,201 - DEBUG - Client 1 received state:
+2024-12-05 18:01:36,201 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:36,201 - DEBUG - Client 2 received state:
+2024-12-05 18:01:36,326 - DEBUG - Client 0 received state.
+2024-12-05 18:01:36,326 - DEBUG - Client 1 received state.
+2024-12-05 18:01:36,326 - DEBUG - Client 2 received state.
+2024-12-05 18:01:36,326 - DEBUG - Receiving states time: 202.02 ms
+2024-12-05 18:01:36,327 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:36,327 - DEBUG - _step total time: 228.22 ms
+2024-12-05 18:01:36,327 - DEBUG - Total step time: 228.73 ms
+2024-12-05 18:01:36,496 - INFO - Step 31/40 completed in 228.73ms
+2024-12-05 18:01:36,597 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:36,597 - DEBUG - Client 0 sent action: jump_walk_forward
+2024-12-05 18:01:36,597 - DEBUG - send_action client 0 time: 0.00 ms
+2024-12-05 18:01:36,598 - DEBUG - > TEXT '{"action": "sneak"}' [19 bytes]
+2024-12-05 18:01:36,598 - DEBUG - Client 1 sent action: sneak
+2024-12-05 18:01:36,598 - DEBUG - send_action client 1 time: 0.00 ms
+2024-12-05 18:01:36,598 - DEBUG - > TEXT '{"action": "move_right"}' [24 bytes]
+2024-12-05 18:01:36,598 - DEBUG - Client 2 sent action: move_right
+2024-12-05 18:01:36,598 - DEBUG - send_action client 2 time: 0.00 ms
+2024-12-05 18:01:36,599 - DEBUG - Sending actions time: 2.00 ms
+2024-12-05 18:01:36,611 - DEBUG - capture_screenshot client 1 time: 11.38 ms
+2024-12-05 18:01:36,617 - DEBUG - capture_screenshot client 0 time: 18.00 ms
+2024-12-05 18:01:36,623 - DEBUG - capture_screenshot client 2 time: 24.14 ms
+2024-12-05 18:01:36,624 - DEBUG - Capturing screenshots time: 25.17 ms
+2024-12-05 18:01:36,699 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3615 bytes]
+2024-12-05 18:01:36,699 - DEBUG - Client 1 received state:
+2024-12-05 18:01:36,700 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:36,700 - DEBUG - Client 2 received state:
+2024-12-05 18:01:36,710 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3736 bytes]
+2024-12-05 18:01:36,710 - DEBUG - Client 0 received state:
+2024-12-05 18:01:36,826 - DEBUG - Client 0 received state.
+2024-12-05 18:01:36,826 - DEBUG - Client 1 received state.
+2024-12-05 18:01:36,826 - DEBUG - Client 2 received state.
+2024-12-05 18:01:36,826 - DEBUG - Receiving states time: 201.85 ms
+2024-12-05 18:01:36,826 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:36,827 - DEBUG - _step total time: 230.05 ms
+2024-12-05 18:01:36,827 - DEBUG - Total step time: 230.05 ms
+2024-12-05 18:01:36,997 - INFO - Step 32/40 completed in 230.55ms
+2024-12-05 18:01:37,097 - DEBUG - > TEXT '{"action": "jump_walk_forward"}' [31 bytes]
+2024-12-05 18:01:37,098 - DEBUG - Client 0 sent action: jump_walk_forward
+2024-12-05 18:01:37,098 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:37,098 - DEBUG - > TEXT '{"action": "next_item"}' [23 bytes]
+2024-12-05 18:01:37,098 - DEBUG - Client 1 sent action: next_item
+2024-12-05 18:01:37,098 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:37,099 - DEBUG - > TEXT '{"action": "sneak"}' [19 bytes]
+2024-12-05 18:01:37,099 - DEBUG - Client 2 sent action: sneak
+2024-12-05 18:01:37,099 - DEBUG - send_action client 2 time: 0.00 ms
+2024-12-05 18:01:37,099 - DEBUG - Sending actions time: 2.04 ms
+2024-12-05 18:01:37,110 - DEBUG - capture_screenshot client 0 time: 10.78 ms
+2024-12-05 18:01:37,117 - DEBUG - capture_screenshot client 1 time: 16.96 ms
+2024-12-05 18:01:37,124 - DEBUG - capture_screenshot client 2 time: 24.11 ms
+2024-12-05 18:01:37,125 - DEBUG - Capturing screenshots time: 25.12 ms
+2024-12-05 18:01:37,200 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3615 bytes]
+2024-12-05 18:01:37,200 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:37,200 - DEBUG - Client 1 received state:
+2024-12-05 18:01:37,201 - DEBUG - Client 2 received state:
+2024-12-05 18:01:37,209 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3737 bytes]
+2024-12-05 18:01:37,210 - DEBUG - Client 0 received state:
+2024-12-05 18:01:37,326 - DEBUG - Client 0 received state.
+2024-12-05 18:01:37,326 - DEBUG - Client 1 received state.
+2024-12-05 18:01:37,326 - DEBUG - Client 2 received state.
+2024-12-05 18:01:37,326 - DEBUG - Receiving states time: 201.64 ms
+2024-12-05 18:01:37,326 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:37,327 - DEBUG - _step total time: 229.32 ms
+2024-12-05 18:01:37,327 - DEBUG - Total step time: 229.32 ms
+2024-12-05 18:01:37,497 - INFO - Step 33/40 completed in 229.83ms
+2024-12-05 18:01:37,598 - DEBUG - > TEXT '{"action": "move_backward"}' [27 bytes]
+2024-12-05 18:01:37,598 - DEBUG - Client 0 sent action: move_backward
+2024-12-05 18:01:37,598 - DEBUG - send_action client 0 time: 0.00 ms
+2024-12-05 18:01:37,599 - DEBUG - > TEXT '{"action": "move_left"}' [23 bytes]
+2024-12-05 18:01:37,599 - DEBUG - Client 1 sent action: move_left
+2024-12-05 18:01:37,599 - DEBUG - send_action client 1 time: 0.00 ms
+2024-12-05 18:01:37,599 - DEBUG - > TEXT '{"action": "attack"}' [20 bytes]
+2024-12-05 18:01:37,599 - DEBUG - Client 2 sent action: attack
+2024-12-05 18:01:37,600 - DEBUG - send_action client 2 time: 0.00 ms
+2024-12-05 18:01:37,600 - DEBUG - Sending actions time: 1.85 ms
+2024-12-05 18:01:37,610 - DEBUG - capture_screenshot client 1 time: 9.90 ms
+2024-12-05 18:01:37,617 - DEBUG - capture_screenshot client 0 time: 16.58 ms
+2024-12-05 18:01:37,623 - DEBUG - capture_screenshot client 2 time: 23.35 ms
+2024-12-05 18:01:37,624 - DEBUG - Capturing screenshots time: 24.38 ms
+2024-12-05 18:01:37,700 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3737 bytes]
+2024-12-05 18:01:37,700 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3615 bytes]
+2024-12-05 18:01:37,700 - DEBUG - Client 0 received state:
+2024-12-05 18:01:37,701 - DEBUG - Client 1 received state:
+2024-12-05 18:01:37,701 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:37,702 - DEBUG - Client 2 received state:
+2024-12-05 18:01:37,825 - DEBUG - Client 0 received state.
+2024-12-05 18:01:37,825 - DEBUG - Client 1 received state.
+2024-12-05 18:01:37,826 - DEBUG - Client 2 received state.
+2024-12-05 18:01:37,826 - DEBUG - Receiving states time: 201.70 ms
+2024-12-05 18:01:37,826 - DEBUG - Processing step data time: 0.52 ms
+2024-12-05 18:01:37,826 - DEBUG - _step total time: 228.45 ms
+2024-12-05 18:01:37,827 - DEBUG - Total step time: 228.96 ms
+2024-12-05 18:01:37,999 - INFO - Step 34/40 completed in 228.96ms
+2024-12-05 18:01:38,099 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:38,099 - DEBUG - Client 0 sent action: previous_item
+2024-12-05 18:01:38,100 - DEBUG - send_action client 0 time: 0.57 ms
+2024-12-05 18:01:38,100 - DEBUG - > TEXT '{"action": "look_up"}' [21 bytes]
+2024-12-05 18:01:38,100 - DEBUG - Client 1 sent action: look_up
+2024-12-05 18:01:38,100 - DEBUG - send_action client 1 time: 0.52 ms
+2024-12-05 18:01:38,100 - DEBUG - > TEXT '{"action": "look_left"}' [23 bytes]
+2024-12-05 18:01:38,101 - DEBUG - Client 2 sent action: look_left
+2024-12-05 18:01:38,101 - DEBUG - send_action client 2 time: 0.52 ms
+2024-12-05 18:01:38,101 - DEBUG - Sending actions time: 1.60 ms
+2024-12-05 18:01:38,110 - DEBUG - capture_screenshot client 0 time: 8.65 ms
+2024-12-05 18:01:38,117 - DEBUG - capture_screenshot client 1 time: 15.25 ms
+2024-12-05 18:01:38,124 - DEBUG - capture_screenshot client 2 time: 22.38 ms
+2024-12-05 18:01:38,124 - DEBUG - Capturing screenshots time: 22.89 ms
+2024-12-05 18:01:38,201 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3736 bytes]
+2024-12-05 18:01:38,201 - DEBUG - Client 0 received state:
+2024-12-05 18:01:38,202 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3615 bytes]
+2024-12-05 18:01:38,202 - DEBUG - Client 1 received state:
+2024-12-05 18:01:38,202 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:38,202 - DEBUG - Client 2 received state:
+2024-12-05 18:01:38,326 - DEBUG - Client 0 received state.
+2024-12-05 18:01:38,326 - DEBUG - Client 1 received state.
+2024-12-05 18:01:38,326 - DEBUG - Client 2 received state.
+2024-12-05 18:01:38,326 - DEBUG - Receiving states time: 202.30 ms
+2024-12-05 18:01:38,326 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:38,327 - DEBUG - _step total time: 227.82 ms
+2024-12-05 18:01:38,327 - DEBUG - Total step time: 227.82 ms
+2024-12-05 18:01:38,497 - INFO - Step 35/40 completed in 227.82ms
+2024-12-05 18:01:38,598 - DEBUG - > TEXT '{"action": "next_item"}' [23 bytes]
+2024-12-05 18:01:38,598 - DEBUG - Client 0 sent action: next_item
+2024-12-05 18:01:38,598 - DEBUG - send_action client 0 time: 0.00 ms
+2024-12-05 18:01:38,599 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:38,599 - DEBUG - Client 1 sent action: previous_item
+2024-12-05 18:01:38,599 - DEBUG - send_action client 1 time: 0.00 ms
+2024-12-05 18:01:38,599 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:38,599 - DEBUG - Client 2 sent action: previous_item
+2024-12-05 18:01:38,599 - DEBUG - send_action client 2 time: 0.00 ms
+2024-12-05 18:01:38,600 - DEBUG - Sending actions time: 1.81 ms
+2024-12-05 18:01:38,611 - DEBUG - capture_screenshot client 2 time: 10.70 ms
+2024-12-05 18:01:38,617 - DEBUG - capture_screenshot client 0 time: 17.42 ms
+2024-12-05 18:01:38,624 - DEBUG - capture_screenshot client 1 time: 23.52 ms
+2024-12-05 18:01:38,624 - DEBUG - Capturing screenshots time: 24.54 ms
+2024-12-05 18:01:38,700 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3615 bytes]
+2024-12-05 18:01:38,700 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3736 bytes]
+2024-12-05 18:01:38,700 - DEBUG - Client 1 received state:
+2024-12-05 18:01:38,701 - DEBUG - Client 0 received state:
+2024-12-05 18:01:38,701 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:38,701 - DEBUG - Client 2 received state:
+2024-12-05 18:01:38,825 - DEBUG - Client 0 received state.
+2024-12-05 18:01:38,825 - DEBUG - Client 1 received state.
+2024-12-05 18:01:38,826 - DEBUG - Client 2 received state.
+2024-12-05 18:01:38,826 - DEBUG - Receiving states time: 201.52 ms
+2024-12-05 18:01:38,826 - DEBUG - Processing step data time: 0.51 ms
+2024-12-05 18:01:38,826 - DEBUG - _step total time: 228.38 ms
+2024-12-05 18:01:38,827 - DEBUG - Total step time: 228.89 ms
+2024-12-05 18:01:38,995 - INFO - Step 36/40 completed in 228.89ms
+2024-12-05 18:01:39,096 - DEBUG - > TEXT '{"action": "move_backward"}' [27 bytes]
+2024-12-05 18:01:39,097 - DEBUG - Client 0 sent action: move_backward
+2024-12-05 18:01:39,097 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:39,097 - DEBUG - > TEXT '{"action": "turn_right"}' [24 bytes]
+2024-12-05 18:01:39,097 - DEBUG - Client 1 sent action: turn_right
+2024-12-05 18:01:39,097 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:39,097 - DEBUG - > TEXT '{"action": "look_right"}' [24 bytes]
+2024-12-05 18:01:39,098 - DEBUG - Client 2 sent action: look_right
+2024-12-05 18:01:39,098 - DEBUG - send_action client 2 time: 0.50 ms
+2024-12-05 18:01:39,098 - DEBUG - Sending actions time: 2.02 ms
+2024-12-05 18:01:39,103 - DEBUG - capture_screenshot client 0 time: 4.60 ms
+2024-12-05 18:01:39,110 - DEBUG - capture_screenshot client 2 time: 12.29 ms
+2024-12-05 18:01:39,117 - DEBUG - capture_screenshot client 1 time: 18.45 ms
+2024-12-05 18:01:39,117 - DEBUG - Capturing screenshots time: 18.97 ms
+2024-12-05 18:01:39,198 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3736 bytes]
+2024-12-05 18:01:39,198 - DEBUG - Client 0 received state:
+2024-12-05 18:01:39,199 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3615 bytes]
+2024-12-05 18:01:39,199 - DEBUG - Client 1 received state:
+2024-12-05 18:01:39,199 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:39,200 - DEBUG - Client 2 received state:
+2024-12-05 18:01:39,319 - DEBUG - Client 0 received state.
+2024-12-05 18:01:39,319 - DEBUG - Client 1 received state.
+2024-12-05 18:01:39,319 - DEBUG - Client 2 received state.
+2024-12-05 18:01:39,319 - DEBUG - Receiving states time: 201.77 ms
+2024-12-05 18:01:39,319 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:39,320 - DEBUG - _step total time: 223.78 ms
+2024-12-05 18:01:39,320 - DEBUG - Total step time: 224.29 ms
+2024-12-05 18:01:39,491 - INFO - Step 37/40 completed in 224.29ms
+2024-12-05 18:01:39,591 - DEBUG - > TEXT '{"action": "move_right"}' [24 bytes]
+2024-12-05 18:01:39,591 - DEBUG - Client 0 sent action: move_right
+2024-12-05 18:01:39,592 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:39,592 - DEBUG - > TEXT '{"action": "jump"}' [18 bytes]
+2024-12-05 18:01:39,592 - DEBUG - Client 1 sent action: jump
+2024-12-05 18:01:39,592 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:39,592 - DEBUG - > TEXT '{"action": "sneak"}' [19 bytes]
+2024-12-05 18:01:39,593 - DEBUG - Client 2 sent action: sneak
+2024-12-05 18:01:39,593 - DEBUG - send_action client 2 time: 0.50 ms
+2024-12-05 18:01:39,593 - DEBUG - Sending actions time: 1.50 ms
+2024-12-05 18:01:39,604 - DEBUG - capture_screenshot client 1 time: 9.86 ms
+2024-12-05 18:01:39,610 - DEBUG - capture_screenshot client 0 time: 17.06 ms
+2024-12-05 18:01:39,617 - DEBUG - capture_screenshot client 2 time: 23.23 ms
+2024-12-05 18:01:39,617 - DEBUG - Capturing screenshots time: 24.37 ms
+2024-12-05 18:01:39,693 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3736 bytes]
+2024-12-05 18:01:39,693 - DEBUG - Client 0 received state:
+2024-12-05 18:01:39,694 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3628 bytes]
+2024-12-05 18:01:39,694 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:39,694 - DEBUG - Client 1 received state:
+2024-12-05 18:01:39,694 - DEBUG - Client 2 received state:
+2024-12-05 18:01:39,818 - DEBUG - Client 0 received state.
+2024-12-05 18:01:39,818 - DEBUG - Client 1 received state.
+2024-12-05 18:01:39,818 - DEBUG - Client 2 received state.
+2024-12-05 18:01:39,819 - DEBUG - Receiving states time: 201.89 ms
+2024-12-05 18:01:39,819 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:39,820 - DEBUG - _step total time: 228.28 ms
+2024-12-05 18:01:39,820 - DEBUG - Total step time: 228.28 ms
+2024-12-05 18:01:39,991 - INFO - Step 38/40 completed in 228.80ms
+2024-12-05 18:01:40,091 - DEBUG - > TEXT '{"action": "look_right"}' [24 bytes]
+2024-12-05 18:01:40,091 - DEBUG - Client 0 sent action: look_right
+2024-12-05 18:01:40,092 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:40,092 - DEBUG - > TEXT '{"action": "move_right"}' [24 bytes]
+2024-12-05 18:01:40,092 - DEBUG - Client 1 sent action: move_right
+2024-12-05 18:01:40,092 - DEBUG - send_action client 1 time: 0.00 ms
+2024-12-05 18:01:40,093 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:40,093 - DEBUG - Client 2 sent action: previous_item
+2024-12-05 18:01:40,093 - DEBUG - send_action client 2 time: 0.51 ms
+2024-12-05 18:01:40,093 - DEBUG - Sending actions time: 1.74 ms
+2024-12-05 18:01:40,103 - DEBUG - capture_screenshot client 1 time: 9.74 ms
+2024-12-05 18:01:40,110 - DEBUG - capture_screenshot client 0 time: 16.87 ms
+2024-12-05 18:01:40,117 - DEBUG - capture_screenshot client 2 time: 22.97 ms
+2024-12-05 18:01:40,117 - DEBUG - Capturing screenshots time: 24.00 ms
+2024-12-05 18:01:40,193 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3736 bytes]
+2024-12-05 18:01:40,193 - DEBUG - Client 0 received state:
+2024-12-05 18:01:40,193 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3616 bytes]
+2024-12-05 18:01:40,194 - DEBUG - Client 1 received state:
+2024-12-05 18:01:40,194 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3560 bytes]
+2024-12-05 18:01:40,194 - DEBUG - Client 2 received state:
+2024-12-05 18:01:40,319 - DEBUG - Client 0 received state.
+2024-12-05 18:01:40,319 - DEBUG - Client 1 received state.
+2024-12-05 18:01:40,319 - DEBUG - Client 2 received state.
+2024-12-05 18:01:40,319 - DEBUG - Receiving states time: 201.95 ms
+2024-12-05 18:01:40,319 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:40,320 - DEBUG - _step total time: 228.20 ms
+2024-12-05 18:01:40,320 - DEBUG - Total step time: 228.20 ms
+2024-12-05 18:01:40,492 - INFO - Step 39/40 completed in 228.72ms
+2024-12-05 18:01:40,593 - DEBUG - > TEXT '{"action": "previous_item"}' [27 bytes]
+2024-12-05 18:01:40,593 - DEBUG - Client 0 sent action: previous_item
+2024-12-05 18:01:40,593 - DEBUG - send_action client 0 time: 0.50 ms
+2024-12-05 18:01:40,593 - DEBUG - > TEXT '{"action": "use"}' [17 bytes]
+2024-12-05 18:01:40,594 - DEBUG - Client 1 sent action: use
+2024-12-05 18:01:40,594 - DEBUG - send_action client 1 time: 0.50 ms
+2024-12-05 18:01:40,594 - DEBUG - > TEXT '{"action": "turn_right"}' [24 bytes]
+2024-12-05 18:01:40,594 - DEBUG - Client 2 sent action: turn_right
+2024-12-05 18:01:40,594 - DEBUG - send_action client 2 time: 0.51 ms
+2024-12-05 18:01:40,594 - DEBUG - Sending actions time: 1.52 ms
+2024-12-05 18:01:40,603 - DEBUG - capture_screenshot client 2 time: 8.18 ms
+2024-12-05 18:01:40,610 - DEBUG - capture_screenshot client 0 time: 15.63 ms
+2024-12-05 18:01:40,617 - DEBUG - capture_screenshot client 1 time: 22.29 ms
+2024-12-05 18:01:40,617 - DEBUG - Capturing screenshots time: 22.80 ms
+2024-12-05 18:01:40,694 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3736 bytes]
+2024-12-05 18:01:40,695 - DEBUG - Client 0 received state:
+2024-12-05 18:01:40,695 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3561 bytes]
+2024-12-05 18:01:40,695 - DEBUG - < TEXT '{"broken_blocks":[0,0,0,0],"alive":true,"held_i...1.0]],"target_block":1}' [3615 bytes]
+2024-12-05 18:01:40,696 - DEBUG - Client 2 received state:
+2024-12-05 18:01:40,696 - DEBUG - Client 1 received state:
+2024-12-05 18:01:40,819 - DEBUG - Client 0 received state.
+2024-12-05 18:01:40,819 - DEBUG - Client 1 received state.
+2024-12-05 18:01:40,819 - DEBUG - Client 2 received state.
+2024-12-05 18:01:40,819 - DEBUG - Receiving states time: 202.00 ms
+2024-12-05 18:01:40,819 - DEBUG - Processing step data time: 0.00 ms
+2024-12-05 18:01:40,820 - DEBUG - _step total time: 227.34 ms
+2024-12-05 18:01:40,820 - DEBUG - Total step time: 227.34 ms
+2024-12-05 18:01:40,990 - INFO - Step 40/40 completed in 227.85ms
+2024-12-05 18:01:41,092 - DEBUG - > CLOSE 1000 (OK) [2 bytes]
+2024-12-05 18:01:41,092 - DEBUG - = connection is CLOSING
+2024-12-05 18:01:41,092 - DEBUG - < CLOSE 1000 (OK) [2 bytes]
+2024-12-05 18:01:41,093 - DEBUG - < EOF
+2024-12-05 18:01:41,093 - DEBUG - > EOF
+2024-12-05 18:01:41,093 - DEBUG - = connection is CLOSED
+2024-12-05 18:01:41,093 - DEBUG - x half-closing TCP connection
+2024-12-05 18:01:41,093 - WARNING - WebSocket connection closed for client 0.
+2024-12-05 18:01:41,093 - DEBUG - connect client 0 time: 29102.81 ms
+2024-12-05 18:01:46,091 - ERROR - Error closing websocket for client 0: 
+2024-12-05 18:01:46,092 - DEBUG - > CLOSE 1000 (OK) [2 bytes]
+2024-12-05 18:01:46,092 - DEBUG - = connection is CLOSING
+2024-12-05 18:01:46,093 - DEBUG - < CLOSE 1000 (OK) [2 bytes]
+2024-12-05 18:01:46,093 - DEBUG - < EOF
+2024-12-05 18:01:46,093 - DEBUG - > EOF
+2024-12-05 18:01:46,093 - DEBUG - = connection is CLOSED
+2024-12-05 18:01:46,093 - DEBUG - x half-closing TCP connection
+2024-12-05 18:01:46,093 - WARNING - WebSocket connection closed for client 1.
+2024-12-05 18:01:46,094 - DEBUG - connect client 1 time: 34103.07 ms
+2024-12-05 18:01:51,092 - ERROR - Error closing websocket for client 1: 
+2024-12-05 18:01:51,093 - DEBUG - > CLOSE 1000 (OK) [2 bytes]
+2024-12-05 18:01:51,093 - DEBUG - = connection is CLOSING
+2024-12-05 18:01:51,093 - DEBUG - < CLOSE 1000 (OK) [2 bytes]
+2024-12-05 18:01:51,094 - DEBUG - < EOF
+2024-12-05 18:01:51,094 - DEBUG - > EOF
+2024-12-05 18:01:51,094 - DEBUG - = connection is CLOSED
+2024-12-05 18:01:51,094 - DEBUG - x half-closing TCP connection
+2024-12-05 18:01:51,094 - WARNING - WebSocket connection closed for client 2.
+2024-12-05 18:01:51,094 - DEBUG - connect client 2 time: 39102.37 ms
+2024-12-05 18:01:56,092 - ERROR - Error closing websocket for client 2: 
+2024-12-05 18:01:56,093 - INFO - Test script completed.
+2024-12-05 18:01:57,100 - DEBUG - <IocpProactor overlapped#=1 result#=0> is running after closing for 1.0 seconds
+2024-12-05 18:01:58,101 - DEBUG - <IocpProactor overlapped#=1 result#=0> is running after closing for 2.0 seconds
+2024-12-05 18:01:59,101 - DEBUG - <IocpProactor overlapped#=1 result#=0> is running after closing for 3.0 seconds
+2024-12-05 18:02:00,101 - DEBUG - <IocpProactor overlapped#=1 result#=0> is running after closing for 4.0 seconds
