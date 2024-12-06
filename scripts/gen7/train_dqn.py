@@ -25,7 +25,7 @@ from torch.utils.tensorboard import SummaryWriter
 MODEL_PATH_BC = "models_bc"  # Path to BC models
 MODEL_PATH_DQN = r"E:\DQN_BC_MODELS\models_dqn_from_bc"  # Changed to new path
 LOG_DIR_BASE = "tensorboard_logs_dqn_from_bc"
-PARALLEL_ENVS = 4  # Updated to handle 3 training environments + 1 eval environment
+PARALLEL_ENVS = 6  # Updated to handle 3 training environments + 1 eval environment
 
 # Generate a unique timestamp for this run
 RUN_TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -35,18 +35,18 @@ LOG_DIR = os.path.join(LOG_DIR_BASE, f"run_{RUN_TIMESTAMP}")
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # Hyperparameters - matching BC where possible
-TOTAL_TIMESTEPS = 1_000_000
-LEARNING_RATE = 5e-4  # Same as BC
-BUFFER_SIZE = 10_000
+TOTAL_TIMESTEPS = 5_000_000
+LEARNING_RATE = 1e-4  # Same as BC
+BUFFER_SIZE = 2_000
 BATCH_SIZE = 128  # Same as BC
 GAMMA = 0.99
-TRAIN_FREQ = 4
+TRAIN_FREQ = 1
 GRADIENT_STEPS = 1
 TARGET_UPDATE_INTERVAL = 500
-EXPLORATION_FRACTION = 0.2
+EXPLORATION_FRACTION = 0.01
 EXPLORATION_FINAL_EPS = 0.1
-EVAL_FREQ = 2000
-EVAL_EPISODES = 3
+EVAL_FREQ = 1000
+EVAL_EPISODES = 2
 
 # Add save frequency constant
 SAVE_EVERY_STEPS = 5_000  # Save every 5k steps
@@ -66,13 +66,13 @@ def debug_log(msg):
         print(f"[DEBUG] {msg}")
 
 def find_minecraft_windows():
-    """Find and sort all Minecraft windows"""
+    """Find and sort all Minecraft windows in a two-column layout"""
     patterns = ["Minecraft*", "*1.21.3*", "*Singleplayer*"]
-    all_windows = gw.getAllTitles()
+    all_titles = gw.getAllTitles()
     matched_windows = []
     seen_handles = set()
 
-    for title in all_windows:
+    for title in all_titles:
         for pattern in patterns:
             if fnmatch.fnmatch(title, pattern):
                 windows = gw.getWindowsWithTitle(title)
@@ -81,11 +81,13 @@ def find_minecraft_windows():
                         matched_windows.append(window)
                         seen_handles.add(window._hWnd)
 
-    if len(matched_windows) < PARALLEL_ENVS:
-        raise Exception(f"Not enough Minecraft windows. Need {PARALLEL_ENVS}, Found: {len(matched_windows)}")
+    required_windows = PARALLEL_ENVS + 1  # +1 for the evaluation environment
+    if len(matched_windows) < required_windows:
+        raise Exception(f"Not enough Minecraft windows. Need {required_windows}, Found: {len(matched_windows)}")
 
-    # Sort windows by their top (y) coordinate
-    return sorted(matched_windows, key=lambda w: w.top)
+    # Sort windows by horizontal position (left) first, then by vertical position (top)
+    sorted_windows = sorted(matched_windows, key=lambda w: (w.left, w.top))
+    return sorted_windows
 
 def make_env(rank, is_eval=False, minecraft_windows=None):
     """Create environment with assigned window"""
@@ -147,109 +149,143 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
         
         super(BCMatchingFeatureExtractor, self).__init__(observation_space, features_dim)
         debug_log("Parent constructor called successfully")
-        
-        # Fixed scalar input dimension calculation
-        scalar_input_dim = (
-            observation_space.spaces["tasks"].shape[0] +      # 10
-            observation_space.spaces["blocks"].shape[0] +     # 4
-            observation_space.spaces["hand"].shape[0] +       # 5 (fixed)
-            observation_space.spaces["target_block"].shape[0] + # 1
-            np.prod(observation_space.spaces["flattened_matrix"].shape)  # 729
+
+        # Extract shapes
+        image_shape = observation_space.spaces["image"].shape  # (3, 120, 120)
+        unflattened_matrix_shape = observation_space.spaces["unflattened_matrix"].shape  # (4, 13, 13)
+        blocks_dim = observation_space.spaces["blocks"].shape[0]  # 4
+        hand_dim = observation_space.spaces["hand"].shape[0]      # 5
+        target_block_dim = observation_space.spaces["target_block"].shape[0]  # 1
+        player_state_dim = observation_space.spaces["player_state"].shape[0]  # 8
+
+        # Combined scalar group: hand + target_block + blocks = 5 + 1 + 4 = 10
+        # This goes through a small MLP -> 64 dim
+        self.scalar_inventory_net = nn.Sequential(
+            nn.Linear(10, 64),
+            nn.ReLU()
         )
-        debug_log(f"Total scalar input dimension: {scalar_input_dim}")  # Should be 749
 
-        image_input_channels = observation_space.spaces["image"].shape[0]  # 3 for RGB
-        debug_log(f"Input dimensions calculated - scalar: {scalar_input_dim}, image: {image_input_channels}")
-        
-        try:
-            # Initialize scalar network with reduced complexity
-            debug_log("Initializing scalar network...")
-            self.scalar_net = nn.Sequential(
-                nn.Linear(scalar_input_dim, 256),
-                nn.ReLU(),
-                nn.Dropout(p=0.2),
-                nn.Linear(256, 128),
-                nn.ReLU()
-            )
-            
-            # Simplified image network for smaller images and reduced complexity
-            debug_log("Initializing image network...")
-            self.image_net = nn.Sequential(
-                nn.Conv2d(image_input_channels, 16, kernel_size=5, stride=2),
-                nn.ReLU(),
-                nn.Conv2d(16, 32, kernel_size=3, stride=2),
-                nn.ReLU(),
-                nn.Flatten()
-            )
-            
-            # Calculate CNN output size with smaller input images
-            dummy_image = th.zeros(1, *observation_space.spaces["image"].shape)
-            conv_output_size = self._get_conv_output_size(dummy_image)
-            debug_log(f"CNN output size: {conv_output_size}")
-            
-            # Updated fusion layers with reduced complexity
-            self.fusion_layers = nn.Sequential(
-                nn.Linear(128 + conv_output_size, 128),
-                nn.ReLU()
-            )
-            
-            # Set final features dim after all layers are initialized
-            self._features_dim = 128
-            debug_log(f"Features dim set to {self._features_dim}")
-            
-            # Test forward pass
-            debug_log("Testing forward pass...")
-            dummy_obs = {
-                "image": dummy_image,
-                "tasks": th.zeros(1, observation_space.spaces["tasks"].shape[0]),
-                "blocks": th.zeros(1, observation_space.spaces["blocks"].shape[0]),
-                "hand": th.zeros(1, observation_space.spaces["hand"].shape[0]),
-                "target_block": th.zeros(1, observation_space.spaces["target_block"].shape[0]),
-                "flattened_matrix": th.zeros(1, int(np.prod(observation_space.spaces["flattened_matrix"].shape)))
-            }
-            with th.no_grad():
-                test_out = self.forward(dummy_obs)
-                debug_log(f"Forward pass successful - output shape: {test_out.shape}")
-                
-        except Exception as e:
-            debug_log(f"Error during feature extractor initialization: {e}")
-            raise e  # Re-raise to prevent silent failures
+        # player_state -> 8 dims -> Dense(32)
+        self.player_state_net = nn.Sequential(
+            nn.Linear(player_state_dim, 32),
+            nn.ReLU()
+        )
 
-    def _get_conv_output_size(self, dummy_input):
+        # unflattened_matrix (4 x 13 x 13) through a simple CNN
+        # Output a 64-dim vector after processing
+        self.matrix_cnn = nn.Sequential(
+            nn.Conv2d(4, 16, kernel_size=3, stride=1, padding=1),  # (4,13,13) -> (16,13,13)
+            nn.ReLU(),
+            nn.MaxPool2d(2),  # (16,6,6)
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1), # (32,6,6)
+            nn.ReLU(),
+            nn.Flatten()
+        )
+
+        # We'll determine the output size of matrix_cnn
         with th.no_grad():
-            output = self.image_net(dummy_input)
-            return int(np.prod(output.shape[1:]))
-    
+            dummy_matrix = th.zeros(1, *unflattened_matrix_shape)
+            matrix_cnn_out = self.matrix_cnn(dummy_matrix)
+            matrix_cnn_out_dim = matrix_cnn_out.shape[1]
+
+        self.matrix_fusion = nn.Sequential(
+            nn.Linear(matrix_cnn_out_dim, 64),
+            nn.ReLU()
+        )
+
+        # After getting 64 from matrix, combine with player_state(32)
+        # cat([64, 32]) -> Dense(64)
+        self.spatial_fusion = nn.Sequential(
+            nn.Linear(64 + 32, 64),
+            nn.ReLU()
+        )
+
+        # Image CNN: very simple, outputs 64-dim
+        self.image_net = nn.Sequential(
+            nn.Conv2d(image_shape[0], 16, kernel_size=5, stride=2),  # e.g. 120->58 approx
+            nn.ReLU(),
+            nn.MaxPool2d(2),  # further reduce
+            nn.Conv2d(16, 32, kernel_size=3, stride=2),
+            nn.ReLU(),
+            nn.Flatten()
+        )
+
+        # Determine image net output dim
+        with th.no_grad():
+            dummy_image = th.zeros(1, *image_shape)
+            image_out = self.image_net(dummy_image)
+            image_out_dim = image_out.shape[1]
+
+        self.image_fc = nn.Sequential(
+            nn.Linear(image_out_dim, 64),
+            nn.ReLU()
+        )
+
+        # Now we have three main branches:
+        # 1) spatial (unflattened_matrix + player_state) -> 64
+        # 2) inventory (blocks+hand+target_block) -> 64
+        # 3) image -> 64
+        # Combine all: 64 + 64 + 64 = 192 -> final fusion layer -> 128
+
+        self.fusion_layer = nn.Sequential(
+            nn.Linear(192, 128),
+            nn.ReLU()
+        )
+
+        self._features_dim = 128
+        debug_log(f"Features dim set to {self._features_dim}")
+
+        # Test forward pass
+        debug_log("Testing forward pass with dummy data...")
+        dummy_obs = {
+            "image": dummy_image,
+            "blocks": th.zeros(1, blocks_dim),
+            "hand": th.zeros(1, hand_dim),
+            "target_block": th.zeros(1, target_block_dim),
+            "player_state": th.zeros(1, player_state_dim),
+            "unflattened_matrix": dummy_matrix
+        }
+        with th.no_grad():
+            test_out = self.forward(dummy_obs)
+            debug_log(f"Forward pass successful - output shape: {test_out.shape}")
+
     def forward(self, observations):
-        """Process input through feature extractor networks"""
         try:
-            # Combine scalar observations
-            tasks = observations["tasks"]
-            blocks = observations["blocks"]
-            hand = observations["hand"]
-            target_block = observations["target_block"]
-            flattened_matrix = observations["flattened_matrix"]
-            
-            # Concatenate all scalar inputs
-            scalar_combined = th.cat([tasks, blocks, hand, target_block, flattened_matrix], dim=1)
-            
-            # Process scalar features
-            scalar_features = self.scalar_net(scalar_combined)
-            
-            # Process image features
-            image_features = self.image_net(observations["image"])
-            
-            # Combine scalar and image features
-            combined_features = th.cat([scalar_features, image_features], dim=1)
-            
-            # Process through fusion layers
-            features = self.fusion_layers(combined_features)
-            
+            blocks = observations["blocks"]    # shape (N,4)
+            hand = observations["hand"]        # shape (N,5)
+            target_block = observations["target_block"]  # shape (N,1)
+            player_state = observations["player_state"]  # shape (N,8)
+            unflattened_matrix = observations["unflattened_matrix"] # shape (N,4,13,13)
+            image = observations["image"]      # shape (N,3,120,120)
+
+            # Inventory scalars
+            inventory_input = th.cat([hand, target_block, blocks], dim=1) # (N,10)
+            inventory_features = self.scalar_inventory_net(inventory_input) # (N,64)
+
+            # Player state
+            player_state_features = self.player_state_net(player_state) # (N,32)
+
+            # Matrix CNN
+            matrix_out = self.matrix_cnn(unflattened_matrix) # -> (N, something)
+            matrix_features = self.matrix_fusion(matrix_out) # (N,64)
+
+            # Combine matrix(64) + player_state(32)
+            spatial_input = th.cat([matrix_features, player_state_features], dim=1) # (N,96)
+            spatial_features = self.spatial_fusion(spatial_input) # (N,64)
+
+            # Image
+            image_out = self.image_net(image) # (N, something)
+            image_features = self.image_fc(image_out) # (N,64)
+
+            # Combine all: spatial(64), inventory(64), image(64) = 192
+            combined = th.cat([spatial_features, inventory_features, image_features], dim=1) # (N,192)
+            features = self.fusion_layer(combined) # (N,128)
+
             return features
-                
         except Exception as e:
             print(f"Error in forward pass: {e}")
-            print(f"Observation shapes: {[(k, v.shape) for k, v in observations.items()]}")
+            for k,v in observations.items():
+                print(f"{k}: {v.shape}")
             raise e
 
 def transfer_bc_weights_to_dqn(bc_model_path, dqn_model):
@@ -562,6 +598,15 @@ def create_new_model(env):
         debug_log(f"Policy kwargs: {policy_kwargs}")
         raise
 
+# Add the following function to get the latest model
+def get_latest_model(model_dir):
+    """Retrieve the latest model file from the specified directory."""
+    models = [f for f in os.listdir(model_dir) if f.endswith('.zip')]
+    if not models:
+        return None
+    latest_model = max(models, key=lambda x: os.path.getctime(os.path.join(model_dir, x)))
+    return os.path.join(model_dir, latest_model)
+
 def main():
     print("Select an option:")
     print("1. Load weights from a previous DQN model")
@@ -623,26 +668,13 @@ def main():
             print("No DQN models found. Starting from scratch.")
             model = create_new_model(train_env)
         else:
-            print("\nAvailable DQN models:")
-            for idx, name in enumerate(dqn_models, 1):
-                print(f"{idx}. {name}")
-            try:
-                model_idx = int(input("Select model number to load: ")) - 1
-                if model_idx < 0 or model_idx >= len(dqn_models):
-                    raise IndexError("Selected model number is out of range.")
-                model_path = os.path.join(MODEL_PATH_DQN, dqn_models[model_idx])
-                
-                print(f"Loading DQN model from {model_path}...")
-                model = load_dqn_model(model_path, train_env, device)  # Use the modified load_dqn_model function
-            except ValueError:
-                print("Invalid input. Please enter a valid number.")
-                return
-            except IndexError as ie:
-                print(f"Error: {ie}")
-                return
-            except Exception as e:
-                print(f"Error loading model: {e}")
-                return
+            latest_model_path = get_latest_model(MODEL_PATH_DQN)
+            if latest_model_path:
+                print(f"Loading the latest DQN model from {latest_model_path}...")
+                model = load_dqn_model(latest_model_path, train_env, device)
+            else:
+                print("No models found. Starting from scratch.")
+                model = create_new_model(train_env)
 
     else:
         # Start training from scratch
@@ -666,7 +698,7 @@ def main():
     ]
 
     # Training loop with auto-restart
-    timesteps_done = 0
+    timesteps_done = model.num_timesteps if hasattr(model, 'num_timesteps') else 0
     while timesteps_done < TOTAL_TIMESTEPS:
         try:
             debug_log(f"Starting training iteration at timestep {timesteps_done}")
@@ -690,8 +722,21 @@ def main():
             model.save(recovery_path)
             print(f"Saved recovery model to {recovery_path}")
             
+            # Load the latest model
+            latest_model_path = get_latest_model(MODEL_PATH_DQN)
+            if latest_model_path and latest_model_path != recovery_path:
+                print(f"Loading the latest model from {latest_model_path} to continue training...")
+                try:
+                    model = load_dqn_model(latest_model_path, train_env, device)
+                except Exception as load_e:
+                    print(f"Failed to load the latest model: {load_e}")
+                    break
+            else:
+                print("No previous models to load. Exiting training loop.")
+                break
+            
             # Update timesteps done
-            timesteps_done = model.num_timesteps
+            timesteps_done = model.num_timesteps if hasattr(model, 'num_timesteps') else timesteps_done
             
             # Reset environments
             train_env.close()
