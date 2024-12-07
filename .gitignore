@@ -12,6 +12,7 @@ scripts/full_ai/ppo_minecraft_tensorboard/
 *.tfevents.*
 *.npz
 *.jsonl
+*.json
 
 
 # Ignore virtual environments

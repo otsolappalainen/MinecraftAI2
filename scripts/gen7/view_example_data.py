@@ -3,7 +3,6 @@ import json
 import cv2
 import numpy as np
 import tkinter as tk
-from tkinter import filedialog
 from PIL import Image, ImageTk
 
 EXAMPLE_DATA_DIR = "example_step_data"
@@ -12,14 +11,14 @@ IMAGE_HEIGHT = 120
 
 
 class DataViewer:
-    def __init__(self, master, run_path):
+    def __init__(self, master):
         self.master = master
         self.master.title("Example Step Data Viewer")
-        self.run_path = run_path
+        self.run_path = EXAMPLE_DATA_DIR
 
-        # Gather all samples
-        self.samples = sorted([d for d in os.listdir(run_path) if os.path.isdir(os.path.join(run_path, d))])
-        self.total_samples = len(self.samples)
+        # Gather all steps from all runs and samples
+        self.steps = self.gather_all_steps(self.run_path)
+        self.total_steps = len(self.steps)
         self.current_index = 0
 
         # Set up UI
@@ -29,79 +28,137 @@ class DataViewer:
         self.text_label = tk.Label(master, justify=tk.LEFT, font=("Courier", 10))
         self.text_label.pack()
 
+        self.info_label = tk.Label(master, justify=tk.LEFT, font=("Courier", 10))
+        self.info_label.pack()
+
         # Bind keys
-        self.master.bind('<i>', self.next_sample)
-        self.master.bind('<o>', self.prev_sample)
+        self.master.bind('<i>', self.next_step)  # Next step
+        self.master.bind('<o>', self.prev_step)  # Previous step
 
-        if self.total_samples > 0:
-            self.display_sample(self.current_index)
+        if self.total_steps > 0:
+            self.display_step(self.current_index)
         else:
-            self.text_label.config(text="No samples available.")
+            self.text_label.config(text="No steps available.")
 
-    def display_sample(self, index):
-        sample_dir = os.path.join(self.run_path, self.samples[index])
+    def gather_all_steps(self, run_path):
+        """Gather all steps from all runs and samples in the run_path directory."""
+        steps = []
+        if not os.path.exists(run_path):
+            print(f"Run path '{run_path}' does not exist.")
+            return steps
 
-        # Load and display images
-        step_images = []
-        step_texts = []
-        for step_num in sorted(os.listdir(sample_dir)):
-            if step_num.endswith("_image.png"):
-                img_path = os.path.join(sample_dir, step_num)
-                image = cv2.imread(img_path)
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                image = Image.fromarray(image)
-                image = image.resize((IMAGE_WIDTH*5, IMAGE_HEIGHT*5), Image.NEAREST)
-                tk_image = ImageTk.PhotoImage(image)
-                step_images.append(tk_image)
+        run_dirs = sorted([d for d in os.listdir(run_path) if os.path.isdir(os.path.join(run_path, d))])
+        if not run_dirs:
+            print(f"No run directories found in '{run_path}'.")
+            return steps
 
-            elif step_num.endswith("_data.json"):
-                json_path = os.path.join(sample_dir, step_num)
-                with open(json_path, 'r') as f:
-                    data = json.load(f)
-                step_texts.append(json.dumps(data, indent=4))
+        for run in run_dirs:
+            run_dir = os.path.join(run_path, run)
+            sample_dirs = sorted([d for d in os.listdir(run_dir) if os.path.isdir(os.path.join(run_dir, d))])
+            if not sample_dirs:
+                print(f"No sample directories found in run '{run}'. Skipping.")
+                continue
 
-        # Display the first step's image and data
-        if step_images and step_texts:
-            self.current_sample_images = step_images
-            self.current_sample_texts = step_texts
-            self.current_step = 0
-            self.update_display()
-        else:
-            self.text_label.config(text="Incomplete sample data.")
+            for sample in sample_dirs:
+                sample_dir = os.path.join(run_dir, sample)
+                step_files = sorted([f for f in os.listdir(sample_dir) if f.endswith("_image.png")])
 
-    def update_display(self):
-        # Update image
-        img = self.current_sample_images[self.current_step]
-        self.image_label.config(image=img)
-        self.image_label.image = img  # Keep a reference
+                if not step_files:
+                    print(f"No step image files found in sample '{sample}' of run '{run}'. Skipping.")
+                    continue
 
-        # Update text
-        text = self.current_sample_texts[self.current_step]
-        self.text_label.config(text=text)
+                for file in step_files:
+                    # Correct step_num extraction
+                    parts = file.split("_")
+                    if len(parts) < 3:
+                        print(f"Unexpected file format '{file}' in sample '{sample}' of run '{run}'. Skipping step.")
+                        continue
 
-    def next_sample(self, event=None):
-        if self.current_index < self.total_samples - 1:
+                    step_num = parts[1]
+                    image_path = os.path.join(sample_dir, file)
+                    json_filename = f"step_{step_num}_data.json"
+                    json_path = os.path.join(sample_dir, json_filename)
+
+                    if not os.path.exists(json_path):
+                        print(f"Missing JSON file for step '{step_num}' in sample '{sample}' of run '{run}'. Skipping step.")
+                        continue
+
+                    steps.append({
+                        "run": run,
+                        "sample": sample,
+                        "step_num": step_num,
+                        "image_path": image_path,
+                        "json_path": json_path
+                    })
+
+        return steps
+
+    def display_step(self, index):
+        """Display the step at the given index."""
+        if index < 0 or index >= self.total_steps:
+            print(f"Index {index} is out of bounds.")
+            return
+
+        step = self.steps[index]
+        run = step["run"]
+        sample = step["sample"]
+        step_num = step["step_num"]
+
+        # Load and display image
+        img_path = step["image_path"]
+        image = cv2.imread(img_path)
+        if image is None:
+            print(f"Failed to load image at '{img_path}'.")
+            self.text_label.config(text=f"Failed to load image at '{img_path}'.")
+            return
+
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = Image.fromarray(image)
+        image = image.resize((IMAGE_WIDTH * 5, IMAGE_HEIGHT * 5), Image.NEAREST)
+        tk_image = ImageTk.PhotoImage(image)
+        self.image_label.config(image=tk_image)
+        self.image_label.image = tk_image  # Keep a reference
+
+        # Load and display JSON data
+        json_path = step["json_path"]
+        try:
+            with open(json_path, 'r') as f:
+                data = json.load(f)
+            formatted_json = json.dumps(data, indent=4)
+            self.text_label.config(text=formatted_json)
+        except Exception as e:
+            print(f"Error loading JSON file '{json_path}': {e}")
+            self.text_label.config(text=f"Error loading JSON data: {e}")
+
+        # Update info label
+        self.info_label.config(text=f"Run: {run} | Sample: {sample} | Step: {step_num} ({index + 1}/{self.total_steps})")
+
+    def next_step(self, event=None):
+        """Navigate to the next step."""
+        if self.current_index < self.total_steps - 1:
             self.current_index += 1
-            self.display_sample(self.current_index)
+            self.display_step(self.current_index)
+        else:
+            print("Already at the last step.")
 
-    def prev_sample(self, event=None):
+    def prev_step(self, event=None):
+        """Navigate to the previous step."""
         if self.current_index > 0:
             self.current_index -= 1
-            self.display_sample(self.current_index)
+            self.display_step(self.current_index)
+        else:
+            print("Already at the first step.")
 
-def select_run_directory():
+
+def main():
+    if not os.path.exists(EXAMPLE_DATA_DIR):
+        print(f"Directory '{EXAMPLE_DATA_DIR}' does not exist.")
+        return
+
     root = tk.Tk()
-    root.withdraw()  # Hide the root window
-    run_dir = filedialog.askdirectory(title="Select Run Directory", initialdir=EXAMPLE_DATA_DIR)
-    root.destroy()
-    return run_dir
+    viewer = DataViewer(root)
+    root.mainloop()
+
 
 if __name__ == "__main__":
-    run_path = select_run_directory()
-    if not run_path:
-        print("No directory selected.")
-        exit()
-
-    root = tk.Tk()
-    viewer = DataViewer(root, run_path)
-    root.mainloop()
+    main()

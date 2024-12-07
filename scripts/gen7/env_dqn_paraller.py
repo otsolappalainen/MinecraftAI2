@@ -29,6 +29,7 @@ PENALTY_AMOUNT = 0.2
 REPETITIVE_NON_PRODUCTIVE_MAX = 50
 STEP_PENALTY_MULTIPLIER = 0.01
 
+
 # Timeout settings in seconds
 TIMEOUT_STEP = 5
 TIMEOUT_STATE = 1
@@ -51,6 +52,9 @@ MAX_SAMPLES = 25
 MAX_SAVE_STEPS = 10000
 CONSECUTIVE_STEPS = 3
 
+# Add to constants section at top
+DIRECTIONAL_REWARD_SCALE = 2.0  # Scaling factor for directional reward
+
 # =================================
 # Minecraft Environment Class
 # =================================
@@ -70,12 +74,13 @@ class MinecraftEnv(gym.Env):
         logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 
         # Normalization ranges
-        self.coord_range = (-10000, 10000)
-        self.height_range = (-256, 256)
+        self.coord_range = (-10000, 10000)  # DEPRECATED - coordinates now come pre-normalized
+        self.height_range = (-256, 256)     # DEPRECATED - coordinates now come pre-normalized 
         self.angle_range = (-180, 180)
         self.pitch_range = (-25, 25)
         self.health_range = (0, 20)
         self.light_level_range = (0, 15)
+
 
         # Single URI
         self.uri = uri
@@ -85,6 +90,10 @@ class MinecraftEnv(gym.Env):
         if self.save_screenshots:
             self.screenshot_dir = "env_screenshots"
             os.makedirs(self.screenshot_dir, exist_ok=True)
+
+         # Require window bounds
+        if window_bounds is None:
+            raise ValueError("window_bounds parameter is required")
 
         # Define action and observation space
         self.ACTION_MAPPING = {
@@ -122,7 +131,7 @@ class MinecraftEnv(gym.Env):
             'blocks': spaces.Box(low=0, high=1, shape=(blocks_dim,), dtype=np.float32),
             'hand': spaces.Box(low=0, high=1, shape=(hand_dim,), dtype=np.float32),
             'target_block': spaces.Box(low=0, high=1, shape=(target_block_dim,), dtype=np.float32),
-            'surrounding_blocks': spaces.Box(low=0, high=1, shape=surrounding_blocks_shape, dtype=np.float32),
+            'surrounding_blocks': spaces.Box(low=0, high=1, shape=surrounding_blocks_shape[::-1], dtype=np.float32),  # Updated shape
             'player_state': spaces.Box(low=0, high=1, shape=(player_state_dim,), dtype=np.float32)
         })
 
@@ -161,56 +170,10 @@ class MinecraftEnv(gym.Env):
         # Initialize additional variables
         self.repetitive_non_productive_counter = 0  # Counter from 0 to REPETITIVE_NON_PRODUCTIVE_MAX
         self.prev_target_block = 0  # To track state changes
+        self.had_target_last_block = False  # Track if the previous state had target_block = 1
 
-        # Initialize Save Example Step Data
-        self.save_example_step_data = save_example_step_data
-        if self.save_example_step_data:
-            os.makedirs(EXAMPLE_DATA_DIR, exist_ok=True)
-            unique_run_id = f"run_{int(time.time())}_{uuid.uuid4().hex[:6]}"
-            self.current_run_dir = os.path.join(EXAMPLE_DATA_DIR, unique_run_id)
-            os.makedirs(self.current_run_dir, exist_ok=True)
-            self.saved_samples = 0
-            self.save_step_buffer = deque(maxlen=CONSECUTIVE_STEPS)
-            self.save_steps_limit = MAX_SAVE_STEPS
+        
 
-    def find_minecraft_window(self):
-        """
-        Finds the Minecraft window matching the patterns and returns its bounds.
-        """
-        patterns = ["Minecraft*", "*1.21.3*", "*Singleplayer*"]
-        all_windows = gw.getAllTitles()
-        matched_windows = []
-        seen_handles = set()  # Track windows by handle instead of title
-
-        for title in all_windows:
-            for pattern in patterns:
-                if fnmatch.fnmatch(title, pattern):
-                    windows = gw.getWindowsWithTitle(title)
-                    for window in windows:
-                        # Use window handle as unique identifier
-                        if window._hWnd not in seen_handles:
-                            matched_windows.append(window)
-                            seen_handles.add(window._hWnd)
-
-        if len(matched_windows) < 1:
-            raise Exception(f"No Minecraft windows found. Expected at least 1, Found: {len(matched_windows)}")
-
-        # Sort windows by their top (y) coordinate
-        sorted_windows = sorted(matched_windows, key=lambda w: w.top)
-
-        # Assign the first sorted window to this client
-        window = sorted_windows[0]
-        if window.isMinimized:
-            window.restore()
-            time.sleep(0.1)  # Reduced sleep time
-
-        bounds = {
-            "left": window.left,
-            "top": window.top,
-            "width": window.width,
-            "height": window.height,
-        }
-        return bounds
 
     def start_connection(self):
         self.loop = asyncio.new_event_loop()
@@ -321,9 +284,10 @@ class MinecraftEnv(gym.Env):
         ], dtype=np.float32)
 
     def flatten_surrounding_blocks(self, state_dict):
-        """Flatten surrounding blocks data"""
+        """Flatten surrounding blocks data and transpose to (4, 13, 13)"""
         surrounding = state_dict.get('surrounding_blocks', [])
         flattened = np.array(surrounding, dtype=np.float32).reshape(13, 13, 4)
+        flattened = flattened.transpose(2, 0, 1)  # Transpose to (4, 13, 13)
         flattened = np.clip(flattened, 0.0, 1.0)  # Ensure values are between 0 and 1
         return flattened
 
@@ -365,6 +329,7 @@ class MinecraftEnv(gym.Env):
         # Wait for screenshot to complete
         screenshot = await screenshot_task
 
+        
         # Process state
         reward = self.step_penalty
         done = False
@@ -379,24 +344,31 @@ class MinecraftEnv(gym.Env):
             if not (self.target_height_min <= player_y <= self.target_height_max):
                 reward += self.height_penalty
 
+
             broken_blocks = state.get('broken_blocks', [0, 0, 0, 0])
+
             if isinstance(broken_blocks, list) and len(broken_blocks) > 0 and isinstance(broken_blocks[0], list):
-                # Multiple broken blocks; take the first one
                 broken_blocks = broken_blocks[0]
+            
 
-            if broken_blocks[0] == 1 and broken_blocks[2] in [-63, -62]:  # Index 2 is y coordinate
-                reward += self.block_break_reward
+            if broken_blocks[0] == 1:
+                print(f"JACKPOT")
+                reward += 20
 
-            # Additional reward logic
+            if broken_blocks[0] == 0.6 and broken_blocks[2] in [-63, -62]:  # Index 2 is y coordinate
+                reward += 3
+
+
+            # Modified additional reward logic
+            current_target_block = state.get('target_block', 0)
             if action_name.startswith(("move_", "look_", "turn_")):
-                current_target_block = state.get('target_block', 0)
-                if current_target_block == 1:
+                if current_target_block != 0 and not self.had_target_last_block:
                     additional_reward += ADDITIONAL_REWARD_AMOUNT
-                elif self.prev_target_block == 1 and current_target_block == 0 and broken_blocks[0] != 1:
+                elif self.had_target_last_block and current_target_block == 0 and broken_blocks[0] == 0:
                     penalty += PENALTY_AMOUNT
 
             # Update previous target block
-            self.prev_target_block = state.get('target_block', 0)
+            self.had_target_last_block = current_target_block != 0
 
             # Ensure target_block is 0 for specific actions
             if action_name in ["jump", "jump_walk_forward"]:
@@ -409,34 +381,25 @@ class MinecraftEnv(gym.Env):
             surrounding_blocks_norm = self.flatten_surrounding_blocks(state)
 
             # Extract and normalize player state
-            x = state.get('x', 0.0)
-            y = state.get('y', 0.0)
-            z = state.get('z', 0.0)
+            x = state.get('x', 0.0)  # Now comes pre-normalized
+            y = state.get('y', 0.0)  # Now comes pre-normalized 
+            z = state.get('z', 0.0)  # Now comes pre-normalized
             yaw = state.get('yaw', 0.0)
             pitch = state.get('pitch', 0.0)
             health = state.get('health', 20.0)
             alive = state.get('alive', True)
             light_level = state.get('light_level', 0)
 
-            # Normalize values
-            norm_x = self.normalize_to_unit(x, *self.coord_range)
-            norm_y = self.normalize_to_unit(y, *self.height_range)
-            norm_z = self.normalize_to_unit(z, *self.coord_range)
-            norm_yaw = self.normalize_to_unit(max(min(yaw, 180), -180), -180, 180)
-            norm_pitch = self.normalize_to_unit(max(min(pitch, 25), -25), -25, 25)
-            norm_health = self.normalize_to_unit(health, *self.health_range)
-            norm_alive = 1.0 if alive else 0.0
-            norm_light = self.normalize_to_unit(light_level, *self.light_level_range)
-
+            # Remove coordinate normalization, keep other normalizations
             player_state = np.array([
-                norm_x,
-                norm_y,
-                norm_z,
-                norm_yaw,
-                norm_pitch,
-                norm_health,
-                norm_alive,
-                norm_light
+                x,  # Already normalized
+                y,  # Already normalized
+                z,  # Already normalized
+                self.normalize_to_unit(max(min(yaw, 180), -180), -180, 180),
+                self.normalize_to_unit(max(min(pitch, 25), -25), -25, 25),
+                self.normalize_to_unit(health, *self.health_range),
+                1.0 if alive else 0.0,
+                self.normalize_to_unit(light_level, *self.light_level_range)
             ], dtype=np.float32)
 
             state_data = {
@@ -452,9 +415,16 @@ class MinecraftEnv(gym.Env):
             reward += additional_reward
             reward -= penalty
 
+            directional_reward = (x - 0.5) / DIRECTIONAL_REWARD_SCALE
+            reward += directional_reward
+
             # Add conditional reward
             if action_name == "attack" and hand_norm[0] == 1 and target_block_norm[0] == 1:
-                reward += 0.5
+                print(f"jackpot?")
+                reward += 5
+            
+            if action_name == "attack" and hand_norm[0] == 1 and target_block_norm[0] == 0.6:
+                reward += 0.3
 
             # Update repetitive non-productive action counter
             if reward > 0:
@@ -465,53 +435,14 @@ class MinecraftEnv(gym.Env):
                 )
 
             # Add to step penalty
-            reward += -STEP_PENALTY_MULTIPLIER * self.repetitive_non_productive_counter
+            #reward += -STEP_PENALTY_MULTIPLIER * self.repetitive_non_productive_counter
 
             # Save Example Step Data if enabled
-            if self.save_example_step_data and self.saved_samples < MAX_SAMPLES and self.steps < self.save_steps_limit:
-                self.save_step_buffer.append({
-                    'uri': self.uri,
-                    'window_bounds': self.minecraft_bounds,
-                    'step_count': self.steps,
-                    'action': action_name,
-                    'target_block': target_block_norm.tolist(),
-                    'hand': hand_norm.tolist(),
-                    'blocks': blocks_norm.tolist(),
-                    'reward': reward,
-                    'total_reward': self.cumulative_rewards + reward
-                })
-                if len(self.save_step_buffer) == CONSECUTIVE_STEPS:
-                    sample_id = self.saved_samples + 1
-                    sample_dir = os.path.join(self.current_run_dir, f"sample_{sample_id}")
-                    os.makedirs(sample_dir, exist_ok=True)
-
-                    for idx, step_data in enumerate(self.save_step_buffer, start=1):
-                        # Save image
-                        image_filename = os.path.join(sample_dir, f"step_{idx}_image.png")
-                        image = step_data['image'].transpose(1, 2, 0) * 255.0  # Convert to HWC
-                        cv2.imwrite(image_filename, image.astype(np.uint8))
-
-                        # Prepare text data
-                        text_data = {
-                            'uri': step_data['uri'],
-                            'window_bounds': step_data['window_bounds'],
-                            'step_count': step_data['step_count'],
-                            'action': step_data['action'],
-                            'target_block': step_data['target_block'],
-                            'hand': step_data['hand'],
-                            'blocks': step_data['blocks'],
-                
-                            'reward': step_data['reward'],
-                            'total_reward': step_data['total_reward']
-                        }
-
-                        # Save text data
-                        text_filename = os.path.join(sample_dir, f"step_{idx}_data.json")
-                        with open(text_filename, 'w') as f:
-                            json.dump(text_data, f, indent=4)
-
-                    self.saved_samples += 1
-                    self.save_step_buffer.clear()
+            
+            # Add directional reward based on x coordinate
+            # x is already normalized to [0,1] with 0.5 being the center
+            # This will give positive reward for moving right (x>0.5) and negative for left (x<0.5)
+            
 
         else:
             logging.warning("No state received after action.")
@@ -526,6 +457,16 @@ class MinecraftEnv(gym.Env):
         terminated = self.steps >= self.max_episode_steps
         truncated = False
         info = {'reward_breakdown': {}}
+
+        # Update cumulative rewards
+        self.cumulative_rewards += reward
+
+        # Log total reward every 50 steps
+        if self.steps % 50 == 0:
+            print(f"Step {self.steps} - Total Reward: {self.cumulative_rewards:.2f} direct reward: {directional_reward:.4f} x: {x:.4f}")
+        
+        if self.steps == 20 and self.uri == "ws://localhost:8081":
+            print(f"blocks: {blocks_norm}, target_block: {target_block_norm}, hand: {hand_norm}, player_state: {player_state}")
 
         return combined_observation, reward, terminated, truncated, info
 
@@ -581,6 +522,7 @@ class MinecraftEnv(gym.Env):
 
             # Capture screenshot asynchronously
             screenshot = await asyncio.get_event_loop().run_in_executor(None, self.capture_screenshot)
+            
 
             # Process state
             if state is not None:
@@ -591,34 +533,25 @@ class MinecraftEnv(gym.Env):
                 surrounding_blocks_norm = self.flatten_surrounding_blocks(state)
 
                 # Extract and normalize player state
-                x = state.get('x', 0.0)
-                y = state.get('y', 0.0)
-                z = state.get('z', 0.0)
+                x = state.get('x', 0.0)  # Now comes pre-normalized
+                y = state.get('y', 0.0)  # Now comes pre-normalized 
+                z = state.get('z', 0.0)  # Now comes pre-normalized
                 yaw = state.get('yaw', 0.0)
                 pitch = state.get('pitch', 0.0)
                 health = state.get('health', 20.0)
                 alive = state.get('alive', True)
                 light_level = state.get('light_level', 0)
 
-                # Normalize values
-                norm_x = self.normalize_to_unit(x, *self.coord_range)
-                norm_y = self.normalize_to_unit(y, *self.height_range)
-                norm_z = self.normalize_to_unit(z, *self.coord_range)
-                norm_yaw = self.normalize_to_unit(max(min(yaw, 180), -180), -180, 180)
-                norm_pitch = self.normalize_to_unit(max(min(pitch, 25), -25), -25, 25)
-                norm_health = self.normalize_to_unit(health, *self.health_range)
-                norm_alive = 1.0 if alive else 0.0
-                norm_light = self.normalize_to_unit(light_level, *self.light_level_range)
-
+                # Remove coordinate normalization, keep other normalizations
                 player_state = np.array([
-                    norm_x,
-                    norm_y,
-                    norm_z,
-                    norm_yaw,
-                    norm_pitch,
-                    norm_health,
-                    norm_alive,
-                    norm_light
+                    x,  # Already normalized
+                    y,  # Already normalized
+                    z,  # Already normalized
+                    self.normalize_to_unit(max(min(yaw, 180), -180), -180, 180),
+                    self.normalize_to_unit(max(min(pitch, 25), -25), -25, 25),
+                    self.normalize_to_unit(health, *self.health_range),
+                    1.0 if alive else 0.0,
+                    self.normalize_to_unit(light_level, *self.light_level_range)
                 ], dtype=np.float32)
 
                 state_data = {
@@ -641,6 +574,7 @@ class MinecraftEnv(gym.Env):
 
     def capture_screenshot(self):
         """Capture a screenshot of the assigned Minecraft window"""
+        #print(f"window {self.minecraft_bounds}, uri: {self.uri}")
         try:
             with mss.mss() as sct:
                 screenshot = sct.grab(self.minecraft_bounds)

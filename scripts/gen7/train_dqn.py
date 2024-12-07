@@ -2,6 +2,7 @@ import os
 import datetime
 import numpy as np
 import torch as th
+from typing import NamedTuple, Dict, Any, Optional
 from stable_baselines3 import DQN
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
@@ -20,6 +21,8 @@ import fnmatch
 import io
 import time
 from torch.utils.tensorboard import SummaryWriter
+from stable_baselines3.common.buffers import DictReplayBuffer, DictReplayBufferSamples
+from stable_baselines3.common.vec_env import VecNormalize
 
 # Configuration
 MODEL_PATH_BC = "models_bc"  # Path to BC models
@@ -36,17 +39,17 @@ os.makedirs(LOG_DIR, exist_ok=True)
 
 # Hyperparameters - matching BC where possible
 TOTAL_TIMESTEPS = 5_000_000
-LEARNING_RATE = 1e-4  # Same as BC
-BUFFER_SIZE = 2_000
+LEARNING_RATE = 2e-4  # Same as BC
+BUFFER_SIZE = 15_000
 BATCH_SIZE = 128  # Same as BC
 GAMMA = 0.99
 TRAIN_FREQ = 1
 GRADIENT_STEPS = 1
 TARGET_UPDATE_INTERVAL = 500
-EXPLORATION_FRACTION = 0.01
+EXPLORATION_FRACTION = 0.2
 EXPLORATION_FINAL_EPS = 0.1
 EVAL_FREQ = 1000
-EVAL_EPISODES = 2
+EVAL_EPISODES = 1
 
 # Add save frequency constant
 SAVE_EVERY_STEPS = 5_000  # Save every 5k steps
@@ -66,27 +69,88 @@ def debug_log(msg):
         print(f"[DEBUG] {msg}")
 
 def find_minecraft_windows():
-    """Find and sort all Minecraft windows in a two-column layout"""
+    """Find and sort all Minecraft windows in a two-column layout with adjusted bounds"""
+    print("\n=== Starting Minecraft Window Detection ===")
     patterns = ["Minecraft*", "*1.21.3*", "*Singleplayer*"]
+    
     all_titles = gw.getAllTitles()
     matched_windows = []
     seen_handles = set()
 
+    # Initial window collection (same as before)
     for title in all_titles:
         for pattern in patterns:
             if fnmatch.fnmatch(title, pattern):
                 windows = gw.getWindowsWithTitle(title)
                 for window in windows:
                     if window._hWnd not in seen_handles:
-                        matched_windows.append(window)
+                        # Original bounds
+                        original_bounds = {
+                            "left": window.left,
+                            "top": window.top,
+                            "width": window.width,
+                            "height": window.height,
+                        }
+                        
+                        # Adjust bounds
+                        adjusted_left = original_bounds["left"] + 30
+                        adjusted_top = original_bounds["top"] + 50
+                        adjusted_width = original_bounds["width"] - 60
+                        adjusted_height = original_bounds["height"] - 70
+                        
+                        # Ensure dimensions are positive
+                        if adjusted_width <= 0 or adjusted_height <= 0:
+                            print(f"Adjusted window size is non-positive for window: {title}. Skipping.")
+                            continue
+                        
+                        adjusted_bounds = {
+                            "left": adjusted_left,
+                            "top": adjusted_top,
+                            "width": adjusted_width,
+                            "height": adjusted_height,
+                        }
+                        
+                        matched_windows.append(adjusted_bounds)
                         seen_handles.add(window._hWnd)
 
-    required_windows = PARALLEL_ENVS + 1  # +1 for the evaluation environment
-    if len(matched_windows) < required_windows:
-        raise Exception(f"Not enough Minecraft windows. Need {required_windows}, Found: {len(matched_windows)}")
+    print("\nUnsorted adjusted window positions:")
+    for i, window in enumerate(matched_windows):
+        print(f"  Window {i+1}: ({window['left']}, {window['top']}) - {window['width']}x{window['height']}")
 
-    # Sort windows by horizontal position (left) first, then by vertical position (top)
-    sorted_windows = sorted(matched_windows, key=lambda w: (w.left, w.top))
+    # Find eval window
+    potential_eval_windows = [w for w in matched_windows if w["left"] < 100 and w["top"] < 100]
+    if not potential_eval_windows:
+        raise ValueError("No suitable eval window found (needs both x < 100 and y < 100)")
+    
+    eval_window = min(potential_eval_windows, key=lambda w: (w["left"], w["top"]))
+    matched_windows.remove(eval_window)
+
+    print("\nEval window selected:")
+    print(f"  ({eval_window['left']}, {eval_window['top']}) - {eval_window['width']}x{eval_window['height']}")
+
+    # Split remaining windows
+    small_x = [w for w in matched_windows if w["left"] < 100]
+    large_x = [w for w in matched_windows if w["left"] >= 100]
+
+    print("\nSmall x windows (unsorted):")
+    for w in small_x:
+        print(f"  ({w['left']}, {w['top']}) - {w['width']}x{w['height']}")
+
+    print("\nLarge x windows (unsorted):")
+    for w in large_x:
+        print(f"  ({w['left']}, {w['top']}) - {w['width']}x{w['height']}")
+
+    small_x_sorted = sorted(small_x, key=lambda w: w["top"])
+    large_x_sorted = sorted(large_x, key=lambda w: w["top"])
+
+    sorted_windows = [eval_window] + small_x_sorted + large_x_sorted
+
+    print("\nFinal sorted windows:")
+    print(f"Eval window: ({sorted_windows[0]['left']}, {sorted_windows[0]['top']})")
+    print("Training windows:")
+    for i, window in enumerate(sorted_windows[1:], 1):
+        print(f"  Env {i}: ({window['left']}, {window['top']}) - {window['width']}x{window['height']}")
+
     return sorted_windows
 
 def make_env(rank, is_eval=False, minecraft_windows=None):
@@ -95,24 +159,26 @@ def make_env(rank, is_eval=False, minecraft_windows=None):
         try:
             if is_eval:
                 uri = "ws://localhost:8080"
-                window = minecraft_windows[0]  # Evaluation uses first window
+                window_bounds = minecraft_windows[0]  # Evaluation uses first window
             else:
                 uri = f"ws://localhost:{8081 + rank}"
-                window = minecraft_windows[rank + 1]  # Training uses subsequent windows
+                window_bounds = minecraft_windows[rank + 1]
 
-            # Restore window if minimized
+            window_title = "Minecraft"  # Adjust based on actual window title if needed
+            windows = gw.getWindowsWithTitle(window_title)
+            if not windows:
+                raise ValueError(f"No window found with title '{window_title}' for rank {rank}.")
+
+            if is_eval:
+                window = windows[0]
+            else:
+                window = windows[rank + 1]
+
             if window.isMinimized:
                 window.restore()
                 time.sleep(0.1)
 
-            bounds = {
-                "left": window.left,
-                "top": window.top,
-                "width": window.width,
-                "height": window.height,
-            }
-
-            env = MinecraftEnv(uri=uri, window_bounds=bounds)
+            env = MinecraftEnv(uri=uri, window_bounds=window_bounds)
             return env
         except Exception as e:
             print(f"Error creating {'evaluation' if is_eval else 'training'} environment {rank}: {e}")
@@ -127,13 +193,11 @@ class TensorboardRewardLogger(BaseCallback):
         self.episode_rewards = []
 
     def _on_step(self):
-        # Check if we are at the end of an episode
         infos = self.locals.get("infos", [])
         for info in infos:
             if "episode" in info:
                 episode_reward = info["episode"]["r"]
                 self.episode_rewards.append(episode_reward)
-                # Log reward to TensorBoard
                 self.writer.add_scalar("Episode Reward", episode_reward, self.num_timesteps)
                 if self.verbose > 0:
                     print(f"Logged episode reward: {episode_reward}")
@@ -151,40 +215,34 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
         debug_log("Parent constructor called successfully")
 
         # Extract shapes
-        image_shape = observation_space.spaces["image"].shape  # (3, 120, 120)
-        unflattened_matrix_shape = observation_space.spaces["unflattened_matrix"].shape  # (4, 13, 13)
-        blocks_dim = observation_space.spaces["blocks"].shape[0]  # 4
-        hand_dim = observation_space.spaces["hand"].shape[0]      # 5
-        target_block_dim = observation_space.spaces["target_block"].shape[0]  # 1
-        player_state_dim = observation_space.spaces["player_state"].shape[0]  # 8
+        image_shape = observation_space.spaces["image"].shape
+        surrounding_blocks = observation_space.spaces["surrounding_blocks"].shape
+        blocks_dim = observation_space.spaces["blocks"].shape[0]
+        hand_dim = observation_space.spaces["hand"].shape[0]
+        target_block_dim = observation_space.spaces["target_block"].shape[0]
+        player_state_dim = observation_space.spaces["player_state"].shape[0]
 
-        # Combined scalar group: hand + target_block + blocks = 5 + 1 + 4 = 10
-        # This goes through a small MLP -> 64 dim
         self.scalar_inventory_net = nn.Sequential(
             nn.Linear(10, 64),
             nn.ReLU()
         )
 
-        # player_state -> 8 dims -> Dense(32)
         self.player_state_net = nn.Sequential(
             nn.Linear(player_state_dim, 32),
             nn.ReLU()
         )
 
-        # unflattened_matrix (4 x 13 x 13) through a simple CNN
-        # Output a 64-dim vector after processing
         self.matrix_cnn = nn.Sequential(
-            nn.Conv2d(4, 16, kernel_size=3, stride=1, padding=1),  # (4,13,13) -> (16,13,13)
+            nn.Conv2d(4, 16, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.MaxPool2d(2),  # (16,6,6)
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1), # (32,6,6)
+            nn.MaxPool2d(2),
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Flatten()
         )
 
-        # We'll determine the output size of matrix_cnn
         with th.no_grad():
-            dummy_matrix = th.zeros(1, *unflattened_matrix_shape)
+            dummy_matrix = th.zeros(1, *surrounding_blocks)
             matrix_cnn_out = self.matrix_cnn(dummy_matrix)
             matrix_cnn_out_dim = matrix_cnn_out.shape[1]
 
@@ -193,24 +251,20 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
             nn.ReLU()
         )
 
-        # After getting 64 from matrix, combine with player_state(32)
-        # cat([64, 32]) -> Dense(64)
         self.spatial_fusion = nn.Sequential(
             nn.Linear(64 + 32, 64),
             nn.ReLU()
         )
 
-        # Image CNN: very simple, outputs 64-dim
         self.image_net = nn.Sequential(
-            nn.Conv2d(image_shape[0], 16, kernel_size=5, stride=2),  # e.g. 120->58 approx
+            nn.Conv2d(image_shape[0], 16, kernel_size=5, stride=2),
             nn.ReLU(),
-            nn.MaxPool2d(2),  # further reduce
+            nn.MaxPool2d(2),
             nn.Conv2d(16, 32, kernel_size=3, stride=2),
             nn.ReLU(),
             nn.Flatten()
         )
 
-        # Determine image net output dim
         with th.no_grad():
             dummy_image = th.zeros(1, *image_shape)
             image_out = self.image_net(dummy_image)
@@ -221,12 +275,7 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
             nn.ReLU()
         )
 
-        # Now we have three main branches:
-        # 1) spatial (unflattened_matrix + player_state) -> 64
-        # 2) inventory (blocks+hand+target_block) -> 64
-        # 3) image -> 64
-        # Combine all: 64 + 64 + 64 = 192 -> final fusion layer -> 128
-
+        # Combine spatial(64), inventory(64), image(64) = 192 -> final 128
         self.fusion_layer = nn.Sequential(
             nn.Linear(192, 128),
             nn.ReLU()
@@ -235,7 +284,6 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
         self._features_dim = 128
         debug_log(f"Features dim set to {self._features_dim}")
 
-        # Test forward pass
         debug_log("Testing forward pass with dummy data...")
         dummy_obs = {
             "image": dummy_image,
@@ -243,7 +291,7 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
             "hand": th.zeros(1, hand_dim),
             "target_block": th.zeros(1, target_block_dim),
             "player_state": th.zeros(1, player_state_dim),
-            "unflattened_matrix": dummy_matrix
+            "surrounding_blocks": dummy_matrix
         }
         with th.no_grad():
             test_out = self.forward(dummy_obs)
@@ -251,35 +299,29 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
 
     def forward(self, observations):
         try:
-            blocks = observations["blocks"]    # shape (N,4)
-            hand = observations["hand"]        # shape (N,5)
-            target_block = observations["target_block"]  # shape (N,1)
-            player_state = observations["player_state"]  # shape (N,8)
-            unflattened_matrix = observations["unflattened_matrix"] # shape (N,4,13,13)
-            image = observations["image"]      # shape (N,3,120,120)
+            blocks = observations["blocks"]
+            hand = observations["hand"]
+            target_block = observations["target_block"]
+            player_state = observations["player_state"]
+            surrounding_blocks = observations["surrounding_blocks"]
+            image = observations["image"]
 
-            # Inventory scalars
-            inventory_input = th.cat([hand, target_block, blocks], dim=1) # (N,10)
-            inventory_features = self.scalar_inventory_net(inventory_input) # (N,64)
+            inventory_input = th.cat([hand, target_block, blocks], dim=1)
+            inventory_features = self.scalar_inventory_net(inventory_input)
 
-            # Player state
-            player_state_features = self.player_state_net(player_state) # (N,32)
+            player_state_features = self.player_state_net(player_state)
 
-            # Matrix CNN
-            matrix_out = self.matrix_cnn(unflattened_matrix) # -> (N, something)
-            matrix_features = self.matrix_fusion(matrix_out) # (N,64)
+            matrix_out = self.matrix_cnn(surrounding_blocks)
+            matrix_features = self.matrix_fusion(matrix_out)
 
-            # Combine matrix(64) + player_state(32)
-            spatial_input = th.cat([matrix_features, player_state_features], dim=1) # (N,96)
-            spatial_features = self.spatial_fusion(spatial_input) # (N,64)
+            spatial_input = th.cat([matrix_features, player_state_features], dim=1)
+            spatial_features = self.spatial_fusion(spatial_input)
 
-            # Image
-            image_out = self.image_net(image) # (N, something)
-            image_features = self.image_fc(image_out) # (N,64)
+            image_out = self.image_net(image)
+            image_features = self.image_fc(image_out)
 
-            # Combine all: spatial(64), inventory(64), image(64) = 192
-            combined = th.cat([spatial_features, inventory_features, image_features], dim=1) # (N,192)
-            features = self.fusion_layer(combined) # (N,128)
+            combined = th.cat([spatial_features, inventory_features, image_features], dim=1)
+            features = self.fusion_layer(combined)
 
             return features
         except Exception as e:
@@ -293,7 +335,6 @@ def transfer_bc_weights_to_dqn(bc_model_path, dqn_model):
         print(f"Loading BC model from {bc_model_path}")
         bc_state_dict = th.load(bc_model_path, map_location=device, weights_only=True)
         
-        # Create and attach feature extractor
         feature_extractor = BCMatchingFeatureExtractor(dqn_model.observation_space)
         feature_extractor = feature_extractor.to(device)
         dqn_model.policy.features_extractor = feature_extractor
@@ -302,22 +343,16 @@ def transfer_bc_weights_to_dqn(bc_model_path, dqn_model):
         transferred_layers = []
         skipped_layers = []
         
-        # Try to transfer each layer
         for dqn_key in dqn_fe_state_dict.keys():
             bc_key = dqn_key
-            
             if bc_key in bc_state_dict:
                 if bc_state_dict[bc_key].shape == dqn_fe_state_dict[dqn_key].shape:
-                    # Direct transfer for matching shapes
                     dqn_fe_state_dict[dqn_key].copy_(bc_state_dict[bc_key])
                     transferred_layers.append(dqn_key)
                 else:
-                    # Special handling for mismatched scalar_net.0.weight
                     if dqn_key == "scalar_net.0.weight":
                         bc_weight = bc_state_dict[bc_key]
                         dqn_weight = dqn_fe_state_dict[dqn_key]
-                        
-                        # Transfer first input features based on scalar_input_dim
                         min_features = min(bc_weight.shape[1], dqn_weight.shape[1])
                         dqn_weight[:, :min_features] = bc_weight[:, :min_features]
                         transferred_layers.append(f"{dqn_key} (partial)")
@@ -326,7 +361,6 @@ def transfer_bc_weights_to_dqn(bc_model_path, dqn_model):
             else:
                 skipped_layers.append((dqn_key, 'Not in BC model', dqn_fe_state_dict[dqn_key].shape))
         
-        # Load updated weights
         feature_extractor.load_state_dict(dqn_fe_state_dict)
         
         print(f"\nTransferred layers ({len(transferred_layers)}):")
@@ -337,7 +371,6 @@ def transfer_bc_weights_to_dqn(bc_model_path, dqn_model):
         for layer, bc_shape, dqn_shape in skipped_layers:
             print(f"  - {layer}: BC shape: {bc_shape}, DQN shape: {dqn_shape}")
             
-        # Validation
         dummy_obs = dqn_model.env.reset()
         with th.no_grad():
             actions, _ = dqn_model.predict(dummy_obs, deterministic=True)
@@ -347,13 +380,89 @@ def transfer_bc_weights_to_dqn(bc_model_path, dqn_model):
         print(f"Error during weight transfer: {str(e)}")
         raise
 
+# Define a custom namedtuple for prioritized samples
+class DictPrioritizedReplayBufferSamples(NamedTuple):
+    observations: Dict[str, th.Tensor]
+    actions: th.Tensor
+    next_observations: Dict[str, th.Tensor]
+    dones: th.Tensor
+    rewards: th.Tensor
+    weights: th.Tensor
+    indices: th.Tensor
+
+# Define a custom prioritized replay buffer
+class PrioritizedReplayBuffer(DictReplayBuffer):
+    def __init__(self, buffer_size, observation_space, action_space, alpha=0.6, **kwargs):
+        super(PrioritizedReplayBuffer, self).__init__(buffer_size, observation_space, action_space, **kwargs)
+        self.alpha = alpha
+        self.priorities = np.zeros((self.buffer_size,), dtype=np.float32)
+
+    def add(self, obs, next_obs, action, reward, done, infos=None):
+        idx = self.pos
+        super().add(obs, next_obs, action, reward, done, infos)
+        max_priority = self.priorities.max() if self.priorities.any() else 1.0
+        self.priorities[idx] = max_priority
+
+    def sample(self, batch_size, beta=0.4, **kwargs) -> DictPrioritizedReplayBufferSamples:
+        if self.full:
+            priorities = self.priorities
+        else:
+            priorities = self.priorities[:self.pos]
+
+        probabilities = priorities ** self.alpha
+        probabilities /= probabilities.sum()
+
+        indices = np.random.choice(len(probabilities), batch_size, p=probabilities)
+
+        return self._get_samples(indices, beta=beta)
+
+    def _get_samples(self, batch_inds: np.ndarray, beta: float = 0.4, env: Optional[VecNormalize] = None) -> DictPrioritizedReplayBufferSamples:
+        # This is the same as DictReplayBuffer._get_samples, plus weights and indices
+        env_indices = np.random.randint(0, high=self.n_envs, size=(len(batch_inds),))
+        obs_ = self._normalize_obs({key: obs[batch_inds, env_indices, :] for key, obs in self.observations.items()}, env)
+        next_obs_ = self._normalize_obs({key: obs[batch_inds, env_indices, :] for key, obs in self.next_observations.items()}, env)
+
+        assert isinstance(obs_, dict)
+        assert isinstance(next_obs_, dict)
+
+        observations = {key: self.to_torch(val) for key, val in obs_.items()}
+        next_observations = {key: self.to_torch(val) for key, val in next_obs_.items()}
+
+        # Compute weights
+        if self.full:
+            priorities = self.priorities
+        else:
+            priorities = self.priorities[:self.pos]
+
+        probabilities = priorities ** self.alpha
+        probabilities /= probabilities.sum()
+        sampled_prob = probabilities[batch_inds]
+        weights = (len(probabilities) * sampled_prob) ** (-beta)
+        weights /= weights.max()
+
+        weights_t = self.to_torch(weights.reshape(-1, 1))
+        indices_t = self.to_torch(batch_inds).long()
+
+        return DictPrioritizedReplayBufferSamples(
+            observations=observations,
+            actions=self.to_torch(self.actions[batch_inds, env_indices]),
+            next_observations=next_observations,
+            dones=self.to_torch(self.dones[batch_inds, env_indices] * (1 - self.timeouts[batch_inds, env_indices])).reshape(-1, 1),
+            rewards=self.to_torch(self._normalize_reward(self.rewards[batch_inds, env_indices].reshape(-1, 1), env)),
+            weights=weights_t,
+            indices=indices_t,
+        )
+
+    def update_priorities(self, indices, priorities):
+        self.priorities[indices] = priorities
+
 def create_new_model(env):
     debug_log("Starting model creation...")
     
     policy_kwargs = dict(
         features_extractor_class=BCMatchingFeatureExtractor,
-        features_extractor_kwargs=dict(features_dim=128),  # Match the feature extractor's output
-        net_arch=[128]  # Reduced fusion and decision layers
+        features_extractor_kwargs=dict(features_dim=128),
+        net_arch=[128]
     )
     
     try:
@@ -369,34 +478,29 @@ def create_new_model(env):
             target_update_interval=TARGET_UPDATE_INTERVAL,
             exploration_fraction=EXPLORATION_FRACTION,
             exploration_final_eps=EXPLORATION_FINAL_EPS,
-            tensorboard_log=LOG_DIR,  # Use the new LOG_DIR
+            tensorboard_log=LOG_DIR,
             device=device,
             policy_kwargs=policy_kwargs,
+            replay_buffer_class=PrioritizedReplayBuffer,
             verbose=1
         )
         
         return model
-        
     except Exception as e:
         debug_log(f"Error creating model: {e}")
         debug_log(f"Policy kwargs: {policy_kwargs}")
         raise
 
 def transfer_weights(old_model, new_model):
-    """
-    Transfer weights from the old model to the new model, skipping mismatched layers.
-    """
     old_state_dict = old_model.policy.state_dict()
     new_state_dict = new_model.policy.state_dict()
 
     transferred_layers = []
     skipped_layers = []
 
-    # Iterate over old model's state_dict and match with the new model
     for key, param in old_state_dict.items():
         if key in new_state_dict:
             if new_state_dict[key].shape == param.shape:
-                # Transfer weights if shapes match
                 new_state_dict[key] = param
                 transferred_layers.append(key)
             else:
@@ -404,7 +508,6 @@ def transfer_weights(old_model, new_model):
         else:
             skipped_layers.append((key, param.shape, 'Not present in new model'))
 
-    # Load the updated state_dict into the new model
     new_model.policy.load_state_dict(new_state_dict, strict=False)
     print("Weight transfer completed.")
     print(f"Transferred layers ({len(transferred_layers)}):")
@@ -415,20 +518,17 @@ def transfer_weights(old_model, new_model):
         print(f"  - {layer}: {old_shape} -> {new_shape}")
 
 def read_dqn_model_metadata(model_path):
-    """Read and print contents of DQN model ZIP file without loading tensors"""
     try:
         with ZipFile(model_path, 'r') as zip_ref:
             print("\nZIP file contents:")
             for info in zip_ref.filelist:
                 print(f"  {info.filename}: {info.file_size} bytes")
             
-            # Read data.pkl for model metadata
             if 'data' in zip_ref.namelist():
                 with zip_ref.open('data') as f:
                     content = f.read()
                     print("\nModel metadata:", content[:1000], "...")
                     
-            # Print policy.pth structure
             if 'policy.pth' in zip_ref.namelist():
                 print("\nPolicy file found")
     except Exception as e:
@@ -436,11 +536,9 @@ def read_dqn_model_metadata(model_path):
         raise
 
 def raw_transfer_dqn_weights(model_path, new_model):
-    """Transfer weights from DQN ZIP file directly to new model"""
     print(f"\nTransferring weights from: {model_path}")
     
     try:
-        # Get state dict of the new model's policy
         new_state_dict = new_model.policy.state_dict()
         print("\nNew model layers:")
         for key, tensor in new_state_dict.items():
@@ -448,17 +546,14 @@ def raw_transfer_dqn_weights(model_path, new_model):
 
         transferred = []
         skipped = []
-        partially_transferred = []
 
         with ZipFile(model_path, 'r') as zip_ref:
             print("\nZIP contents:")
             for info in zip_ref.filelist:
                 print(f"  {info.filename}: {info.file_size} bytes")
 
-            # Load policy.pth directly
             if 'policy.pth' in zip_ref.namelist():
                 with zip_ref.open('policy.pth') as f:
-                    # Load using BytesIO to avoid file system dependencies
                     buffer = io.BytesIO(f.read())
                     old_state_dict = th.load(buffer, map_location=device)
                     
@@ -466,18 +561,15 @@ def raw_transfer_dqn_weights(model_path, new_model):
                     for key, tensor in old_state_dict.items():
                         print(f"  {key}: {tensor.shape}")
 
-                    # Iterate over the new model's state_dict keys
                     for new_key in new_state_dict.keys():
                         if new_key in old_state_dict:
                             old_tensor = old_state_dict[new_key]
                             new_tensor = new_state_dict[new_key]
                             
                             if old_tensor.shape == new_tensor.shape:
-                                # Direct transfer for matching shapes
                                 new_state_dict[new_key].copy_(old_tensor)
                                 transferred.append(new_key)
                             elif new_key.startswith("features_extractor.scalar_net") and new_key in old_state_dict:
-                                # Handle partial transfer for scalar_net layers if needed
                                 min_dim = min(old_tensor.shape[1], new_tensor.shape[1])
                                 new_state_dict[new_key][:, :min_dim].copy_(old_tensor[:, :min_dim])
                                 transferred.append(f"{new_key} (partial)")
@@ -486,7 +578,6 @@ def raw_transfer_dqn_weights(model_path, new_model):
                         else:
                             skipped.append((new_key, "Not found in old model", new_state_dict[new_key].shape))
 
-        # Load the updated state_dict into the new model's policy
         new_model.policy.load_state_dict(new_state_dict, strict=False)
 
         print(f"\nTransferred {len(transferred)} layers:")
@@ -505,13 +596,12 @@ def raw_transfer_dqn_weights(model_path, new_model):
         raise
 
 def load_dqn_model(model_path, env, device):
-    """Load existing DQN model and update learning parameters"""
     try:
         print(f"Loading DQN model from {model_path}...")
         model = DQN.load(model_path, env=env, device=device)
         print("Model loaded successfully.")
 
-        # Update learning parameters to current ones
+        # Update learning parameters
         model.learning_rate = LEARNING_RATE
         model.buffer_size = BUFFER_SIZE
         model.batch_size = BATCH_SIZE
@@ -563,44 +653,7 @@ class TimestampedEvalCallback(EvalCallback):
                 print(f"New best model saved with reward {self.best_mean_reward:.2f}")
         return result
 
-def create_new_model(env):
-    debug_log("Starting model creation...")
-    
-    policy_kwargs = dict(
-        features_extractor_class=BCMatchingFeatureExtractor,
-        features_extractor_kwargs=dict(features_dim=128),  # Match the feature extractor's output
-        net_arch=[128]  # Reduced fusion and decision layers
-    )
-    
-    try:
-        model = DQN(
-            policy=DQNPolicy,
-            env=env,
-            learning_rate=LEARNING_RATE,
-            buffer_size=BUFFER_SIZE,
-            batch_size=BATCH_SIZE,
-            gamma=GAMMA,
-            train_freq=TRAIN_FREQ,
-            gradient_steps=GRADIENT_STEPS,
-            target_update_interval=TARGET_UPDATE_INTERVAL,
-            exploration_fraction=EXPLORATION_FRACTION,
-            exploration_final_eps=EXPLORATION_FINAL_EPS,
-            tensorboard_log=LOG_DIR,  # Use the new LOG_DIR
-            device=device,
-            policy_kwargs=policy_kwargs,
-            verbose=1
-        )
-        
-        return model
-        
-    except Exception as e:
-        debug_log(f"Error creating model: {e}")
-        debug_log(f"Policy kwargs: {policy_kwargs}")
-        raise
-
-# Add the following function to get the latest model
 def get_latest_model(model_dir):
-    """Retrieve the latest model file from the specified directory."""
     models = [f for f in os.listdir(model_dir) if f.endswith('.zip')]
     if not models:
         return None
@@ -614,15 +667,12 @@ def main():
     print("3. Start training from scratch")
     choice = input("Enter 1, 2, or 3: ").strip()
 
-    # Find all Minecraft windows first
     minecraft_windows = find_minecraft_windows()
     
-    # Create vectorized environments with window assignments
     train_env_fns = [make_env(i, minecraft_windows=minecraft_windows) for i in range(PARALLEL_ENVS)]
     train_env = SubprocVecEnv(train_env_fns)
     train_env = VecMonitor(train_env)
     
-    # Create evaluation environment
     eval_env_fn = [make_env(0, is_eval=True, minecraft_windows=minecraft_windows)]
     eval_env = SubprocVecEnv(eval_env_fn)
     eval_env = VecMonitor(eval_env)
@@ -631,7 +681,6 @@ def main():
     print("Evaluation Environment observation space:", eval_env.observation_space)
 
     if choice == "1":
-        # Load weights from a previous DQN model
         dqn_models = [f for f in os.listdir(MODEL_PATH_DQN) if f.endswith('.zip')]
         if not dqn_models:
             print("No DQN models found in the default save location. Starting from scratch.")
@@ -662,7 +711,6 @@ def main():
                 return
 
     elif choice == "2":
-        # Load existing DQN model 
         dqn_models = [f for f in os.listdir(MODEL_PATH_DQN) if f.endswith('.zip')]
         if not dqn_models:
             print("No DQN models found. Starting from scratch.")
@@ -677,11 +725,9 @@ def main():
                 model = create_new_model(train_env)
 
     else:
-        # Start training from scratch
         model = create_new_model(train_env)
         print("Training from scratch...")
 
-    # Setup callbacks
     callbacks = [
         SaveOnStepCallback(
             save_freq=SAVE_EVERY_STEPS,
@@ -693,11 +739,10 @@ def main():
             log_path=LOG_DIR,
             eval_freq=EVAL_FREQ,
             n_eval_episodes=EVAL_EPISODES,
-            deterministic=True
+            deterministic=False
         )
     ]
 
-    # Training loop with auto-restart
     timesteps_done = model.num_timesteps if hasattr(model, 'num_timesteps') else 0
     while timesteps_done < TOTAL_TIMESTEPS:
         try:
@@ -706,7 +751,7 @@ def main():
             model.learn(
                 total_timesteps=remaining_timesteps,
                 callback=callbacks,
-                tb_log_name=f"dqn_from_bc_{RUN_TIMESTAMP}",  # Unique tb_log_name
+                tb_log_name=f"dqn_from_bc_{RUN_TIMESTAMP}",
                 reset_num_timesteps=False
             )
             timesteps_done = TOTAL_TIMESTEPS
@@ -714,7 +759,6 @@ def main():
         except Exception as e:
             print(f"Error during training: {e}")
             debug_log(f"Stack trace: {traceback.format_exc()}")
-            # Save recovery model
             recovery_path = os.path.join(
                 MODEL_PATH_DQN, 
                 f"recovery_model_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
@@ -722,9 +766,8 @@ def main():
             model.save(recovery_path)
             print(f"Saved recovery model to {recovery_path}")
             
-            # Load the latest model
             latest_model_path = get_latest_model(MODEL_PATH_DQN)
-            if latest_model_path and latest_model_path != recovery_path:
+            if (latest_model_path and latest_model_path != recovery_path):
                 print(f"Loading the latest model from {latest_model_path} to continue training...")
                 try:
                     model = load_dqn_model(latest_model_path, train_env, device)
@@ -735,14 +778,9 @@ def main():
                 print("No previous models to load. Exiting training loop.")
                 break
             
-            # Update timesteps done
-            timesteps_done = model.num_timesteps if hasattr(model, 'num_timesteps') else timesteps_done
-            
-            # Reset environments
             train_env.close()
             eval_env.close()
             
-            # Recreate environments
             train_env_fns = [make_env(i, minecraft_windows=minecraft_windows) for i in range(PARALLEL_ENVS)]
             train_env = SubprocVecEnv(train_env_fns)
             train_env = VecMonitor(train_env)
@@ -751,13 +789,11 @@ def main():
             eval_env = SubprocVecEnv(eval_env_fn)
             eval_env = VecMonitor(eval_env)
             
-            # Update model env reference
             model.set_env(train_env)
             
             print("Restarting training...")
             continue
 
-    # Save final model
     final_path = os.path.join(MODEL_PATH_DQN, f"final_model_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.zip")
     model.save(final_path)
     print(f"Training completed. Final model saved to {final_path}")
