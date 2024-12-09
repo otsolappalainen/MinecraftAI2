@@ -14,11 +14,12 @@ import os
 import logging
 import uuid
 from collections import deque
+import math
 
 # ================================
 # Constants
 # ================================
-MAX_EPISODE_STEPS = 100
+MAX_EPISODE_STEPS = 512
 TARGET_HEIGHT_MIN = -63
 TARGET_HEIGHT_MAX = -60
 BLOCK_BREAK_REWARD = 3.0
@@ -54,6 +55,13 @@ CONSECUTIVE_STEPS = 3
 
 # Add to constants section at top
 DIRECTIONAL_REWARD_SCALE = 1.0  # Scaling factor for directional reward
+
+# Directional reward settings
+DIRECTIONAL_REWARD_MAX = 0.5  # Maximum reward/penalty per step
+CONSIDERATION_WINDOW = 200     # Number of timesteps to consider
+REWARD_START_PERCENTAGE = 0.1  # Percentage of window to start giving rewards
+NULLIFY_PERCENTAGE = 0.1       # Percentage of dominant direction to nullify reward
+DIRECTION_THRESHOLD = 0.0      # Minimum change to consider movement (keep at 0 for now)
 
 # =================================
 # Minecraft Environment Class
@@ -108,13 +116,11 @@ class MinecraftEnv(gym.Env):
             8: "look_right",
             9: "look_up",
             10: "look_down",
-            11: "turn_left",
-            12: "turn_right",
-            13: "attack",
-            14: "use",
-            15: "next_item",
-            16: "previous_item",
-            17: "no_op"
+            11: "attack",
+            12: "use",
+            13: "next_item",
+            14: "previous_item",
+            15: "no_op"
         }
 
         self.action_space = spaces.Discrete(len(self.ACTION_MAPPING))
@@ -166,6 +172,7 @@ class MinecraftEnv(gym.Env):
         # Cumulative reward and episode count
         self.cumulative_rewards = 0.0
         self.episode_counts = 0
+        self.cumulative_directional_rewards = 0.0
 
         # Initialize additional variables
         self.repetitive_non_productive_counter = 0  # Counter from 0 to REPETITIVE_NON_PRODUCTIVE_MAX
@@ -174,7 +181,19 @@ class MinecraftEnv(gym.Env):
 
         # Initialize previous sum of surrounding blocks
         self.prev_sum_surrounding = 0.0
+        self.cumulative_movement_bonus = 0.0
 
+        self.movement_history = {
+            'x': deque(maxlen=200),
+            'z': deque(maxlen=200)
+        }
+        self.directional_consistency_bonus = 0.05  # Reward multiplier for consistent movement
+        self.directional_consistency_bonus = 0.05  # Base multiplier
+        self.direction_change_cooldown = 50  # Steps to wait before new direction bonus
+        self.last_direction_change = 0  # Track when direction last changed
+        self.previous_direction = None  # Track previous main direction
+        self.direction_strength = 0  # Track current direction commitment
+        self.recent_block_breaks = deque(maxlen=20)  # Track block breaks in last 20 steps
         
 
 
@@ -324,75 +343,31 @@ class MinecraftEnv(gym.Env):
         # Wait for screenshot to complete
         screenshot = await screenshot_task
 
-        
-        # Process state
-        reward = self.step_penalty
-        done = False
-        broken_blocks = []
-
-        additional_reward = 0.0
-        penalty = 0.0
+        # Initialize reward with small constant step penalty
+        reward = -0.1  # Adjust the step penalty as needed
 
         if state is not None:
-            # Process the state as before
-            player_y = state.get('y', 0.0)
-            
+            # Extract relevant data from state
             broken_blocks = state.get('broken_blocks', [0, 0, 0, 0])
-
             if isinstance(broken_blocks, list) and len(broken_blocks) > 0 and isinstance(broken_blocks[0], list):
                 broken_blocks = broken_blocks[0]
-            
 
-            if broken_blocks[0] == 1:
-                print(f"JACKPOT")
-                reward += 10
-
-            if broken_blocks[0] == 0.6:
-                #print("works")
-                reward += 5
-
-
-            # Modified additional reward logic
-            #current_target_block = state.get('target_block', 0)
-            #if action_name.startswith(("move_", "look_", "turn_")):
-            #    if current_target_block != 0 and not self.had_target_last_block:
-            #        additional_reward += ADDITIONAL_REWARD_AMOUNT
-            #    elif self.had_target_last_block and current_target_block == 0 and broken_blocks[0] == 0:
-            #        penalty += PENALTY_AMOUNT
-
-            # Update previous target block
-            #self.had_target_last_block = current_target_block != 0
-
-            # Ensure target_block is 0 for specific actions
-            if action_name in ["jump", "jump_walk_forward"]:
-                state['target_block'] = 0.0
-
-            # Removed tasks from observation
             blocks_norm = self.normalize_blocks(broken_blocks)
             hand_norm = self.normalize_hand(state)
             target_block_norm = self.normalize_target_block(state)
             surrounding_blocks_norm = self.flatten_surrounding_blocks(state)
 
-            # Extract and normalize player state
-            x = state.get('x', 0.0)  # Now comes pre-normalized
-            y = state.get('y', 0.0)  # Now comes pre-normalized 
-            z = state.get('z', 0.0)  # Now comes pre-normalized
+            x = state.get('x', 0.0)  # Normalized
+            y = state.get('y', 0.0)
+            z = state.get('z', 0.0)
             yaw = state.get('yaw', 0.0)
             pitch = state.get('pitch', 0.0)
-            health = state.get('health', 20.0)
+            health = state.get('health', 1.0)
             alive = state.get('alive', True)
             light_level = state.get('light_level', 0)
 
-            # Remove coordinate normalization, keep other normalizations
             player_state = np.array([
-                x,  # Already normalized
-                y,  # Already normalized
-                z,  # Already normalized
-                self.normalize_to_unit(max(min(yaw, 180), -180), -180, 180),
-                pitch,
-                self.normalize_to_unit(health, *self.health_range),
-                1.0 if alive else 0.0,
-                self.normalize_to_unit(light_level, *self.light_level_range)
+                x, y, z, yaw, pitch, health, 1.0 if alive else 0.0, light_level
             ], dtype=np.float32)
 
             state_data = {
@@ -404,103 +379,67 @@ class MinecraftEnv(gym.Env):
                 'player_state': player_state
             }
 
-            # Update reward with additional rewards and penalties
-            reward += additional_reward
-            reward -= penalty
-
-            directional_reward = (x - 0.5) * 0.5
-            reward += directional_reward
-
-            # Add conditional reward
-            if action_name == "attack" and hand_norm[0] == 1 and target_block_norm[0] == 1:
-                print(f"jackpot?")
-                reward += 5
-            
-            if action_name == "attack" and hand_norm[0] == 1 and target_block_norm[0] == 0.6:
-                #print("works")
-                reward += 0.5
-
-            # Update repetitive non-productive action counter
-            if reward > 0:
-                self.repetitive_non_productive_counter = 0
+            # Check if the screenshot is valid
+            if not np.any(screenshot):
+                logging.warning(f"Step {self.steps}: Screenshot is all zeros.")
             else:
-                self.repetitive_non_productive_counter = min(
-                    self.repetitive_non_productive_counter + 1, REPETITIVE_NON_PRODUCTIVE_MAX
-                )
+                logging.debug(f"Step {self.steps}: Screenshot captured successfully.")
 
-            # Add to step penalty
-            if self.repetitive_non_productive_counter > 5:
-                reward += -STEP_PENALTY_MULTIPLIER * self.repetitive_non_productive_counter
+            # Optionally, log the shape and some statistics of the image
+            logging.debug(f"Step {self.steps}: Image shape: {screenshot.shape}, "
+                          f"Min: {screenshot.min()}, Max: {screenshot.max()}, Mean: {screenshot.mean()}")
 
-            # Save Example Step Data if enabled
-            
-            # Add directional reward based on x coordinate
-            # x is already normalized to [0,1] with 0.5 being the center
-            # This will give positive reward for moving right (x>0.5) and negative for left (x<0.5)
-            
-            # Calculate current sum of surrounding blocks
-            current_sum_surrounding = surrounding_blocks_norm.sum()
+            # Check if action was 'attack' and process block breaking rewards
+            if blocks_norm[0] > 0.0:
+                block_value = blocks_norm[0]  # Value between 0 and 1
+                reward += (block_value ** 4) * 20  # Max reward of 10 for valuable blocks
+                self.recent_block_breaks.append(True)
+            else:
+                self.recent_block_breaks.append(False)
 
-            # Compute difference from previous step
-            delta_sum = current_sum_surrounding - self.prev_sum_surrounding
-            reward_from_surrounding = 0.0
+            if action_name == "attack" and target_block_norm[0] > 0.0:
+                block_value = target_block_norm[0]  # Value between 0 and 1
+                reward += (block_value ** 5) * 10
 
-            # Calculate reward from surrounding blocks difference, capped at ±0.5
-            if action_name != "attack" and blocks_norm[0] == 0:
-                reward_from_surrounding = np.clip(delta_sum * (0.5 / 10), -0.5, 0.5)
+            # Check if any blocks were broken in last 20 steps
+            blocks_broken_recently = any(self.recent_block_breaks)
 
-            bonus = 0.0
+            # Encourage moving forward after breaking blocks
+            if blocks_broken_recently and action_name == "move_forward" and (0.02 < abs(x-0.5) or 0.02 < abs(z-0.5)):
+                reward += 0.5  # Small reward for moving forward after breaking blocks
+                self.cumulative_directional_rewards += 0.5
 
-            # Add guiding rewards to the primary reward
-            #reward += reward_from_surrounding + bonus
+            # Encourage looking up or down after breaking blocks  
+            if blocks_broken_recently and (action_name == "look_up" or action_name == "look_down"):
+                reward += 0.5  # Small reward for adjusting pitch after breaking blocks
+                self.cumulative_directional_rewards += 0.5
 
-            # Update previous sum for the next step
-            self.prev_sum_surrounding = current_sum_surrounding
+            # Penalize looking to the sides shortly after breaking blocks
+            if blocks_broken_recently and (action_name == "look_left" or action_name == "look_right"):
+                reward -= 0.5  # Small penalty for looking sideways
+                self.cumulative_directional_rewards -= 0.5
 
-            # Calculate current sum of surrounding blocks for density check
-            current_sum_surrounding = surrounding_blocks_norm.sum()
-            surrounding_density = current_sum_surrounding / 676  # Normalize by total possible (13*13*4)
-
-            # Add conditional reward - only when in good mining areas
-            if action_name == "attack" and hand_norm[0] == 1:
-                if current_sum_surrounding >= 300:  # Only reward attacks in dense areas
-                    if target_block_norm[0] == 1:
-                        print(f"jackpot?")
-                        # Scale reward by surrounding density (1.0 to 1.5 multiplier)
-                        #density_multiplier = 1.0 + (surrounding_density - 0.44)  # 300/676 ≈ 0.44
-                        #reward += 5 * density_multiplier
-                    
-                    if target_block_norm[0] == 0.6:
-                        # Scale smaller reward by density too
-                        density_multiplier = 1.0 + (surrounding_density - 0.44)
-                        #reward += 0.5 * density_multiplier
-            
-            #if blocks_norm[1] == 1 and action_name == "attack":
-                #reward += 0.2
+            # Update previous action
+            self.previous_action = action_name
 
         else:
             logging.warning("No state received after action.")
             state_data = self._get_default_state()
-            reward_from_surrounding = 0.0
-            bonus = 0.0
 
         self.steps += 1
 
         # Prepare combined_observation
         combined_observation = state_data
 
-        # Split done into terminated and truncated
+        self.cumulative_rewards += reward
+        if self.steps % 50 == 0 and self.uri == "ws://localhost:8081":
+                print(f"Reward: {reward}, Cumulative Direction Reward: {self.cumulative_directional_rewards} Cumulative Rewards: {self.cumulative_rewards}")
+
+
+        # Check if episode is terminated
         terminated = self.steps >= self.max_episode_steps
         truncated = False
-        info = {'reward_breakdown': {}}
-
-        # Update cumulative rewards
-        self.cumulative_rewards += reward
-
-        # Log total reward every 50 steps
-        if self.steps % 20 == 0 and self.uri == "ws://localhost:8081":
-            print(f"reward: {reward:.2f} total reward: {self.cumulative_rewards:.2f}")
-
+        info = {}
 
         return combined_observation, reward, terminated, truncated, info
 
@@ -528,6 +467,8 @@ class MinecraftEnv(gym.Env):
         self.steps = 0
         self.cumulative_rewards = 0.0
         self.episode_counts = 0
+        self.cumulative_directional_rewards = 0.0
+        self.cumulative_movement_bonus = 0.0
 
         # Reset additional variables
         self.repetitive_non_productive_counter = 0
@@ -557,6 +498,15 @@ class MinecraftEnv(gym.Env):
             # Capture screenshot asynchronously
             screenshot = await asyncio.get_event_loop().run_in_executor(None, self.capture_screenshot)
             
+            # Check if the screenshot is valid
+            if not np.any(screenshot):
+                logging.warning("Reset: Screenshot is all zeros.")
+            else:
+                logging.debug("Reset: Screenshot captured successfully.")
+
+            # Optionally, log the shape and some statistics of the image
+            logging.debug(f"Reset: Image shape: {screenshot.shape}, "
+                          f"Min: {screenshot.min()}, Max: {screenshot.max()}, Mean: {screenshot.mean()}")
 
             # Process state
             if state is not None:
@@ -622,6 +572,7 @@ class MinecraftEnv(gym.Env):
                     timestamp = time.strftime('%Y%m%d_%H%M%S')
                     screenshot_path = os.path.join(self.screenshot_dir, f"screenshot_{timestamp}.png")
                     cv2.imwrite(screenshot_path, img.transpose(1, 2, 0) * 255)
+                    logging.debug(f"Saved screenshot to {screenshot_path}")
         except Exception as e:
             logging.error(f"Error capturing screenshot: {e}")
             img = np.zeros(IMAGE_SHAPE, dtype=np.float32)
@@ -670,3 +621,61 @@ class MinecraftEnv(gym.Env):
     def __del__(self):
         """Cleanup before deleting the environment object."""
         self.close()
+
+    def get_movement_tendency(self):
+        """
+        Calculate movement tendency based on historical movement.
+        Returns:
+            primary_direction (str): 'x' or 'z' or None
+            direction_strength (float): Value between -1 and 1 indicating dominant direction
+            reward_multiplier (float): Factor between -1 and 1 for scaling rewards
+        """
+        window = CONSIDERATION_WINDOW
+        if len(self.movement_history['x']) < window:
+            return None, 0, 0
+
+        # Get recent movement history
+        x_vals = np.array(self.movement_history['x'])[-window:]
+        z_vals = np.array(self.movement_history['z'])[-window:]
+
+        # Calculate movement deviations from center (0.5)
+        x_dev = x_vals - 0.5
+        z_dev = z_vals - 0.5
+
+        # Apply threshold
+        x_dev = np.where(np.abs(x_dev) > DIRECTION_THRESHOLD, x_dev, 0)
+        z_dev = np.where(np.abs(z_dev) > DIRECTION_THRESHOLD, z_dev, 0)
+
+        # Sum deviations to get net movement
+        x_sum = np.sum(x_dev)
+        z_sum = np.sum(z_dev)
+
+        # Determine dominant direction
+        if np.abs(x_sum) > np.abs(z_sum) and np.abs(x_sum) > 0:
+            primary_direction = 'x'
+            direction_strength = x_sum / (window * 0.5)  # Normalize to [-1, 1]
+            other_strength = np.abs(z_sum / x_sum)
+        elif np.abs(z_sum) > 0:
+            primary_direction = 'z'
+            direction_strength = z_sum / (window * 0.5)
+            other_strength = np.abs(x_sum / z_sum)
+        else:
+            return None, 0, 0
+
+        # Check for nullification
+        if other_strength > NULLIFY_PERCENTAGE:
+            return None, 0, 0
+
+        # Check if movement is sufficient to start rewarding
+        min_steps_for_reward = int(window * REWARD_START_PERCENTAGE)
+        if np.count_nonzero(x_dev if primary_direction == 'x' else z_dev) < min_steps_for_reward:
+            return None, 0, 0
+
+        # Current step deviation
+        current_dev = (self.movement_history[primary_direction][-1] - 0.5)
+        if (current_dev > 0 and direction_strength > 0) or (current_dev < 0 and direction_strength < 0):
+            reward_multiplier = direction_strength
+        else:
+            reward_multiplier = -direction_strength  # Penalize opposite movement
+
+        return primary_direction, direction_strength, reward_multiplier

@@ -1,9 +1,11 @@
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # 0=all, 1=no INFO, 2=no INFO/WARN, 3=no INFO/WARN/ERROR
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import datetime
 import numpy as np
 import torch as th
 from typing import NamedTuple, Dict, Any, Optional
-from stable_baselines3 import DQN
+from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
@@ -11,9 +13,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import multiprocessing
 import logging
-from env_dqn_paraller import MinecraftEnv
-from stable_baselines3.dqn.policies import DQNPolicy
-from stable_baselines3.common.torch_layers import create_mlp
+from env_ppo import MinecraftEnv
+from stable_baselines3.common.policies import ActorCriticPolicy
 import random
 import traceback
 from zipfile import ZipFile
@@ -22,15 +23,16 @@ import fnmatch
 import io
 import time
 from torch.utils.tensorboard import SummaryWriter
-from stable_baselines3.common.buffers import DictReplayBuffer, DictReplayBufferSamples
 from stable_baselines3.common.vec_env import VecNormalize
 from stable_baselines3.common.utils import safe_mean
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+import psutil
+import torch
+import gc
 
 # Configuration
-MODEL_PATH_BC = "models_bc"
-MODEL_PATH_DQN = r"E:\DQN_BC_MODELS\models_dqn_from_bc"
-LOG_DIR_BASE = "tensorboard_logs_dqn_from_bc"
+MODEL_PATH_PPO = r"E:\PPO_BC_MODELS\models_ppo_large"
+LOG_DIR_BASE = "tensorboard_logs_ppo_from_bc"
 PARALLEL_ENVS = 6
 
 RUN_TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -38,25 +40,33 @@ LOG_DIR = os.path.join(LOG_DIR_BASE, f"run_{RUN_TIMESTAMP}")
 os.makedirs(LOG_DIR, exist_ok=True)
 
 TOTAL_TIMESTEPS = 5_000_000
-LEARNING_RATE = 2e-4
-BUFFER_SIZE = 10000
-BATCH_SIZE = 256
+LEARNING_RATE = 2e-4  # PPO learning rate
+N_STEPS = 1024
+BATCH_SIZE = 128
+N_EPOCHS = 10
 GAMMA = 0.99
-TRAIN_FREQ = 4
-GRADIENT_STEPS = 1
-TARGET_UPDATE_INTERVAL = 1500
-EXPLORATION_FRACTION = 0.1
-EXPLORATION_FINAL_EPS = 0.05
-EVAL_FREQ = 1000
-EVAL_EPISODES = 2
-SAVE_EVERY_STEPS = 5000
+EVAL_FREQ = 2048
+EVAL_EPISODES = 1
+SAVE_EVERY_STEPS = 20000
+GAE_LAMBDA = 0.95
+CLIP_RANGE = 0.2
+CLIP_RANGE_VF = None  # You can set this to a float value
+ENT_COEF = 0.01
+VF_COEF = 0.5
+MAX_GRAD_NORM = 0.5
+USE_SDE = False
+SDE_SAMPLE_FREQ = -1
+TARGET_KL = 0.02  # You can set this to a float value
+VERBOSE = 1
+SEED = None  # You can set this to an integer
 
-os.makedirs(MODEL_PATH_DQN, exist_ok=True)
+
+
+os.makedirs(MODEL_PATH_PPO, exist_ok=True)
 os.makedirs(LOG_DIR_BASE, exist_ok=True)
 
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
-
-DEBUG_MODE = True  # Toggle for verbose logging
+DEBUG_MODE = False
 
 def debug_log(msg):
     if DEBUG_MODE:
@@ -115,7 +125,6 @@ def find_minecraft_windows():
 
     print("\nEval window selected:")
     print(f"  ({eval_window['left']}, {eval_window['top']}) - {eval_window['width']}x{eval_window['height']}")
-
     small_x = [w for w in matched_windows if w["left"] < 100]
     large_x = [w for w in matched_windows if w["left"] >= 100]
 
@@ -193,8 +202,6 @@ class TensorboardRewardLogger(BaseCallback):
     def _on_training_end(self):
         self.writer.close()
 
-
-
 class GradNormCallback(BaseCallback):
     def __init__(self, writer, verbose=0):
         super(GradNormCallback, self).__init__(verbose)
@@ -207,34 +214,43 @@ class GradNormCallback(BaseCallback):
                 total_norm = 0
                 grad_means = []
                 grad_vars = []
-                for p in parameters:
+                for i, p in enumerate(parameters):
                     param_norm = p.grad.data.norm(2).item()
                     total_norm += param_norm ** 2
                     grad_means.append(p.grad.data.mean().item())
                     grad_vars.append(p.grad.data.var().item())
+                    
+                    if self.writer:
+                        self.writer.add_scalar(f"grad/p{i}_mean", p.grad.data.mean().item(), self.num_timesteps)
+                        self.writer.add_scalar(f"grad/p{i}_var", p.grad.data.var().item(), self.num_timesteps)
+                
                 total_norm = total_norm ** 0.5
-                self.writer.add_scalar("Gradients/TotalNorm", total_norm, self.num_timesteps)
-                self.writer.add_scalar("Gradients/MeanGrad", np.mean(grad_means), self.num_timesteps)
-                self.writer.add_scalar("Gradients/VarGrad", np.mean(grad_vars), self.num_timesteps)
+                self.writer.add_scalar("grad/total_norm", total_norm, self.num_timesteps)
+                self.writer.add_scalar("grad/mean", np.mean(grad_means), self.num_timesteps)
+                self.writer.add_scalar("grad/var", np.mean(grad_vars), self.num_timesteps)
         return True
+
 
 class LRMonitorCallback(BaseCallback):
     def __init__(self, optimizer, writer, verbose=0):
         super(LRMonitorCallback, self).__init__(verbose)
         self.optimizer = optimizer
         self.writer = writer
-        self.scheduler = ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=10, verbose=DEBUG_MODE)
+        self.scheduler = ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=10)
         self.best_mean_reward = -np.inf
 
     def _on_step(self) -> bool:
         if DEBUG_MODE and self.num_timesteps % 1000 == 0 and self.writer is not None:
             for i, param_group in enumerate(self.optimizer.param_groups):
                 lr = param_group['lr']
-                self.writer.add_scalar(f"LearningRate/group_{i}", lr, self.num_timesteps)
+                self.writer.add_scalar(f"lr/group_{i}", lr, self.num_timesteps)
+                if DEBUG_MODE:
+                    print(f"Current learning rate for group {i}: {lr}")
         return True
 
-    def update_scheduler(self, mean_reward):
-        self.scheduler.step(mean_reward)
+    def update_scheduler(self, value):
+        self.scheduler.step(value)
+
 
 class CustomEvalCallback(EvalCallback):
     def __init__(self, lr_monitor_callback: LRMonitorCallback, *args, **kwargs):
@@ -247,27 +263,35 @@ class CustomEvalCallback(EvalCallback):
             self.lr_monitor_callback.update_scheduler(self.last_mean_reward)
         return result
 
-class MultiTokenAttention(nn.Module):
-    def __init__(self, dim, num_heads=4):
+class EnhancedMultiTokenAttention(nn.Module):
+    def __init__(self, dim, num_heads=4):  # Add num_heads parameter
         super().__init__()
         self.attn = nn.MultiheadAttention(embed_dim=dim, num_heads=num_heads, batch_first=True)
+        self.norm = nn.LayerNorm(dim)
+        # Preserve more information
+        self.fusion = nn.Sequential(
+            nn.Linear(dim * 2, dim * 3),  # Expand to preserve information
+            nn.ReLU(),
+            nn.Linear(dim * 3, dim * 3)  # Output 192 (64*3)
+        )
 
     def forward(self, tokens):
-        # tokens: [Batch, 3, Dim]
         attended, _ = self.attn(tokens, tokens, tokens)
-        attended = attended.mean(dim=1) # [Batch, Dim]
-        return attended
+        attended = self.norm(attended)
+        max_pooled = th.max(attended, dim=1)[0]
+        avg_pooled = th.mean(attended, dim=1)
+        # Concatenate instead of add
+        combined = th.cat([max_pooled, avg_pooled], dim=1)
+        return self.fusion(combined)
 
 class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
-    def __init__(self, observation_space, features_dim=256, debug=False, log_dir=None, get_step_fn=None):
+    _last_logged_step = -1
+
+    def __init__(self, observation_space, features_dim=512, debug=False, log_dir=None, get_step_fn=None):
         super(BCMatchingFeatureExtractor, self).__init__(observation_space, features_dim)
         self.debug = debug
         self.writer = SummaryWriter(log_dir=log_dir) if (debug and log_dir is not None) else None
         
-        self._current_step = 0
-        self._initialized = False
-        self.debug = debug
-        self.writer = SummaryWriter(log_dir=log_dir) if (debug and log_dir is not None) else None
         self.get_step_fn = get_step_fn if get_step_fn is not None else (lambda: 0)
 
         image_shape = observation_space.spaces["image"].shape
@@ -277,16 +301,13 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
         target_block_dim = observation_space.spaces["target_block"].shape[0]
         player_state_dim = observation_space.spaces["player_state"].shape[0]
 
+        # Scalar inventory network (includes player state) - outputs 128
         self.scalar_inventory_net = nn.Sequential(
-            nn.Linear(10, 64),
+            nn.Linear(10 + player_state_dim, 128),
             nn.ReLU()
         )
 
-        self.player_state_net = nn.Sequential(
-            nn.Linear(player_state_dim, 32),
-            nn.ReLU()
-        )
-
+        # Matrix CNN and fusion - outputs 128
         self.matrix_cnn = nn.Sequential(
             nn.Conv2d(4, 16, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
@@ -302,20 +323,21 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
             matrix_cnn_out_dim = matrix_cnn_out.shape[1]
 
         self.matrix_fusion = nn.Sequential(
-            nn.Linear(matrix_cnn_out_dim, 64),
+            nn.Linear(matrix_cnn_out_dim, 128),
             nn.ReLU()
         )
 
-        self.spatial_fusion = nn.Sequential(
-            nn.Linear(64 + 32, 64),
-            nn.ReLU()
-        )
+        # Remove spatial_fusion as it's no longer needed
 
+        # Image network - outputs 128
         self.image_net = nn.Sequential(
-            nn.Conv2d(image_shape[0], 16, kernel_size=5, stride=2),
+            nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(2),
-            nn.Conv2d(16, 32, kernel_size=3, stride=2),
+            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Flatten()
         )
@@ -326,31 +348,16 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
             image_out_dim = image_out.shape[1]
 
         self.image_fc = nn.Sequential(
-            nn.Linear(image_out_dim, 64),
+            nn.Linear(image_out_dim, 128),
             nn.ReLU()
         )
 
-        class ResidualBlock(nn.Module):
-            def __init__(self, features):
-                super().__init__()
-                self.block = nn.Sequential(
-                    nn.Linear(features, features),
-                    nn.ReLU(),
-                    nn.Linear(features, features)
-                )
-
-            def forward(self, x):
-                return F.relu(x + self.block(x))
-
-        # Use attention to fuse tokens
-        self.token_attention = MultiTokenAttention(dim=64, num_heads=4)
-
+        # Final fusion layer takes 3 x 128 = 384 inputs
         self.fusion_layer = nn.Sequential(
-            nn.Linear(64, 256),
+            nn.Linear(384, 512),
             nn.ReLU(),
-            ResidualBlock(256),
-            ResidualBlock(256),
-            nn.Linear(256, features_dim),
+            nn.LayerNorm(512),
+            nn.Linear(512, 512),
             nn.ReLU()
         )
 
@@ -367,34 +374,47 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
             "surrounding_blocks": dummy_matrix
         }
         with th.no_grad():
-            test_out = self.forward(dummy_obs, test_mode=True)
+            test_out = self.forward(dummy_obs)
             debug_log(f"Forward pass successful - output shape: {test_out.shape}")
             if self.debug:
                 self._log_feature_stats(test_out, step=0)
 
-        self._num_timesteps = 0
+        self._register_gradient_hooks()
 
-    @property
-    def num_timesteps(self):
-        return self._num_timesteps
+    def _create_hook(self, name):
+        def hook(module, grad_input, grad_output):
+            if not DEBUG_MODE:
+                return
+            if grad_input and grad_input[0] is not None:
+                grad = grad_input[0]
+                grad_mean = grad.mean().item()
+                grad_var = grad.var().item()
+                step = self.get_step_fn()
+                debug_log(f"Gradient stats for {name}: mean={grad_mean:.8f}, var={grad_var:.8f}, step={step}")
+                if self.writer is not None:
+                    self.writer.add_scalar(f"Gradients/{name}_Mean", grad_mean, step)
+                    self.writer.add_scalar(f"Gradients/{name}_Variance", grad_var, step)
+            else:
+                debug_log(f"No gradient flowing through {name}")
+        return hook
 
-    @num_timesteps.setter
-    def num_timesteps(self, steps):
-        self._num_timesteps = steps
+    def _register_gradient_hooks(self):
+        target_modules = {
+            "scalar_inventory_net": self.scalar_inventory_net,
+            "matrix_cnn": self.matrix_cnn,
+            "matrix_fusion": self.matrix_fusion,
+            "image_net": self.image_net,
+            "image_fc": self.image_fc,
+            "fusion_layer": self.fusion_layer
+        }
 
-    @property 
-    def current_step(self):
-        return self._current_step
-        
-    @current_step.setter
-    def current_step(self, step):
-        self._current_step = step
-        self._initialized = True
+        for name, module in target_modules.items():
+            for submodule_name, submodule in module.named_modules():
+                if len(list(submodule.children())) == 0:  # leaf module
+                    submodule.register_full_backward_hook(self._create_hook(f"{name}.{submodule_name}" if submodule_name else name))
+            debug_log(f"Registered gradient hook for module: {name}")
 
-    def forward(self, observations, test_mode=False):
-        if not self._initialized and not test_mode:
-            debug_log("Warning: Feature extractor not properly initialized with step count")
-            
+    def forward(self, observations):
         blocks = observations["blocks"]
         hand = observations["hand"]
         target_block = observations["target_block"]
@@ -402,28 +422,27 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
         surrounding_blocks = observations["surrounding_blocks"]
         image = observations["image"]
 
-        inventory_input = th.cat([hand, target_block, blocks], dim=1)
-        inventory_features = self.scalar_inventory_net(inventory_input) * 1.2
+        # Process inventory and player state together
+        inventory_input = th.cat([hand, target_block, blocks, player_state], dim=1)
+        inventory_features = self.scalar_inventory_net(inventory_input)  # 128
 
-        player_state_features = self.player_state_net(player_state)
-
+        # Process matrix
         matrix_out = self.matrix_cnn(surrounding_blocks)
-        matrix_features = self.matrix_fusion(matrix_out)
+        matrix_features = self.matrix_fusion(matrix_out)  # 128
 
-        spatial_input = th.cat([matrix_features, player_state_features], dim=1)
-        spatial_features = self.spatial_fusion(spatial_input)
-
+        # Process image
         image_out = self.image_net(image)
-        image_features = self.image_fc(image_out)
+        image_features = self.image_fc(image_out)  # 128
 
-        tokens = th.stack([spatial_features, inventory_features, image_features], dim=1) # [B,3,64]
-        attended = self.token_attention(tokens) # [B,64]
-
-        final_features = self.fusion_layer(attended) # [B,256]
+        # Combine all 128-dim features
+        tokens = th.cat([matrix_features, inventory_features, image_features], dim=1)  # 384
+        final_features = self.fusion_layer(tokens)  # 512
 
         if self.debug:
-            current_step = self.get_step_fn()
-            self._log_feature_stats(final_features, step=current_step)
+            current_step = self.get_step_fn()  
+            if current_step > BCMatchingFeatureExtractor._last_logged_step:
+                self._log_feature_stats(final_features, step=current_step)
+                BCMatchingFeatureExtractor._last_logged_step = current_step
 
         return final_features
 
@@ -434,223 +453,31 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
         var = features.var().item()
         debug_log(f"Feature stats at step {step}: mean={mean:.4f}, var={var:.4f}")
         if self.writer is not None:
-            self.writer.add_scalar("Features/Mean", mean, step)
-            self.writer.add_scalar("Features/Variance", var, step)
+            self.writer.add_scalar("feat/mean", mean, step)
+            self.writer.add_scalar("feat/var", var, step)
 
     def close(self):
         if self.writer is not None:
             self.writer.close()
 
-def transfer_bc_weights_to_dqn(bc_model_path, dqn_model):
+def load_ppo_model(model_path, env, device):
     try:
-        print(f"Loading BC model from {bc_model_path}")
-        bc_state_dict = th.load(bc_model_path, map_location=device, weights_only=True)
+        print(f"Loading PPO model weights from {model_path}...")
         
-        feature_extractor = BCMatchingFeatureExtractor(dqn_model.observation_space, debug=DEBUG_MODE, log_dir=LOG_DIR)
-        feature_extractor = feature_extractor.to(device)
-        dqn_model.policy.features_extractor = feature_extractor
-        dqn_fe_state_dict = feature_extractor.state_dict()
+        # Create new model with current parameters
+        new_model = create_new_model(env, debug=DEBUG_MODE, log_dir=LOG_DIR)
         
-        transferred_layers = []
-        skipped_layers = []
+        # Load old model
+        old_model = PPO.load(model_path, env=env, device=device)
         
-        for dqn_key in dqn_fe_state_dict.keys():
-            bc_key = dqn_key
-            if bc_key in bc_state_dict:
-                if bc_state_dict[bc_key].shape == dqn_fe_state_dict[dqn_key].shape:
-                    dqn_fe_state_dict[dqn_key].copy_(bc_state_dict[bc_key])
-                    transferred_layers.append(dqn_key)
-                else:
-                    skipped_layers.append((dqn_key, bc_state_dict[bc_key].shape, dqn_fe_state_dict[dqn_key].shape))
-            else:
-                skipped_layers.append((dqn_key, 'Not in BC model', dqn_fe_state_dict[dqn_key].shape))
+        # Transfer only the policy parameters
+        new_model.policy.load_state_dict(old_model.policy.state_dict())
         
-        feature_extractor.load_state_dict(dqn_fe_state_dict)
+        print("Model weights transferred successfully.")
+        print("Using current training parameters with loaded weights.")
         
-        print(f"\nTransferred layers ({len(transferred_layers)}):")
-        for layer in transferred_layers:
-            print(f"  - {layer}")
-            
-        print(f"\nSkipped layers ({len(skipped_layers)}):")
-        for layer, bc_shape, dqn_shape in skipped_layers:
-            print(f"  - {layer}: BC shape: {bc_shape}, DQN shape: {dqn_shape}")
-            
-        dummy_obs = dqn_model.env.reset()
-        with th.no_grad():
-            actions, _ = dqn_model.predict(dummy_obs, deterministic=True)
-            print(f"Post-transfer prediction test successful - actions: {actions}")
-                
-    except Exception as e:
-        print(f"Error during weight transfer: {str(e)}")
-        raise
-
-def create_new_model(env, debug=True, log_dir=None):
-    debug_log("Starting model creation...")
-    dummy_get_step_fn = lambda: 0
-    
-    policy_kwargs = dict(
-        features_extractor_class=BCMatchingFeatureExtractor,
-        features_extractor_kwargs=dict(
-            features_dim=256,
-            debug=debug,
-            log_dir=LOG_DIR,
-            get_step_fn=dummy_get_step_fn
-        ),
-        net_arch=[256, 256]
-    )
-
-    try:
-        model = DQN(
-            policy=DQNPolicy,
-            env=env,
-            learning_rate=LEARNING_RATE,
-            buffer_size=BUFFER_SIZE,
-            batch_size=BATCH_SIZE,
-            gamma=GAMMA,
-            train_freq=TRAIN_FREQ,
-            gradient_steps=GRADIENT_STEPS,
-            target_update_interval=TARGET_UPDATE_INTERVAL,
-            exploration_fraction=EXPLORATION_FRACTION,
-            exploration_final_eps=EXPLORATION_FINAL_EPS,
-            tensorboard_log=LOG_DIR,
-            device=device,
-            policy_kwargs=policy_kwargs,
-            verbose=1
-        )
-
-        def get_step_fn():
-            return model.num_timesteps
-        model.policy.features_extractor.get_step_fn = get_step_fn
-
-        return model
-    except Exception as e:
-        debug_log(f"Error creating model: {e}")
-        debug_log(f"Policy kwargs: {policy_kwargs}")
-        raise
-
-def transfer_weights(old_model, new_model):
-    old_state_dict = old_model.policy.state_dict()
-    new_state_dict = new_model.policy.state_dict()
-
-    transferred_layers = []
-    skipped_layers = []
-
-    for key, param in old_state_dict.items():
-        if key in new_state_dict:
-            if new_state_dict[key].shape == param.shape:
-                new_state_dict[key] = param
-                transferred_layers.append(key)
-            else:
-                skipped_layers.append((key, param.shape, new_state_dict[key].shape))
-        else:
-            skipped_layers.append((key, param.shape, 'Not present in new model'))
-
-    new_model.policy.load_state_dict(new_state_dict, strict=False)
-    print("Weight transfer completed.")
-    print(f"Transferred layers ({len(transferred_layers)}):")
-    for layer in transferred_layers:
-        print(f"  - {layer}")
-    print(f"Skipped layers ({len(skipped_layers)}):")
-    for layer, old_shape, new_shape in skipped_layers:
-        print(f"  - {layer}: {old_shape} -> {new_shape}")
-
-def read_dqn_model_metadata(model_path):
-    try:
-        with ZipFile(model_path, 'r') as zip_ref:
-            print("\nZIP file contents:")
-            for info in zip_ref.filelist:
-                print(f"  {info.filename}: {info.file_size} bytes")
-            
-            if 'data' in zip_ref.namelist():
-                with zip_ref.open('data') as f:
-                    content = f.read()
-                    print("\nModel metadata:", content[:1000], "...")
-                    
-            if 'policy.pth' in zip_ref.namelist():
-                print("\nPolicy file found")
-    except Exception as e:
-        print(f"Error reading model file: {e}")
-        raise
-
-def raw_transfer_dqn_weights(model_path, new_model):
-    print(f"\nTransferring weights from: {model_path}")
-    
-    try:
-        new_state_dict = new_model.policy.state_dict()
-        print("\nNew model layers:")
-        for key, tensor in new_state_dict.items():
-            print(f"  {key}: {tensor.shape}")
-
-        transferred = []
-        skipped = []
-
-        with ZipFile(model_path, 'r') as zip_ref:
-            print("\nZIP contents:")
-            for info in zip_ref.filelist:
-                print(f"  {info.filename}: {info.file_size} bytes")
-
-            if 'policy.pth' in zip_ref.namelist():
-                with zip_ref.open('policy.pth') as f:
-                    buffer = io.BytesIO(f.read())
-                    old_state_dict = th.load(buffer, map_location=device)
-                    
-                    print("\nLoaded model layers:")
-                    for key, tensor in old_state_dict.items():
-                        print(f"  {key}: {tensor.shape}")
-
-                    for new_key in new_state_dict.keys():
-                        if new_key in old_state_dict:
-                            old_tensor = old_state_dict[new_key]
-                            new_tensor = new_state_dict[new_key]
-                            
-                            if old_tensor.shape == new_tensor.shape:
-                                new_state_dict[new_key].copy_(old_tensor)
-                                transferred.append(new_key)
-                            elif new_key.startswith("features_extractor.scalar_inventory_net") and new_key in old_state_dict:
-                                min_dim = min(old_tensor.shape[1], new_tensor.shape[1])
-                                new_state_dict[new_key][:, :min_dim].copy_(old_tensor[:, :min_dim])
-                                transferred.append(f"{new_key} (partial)")
-                            else:
-                                skipped.append((new_key, old_tensor.shape, new_tensor.shape))
-                        else:
-                            skipped.append((new_key, "Not found in old model", new_state_dict[new_key].shape))
-
-        new_model.policy.load_state_dict(new_state_dict, strict=False)
-
-        print(f"\nTransferred {len(transferred)} layers:")
-        for layer in transferred:
-            print(f"  + {layer}")
-
-        print(f"\nSkipped {len(skipped)} layers:")
-        for layer, old_shape, new_shape in skipped:
-            print(f"  - {layer}: old={old_shape}, new={new_shape}")
-
         return new_model
-
-    except Exception as e:
-        print(f"Error during transfer: {e}")
-        print(traceback.format_exc())
-        raise
-
-def load_dqn_model(model_path, env, device):
-    try:
-        print(f"Loading DQN model from {model_path}...")
-        model = DQN.load(model_path, env=env, device=device)
-        print("Model loaded successfully.")
-
-        # Update learning parameters
-        model.learning_rate = LEARNING_RATE
-        model.buffer_size = BUFFER_SIZE
-        model.batch_size = BATCH_SIZE
-        model.gamma = GAMMA
-        model.train_freq = TRAIN_FREQ
-        model.gradient_steps = GRADIENT_STEPS
-        model.target_update_interval = TARGET_UPDATE_INTERVAL
-        model.exploration_fraction = EXPLORATION_FRACTION
-        model.exploration_final_eps = EXPLORATION_FINAL_EPS
-
-        print("Updated model with current learning parameters.")
-        return model
+        
     except Exception as e:
         print(f"Error loading model: {e}")
         raise
@@ -697,10 +524,100 @@ def get_latest_model(model_dir):
     latest_model = max(models, key=lambda x: os.path.getctime(os.path.join(model_dir, x)))
     return os.path.join(model_dir, latest_model)
 
+
+def create_new_model(env, debug=True, log_dir=None):
+    debug_log("Starting PPO model creation...")
+    dummy_get_step_fn = lambda: 0
+
+    policy_kwargs = dict(
+        features_extractor_class=BCMatchingFeatureExtractor,
+        features_extractor_kwargs=dict(
+            features_dim=512,
+            debug=debug,
+            log_dir=LOG_DIR,
+            get_step_fn=dummy_get_step_fn
+        ),
+        net_arch=[512, 256, 256]  # Simple network arch
+    )
+
+    model = PPO(
+        policy=ActorCriticPolicy,
+        env=env,
+        learning_rate=LEARNING_RATE,
+        n_steps=N_STEPS,
+        batch_size=BATCH_SIZE,
+        n_epochs=N_EPOCHS,
+        gamma=GAMMA,
+        gae_lambda=GAE_LAMBDA,
+        clip_range=CLIP_RANGE,
+        clip_range_vf=CLIP_RANGE_VF,
+        ent_coef=ENT_COEF,
+        vf_coef=VF_COEF,
+        max_grad_norm=MAX_GRAD_NORM,
+        use_sde=USE_SDE,
+        sde_sample_freq=SDE_SAMPLE_FREQ,
+        target_kl=TARGET_KL,
+        tensorboard_log=LOG_DIR,
+        device=device,
+        policy_kwargs=policy_kwargs,
+        verbose=VERBOSE,
+        seed=SEED
+    )
+
+    
+    def get_step_fn():
+        return model.num_timesteps
+
+    # Force features_extractor creation
+    dummy_obs = env.observation_space.sample()
+    dummy_tensor = model.policy.obs_to_tensor(dummy_obs)[0]
+    with th.no_grad():
+        model.policy(dummy_tensor)
+
+    # Set get_step_fn for feature extractor
+    model.policy.features_extractor.get_step_fn = get_step_fn
+
+    # Register gradient hooks for pi_net and value_net
+    def create_grad_hook(net_name, module_name):
+        def hook(module, grad_input, grad_output):
+            if not DEBUG_MODE:
+                return
+            if grad_input and grad_input[0] is not None:
+                grad = grad_input[0]
+                grad_mean = grad.mean().item()
+                grad_var = grad.var().item()
+                step = get_step_fn()
+                debug_log(f"Gradient stats for {net_name}.{module_name}: mean={grad_mean:.4f}, var={grad_var:.4f}, step={step}")
+                # If model.logger existed, we could record there. We'll use writer:
+                if model.logger:
+                    model.logger.record(f"grad_mean/{net_name}.{module_name}", grad_mean, step)
+                    model.logger.record(f"grad_var/{net_name}.{module_name}", grad_var, step)
+            else:
+                debug_log(f"No gradient flowing through {net_name}.{module_name}")
+        return hook
+
+    def register_net_hooks(net, net_name):
+        for name, module in net.named_modules():
+            if len(list(module.children())) == 0 and isinstance(module, (nn.Linear, nn.Conv2d)):
+                module.register_full_backward_hook(create_grad_hook(net_name, name))
+
+    # PPO's MlpPolicy has mlp_extractor with policy_net and value_net
+    register_net_hooks(model.policy.mlp_extractor.policy_net, "policy_net")
+    register_net_hooks(model.policy.mlp_extractor.value_net, "value_net")
+
+    return model
+
+def log_memory_usage():
+    process = psutil.Process()
+    cpu_mem = process.memory_info().rss / 1024 / 1024  # MB
+    gpu_mem = torch.cuda.memory_allocated() / 1024 / 1024  # MB if using CUDA
+    print(f"CPU Memory: {cpu_mem:.2f}MB, GPU Memory: {gpu_mem:.2f}MB")
+
+
 def main():
     print("Select an option:")
-    print("1. Load weights from a previous DQN model")
-    print("2. Load existing DQN model")
+    print("1. Load weights from a previous PPO model")
+    print("2. Load existing PPO model")
     print("3. Start training from scratch")
     choice = input("Enter 1, 2, or 3: ").strip()
 
@@ -718,24 +635,25 @@ def main():
     print("Evaluation Environment observation space:", eval_env.observation_space)
 
     if choice == "1":
-        dqn_models = [f for f in os.listdir(MODEL_PATH_DQN) if f.endswith('.zip')]
-        if not dqn_models:
-            print("No DQN models found. Starting from scratch.")
+        ppo_models = [f for f in os.listdir(MODEL_PATH_PPO) if f.endswith('.zip')]
+        if not ppo_models:
+            print("No PPO models found. Starting from scratch.")
             model = create_new_model(train_env, debug=DEBUG_MODE, log_dir=LOG_DIR)
         else:
-            print("\nAvailable DQN models:")
-            for idx, name in enumerate(dqn_models, 1):
+            print("\nAvailable PPO models:")
+            for idx, name in enumerate(ppo_models, 1):
                 print(f"{idx}. {name}")
             try:
                 model_idx = int(input("Select the model number to transfer weights from: ")) - 1
-                if model_idx < 0 or model_idx >= len(dqn_models):
+                if model_idx < 0 or model_idx >= len(ppo_models):
                     raise IndexError("Selected model number is out of range.")
-                selected_model = dqn_models[model_idx]
-                model_path = os.path.join(MODEL_PATH_DQN, selected_model)
+                selected_model = ppo_models[model_idx]
+                model_path = os.path.join(MODEL_PATH_PPO, selected_model)
                 
                 model = create_new_model(train_env, debug=DEBUG_MODE, log_dir=LOG_DIR)
                 print(f"Transferring weights from {selected_model}...")
-                raw_transfer_dqn_weights(model_path, model)
+                # Implement transfer if needed
+                # raw_transfer_ppo_weights(model_path, model)
                 print("Weight transfer completed successfully.")
             except ValueError:
                 print("Invalid input. Please enter a valid number.")
@@ -748,18 +666,31 @@ def main():
                 return
 
     elif choice == "2":
-        dqn_models = [f for f in os.listdir(MODEL_PATH_DQN) if f.endswith('.zip')]
-        if not dqn_models:
-            print("No DQN models found. Starting from scratch.")
+        ppo_models = [f for f in os.listdir(MODEL_PATH_PPO) if f.endswith('.zip')]
+        if not ppo_models:
+            print("No PPO models found. Starting from scratch.")
             model = create_new_model(train_env, debug=DEBUG_MODE, log_dir=LOG_DIR)
         else:
-            latest_model_path = get_latest_model(MODEL_PATH_DQN)
-            if latest_model_path:
-                print(f"Loading the latest DQN model from {latest_model_path}...")
-                model = load_dqn_model(latest_model_path, train_env, device)
-            else:
-                print("No models found. Starting from scratch.")
-                model = create_new_model(train_env, debug=DEBUG_MODE, log_dir=LOG_DIR)
+            print("\nAvailable PPO models:")
+            for idx, name in enumerate(ppo_models, 1):
+                print(f"{idx}. {name}")
+            try:
+                model_idx = int(input("Select the model number to load: ")) - 1
+                if model_idx < 0 or model_idx >= len(ppo_models):
+                    raise IndexError("Selected model number is out of range.")
+                selected_model = ppo_models[model_idx]
+                model_path = os.path.join(MODEL_PATH_PPO, selected_model)
+                print(f"Loading the selected PPO model from {model_path}...")
+                model = load_ppo_model(model_path, train_env, device)
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
+                return
+            except IndexError as ie:
+                print(f"Error: {ie}")
+                return
+            except Exception as e:
+                print(f"An unexpected error occurred during model loading: {e}")
+                return
 
     else:
         model = create_new_model(train_env, debug=DEBUG_MODE, log_dir=LOG_DIR)
@@ -771,7 +702,7 @@ def main():
     eval_callback = CustomEvalCallback(
         lr_monitor_callback=lr_monitor_callback,
         eval_env=eval_env,
-        best_model_save_path=MODEL_PATH_DQN,
+        best_model_save_path=MODEL_PATH_PPO,
         log_path=LOG_DIR,
         eval_freq=EVAL_FREQ,
         n_eval_episodes=EVAL_EPISODES,
@@ -779,11 +710,10 @@ def main():
     )
     grad_norm_callback = GradNormCallback(writer=writer)
 
-    # Ensure FeatureExtractorStepCallback runs first
     callbacks = [
         SaveOnStepCallback(
             save_freq=SAVE_EVERY_STEPS,
-            save_path=MODEL_PATH_DQN
+            save_path=MODEL_PATH_PPO
         ),
         eval_callback,
         grad_norm_callback,
@@ -793,31 +723,37 @@ def main():
     timesteps_done = model.num_timesteps if hasattr(model, 'num_timesteps') else 0
     while timesteps_done < TOTAL_TIMESTEPS:
         try:
-            debug_log(f"Starting training iteration at timestep {timesteps_done}")
+            if timesteps_done % 10000 == 0:
+                log_memory_usage()
+            debug_log(f"Starting PPO training iteration at timestep {timesteps_done}")
             remaining_timesteps = TOTAL_TIMESTEPS - timesteps_done
             model.learn(
                 total_timesteps=remaining_timesteps,
                 callback=callbacks,
-                tb_log_name=f"dqn_from_bc_{RUN_TIMESTAMP}",
+                tb_log_name=f"ppo_from_bc_{RUN_TIMESTAMP}",
                 reset_num_timesteps=False
             )
             timesteps_done = TOTAL_TIMESTEPS
+            if timesteps_done % 10000 == 0:
+                gc.collect()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
 
         except Exception as e:
             print(f"Error during training: {e}")
             debug_log(f"Stack trace: {traceback.format_exc()}")
             recovery_path = os.path.join(
-                MODEL_PATH_DQN, 
+                MODEL_PATH_PPO, 
                 f"recovery_model_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
             )
             model.save(recovery_path)
             print(f"Saved recovery model to {recovery_path}")
             
-            latest_model_path = get_latest_model(MODEL_PATH_DQN)
+            latest_model_path = get_latest_model(MODEL_PATH_PPO)
             if (latest_model_path and latest_model_path != recovery_path):
                 print(f"Loading the latest model from {latest_model_path} to continue training...")
                 try:
-                    model = load_dqn_model(latest_model_path, train_env, device)
+                    model = load_ppo_model(latest_model_path, train_env, device)
                 except Exception as load_e:
                     print(f"Failed to load the latest model: {load_e}")
                     break
@@ -841,9 +777,9 @@ def main():
             print("Restarting training...")
             continue
 
-    final_path = os.path.join(MODEL_PATH_DQN, f"final_model_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.zip")
+    final_path = os.path.join(MODEL_PATH_PPO, f"final_model_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.zip")
     model.save(final_path)
-    print(f"Training completed. Final model saved to {final_path}")
+    print(f"Training completed. Final PPO model saved to {final_path}")
     
     train_env.close()
     eval_env.close()

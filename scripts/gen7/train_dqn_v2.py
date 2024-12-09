@@ -1,4 +1,6 @@
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import datetime
 import numpy as np
 import torch as th
@@ -12,8 +14,7 @@ import torch.nn.functional as F
 import multiprocessing
 import logging
 from env_dqn_paraller import MinecraftEnv
-from stable_baselines3.dqn.policies import DQNPolicy
-from stable_baselines3.common.torch_layers import create_mlp
+from stable_baselines3.dqn.policies import MlpPolicy
 import random
 import traceback
 from zipfile import ZipFile
@@ -22,7 +23,6 @@ import fnmatch
 import io
 import time
 from torch.utils.tensorboard import SummaryWriter
-from stable_baselines3.common.buffers import DictReplayBuffer, DictReplayBufferSamples
 from stable_baselines3.common.vec_env import VecNormalize
 from stable_baselines3.common.utils import safe_mean
 from torch.optim.lr_scheduler import ReduceLROnPlateau
@@ -37,14 +37,14 @@ RUN_TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 LOG_DIR = os.path.join(LOG_DIR_BASE, f"run_{RUN_TIMESTAMP}")
 os.makedirs(LOG_DIR, exist_ok=True)
 
-TOTAL_TIMESTEPS = 5_000_000
+TOTAL_TIMESTEPS = 2_000_000
 LEARNING_RATE = 2e-4
 BUFFER_SIZE = 10000
 BATCH_SIZE = 256
 GAMMA = 0.99
 TRAIN_FREQ = 4
 GRADIENT_STEPS = 1
-TARGET_UPDATE_INTERVAL = 1500
+TARGET_UPDATE_INTERVAL = 1000
 EXPLORATION_FRACTION = 0.1
 EXPLORATION_FINAL_EPS = 0.05
 EVAL_FREQ = 1000
@@ -55,8 +55,7 @@ os.makedirs(MODEL_PATH_DQN, exist_ok=True)
 os.makedirs(LOG_DIR_BASE, exist_ok=True)
 
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
-
-DEBUG_MODE = True  # Toggle for verbose logging
+DEBUG_MODE = False
 
 def debug_log(msg):
     if DEBUG_MODE:
@@ -115,7 +114,6 @@ def find_minecraft_windows():
 
     print("\nEval window selected:")
     print(f"  ({eval_window['left']}, {eval_window['top']}) - {eval_window['width']}x{eval_window['height']}")
-
     small_x = [w for w in matched_windows if w["left"] < 100]
     large_x = [w for w in matched_windows if w["left"] >= 100]
 
@@ -193,8 +191,6 @@ class TensorboardRewardLogger(BaseCallback):
     def _on_training_end(self):
         self.writer.close()
 
-
-
 class GradNormCallback(BaseCallback):
     def __init__(self, writer, verbose=0):
         super(GradNormCallback, self).__init__(verbose)
@@ -207,15 +203,21 @@ class GradNormCallback(BaseCallback):
                 total_norm = 0
                 grad_means = []
                 grad_vars = []
-                for p in parameters:
+                for i, p in enumerate(parameters):
                     param_norm = p.grad.data.norm(2).item()
                     total_norm += param_norm ** 2
                     grad_means.append(p.grad.data.mean().item())
                     grad_vars.append(p.grad.data.var().item())
+                    
+                    # Log individual parameter gradients with shorter names
+                    if self.writer:
+                        self.writer.add_scalar(f"grad/p{i}_mean", p.grad.data.mean().item(), self.num_timesteps)
+                        self.writer.add_scalar(f"grad/p{i}_var", p.grad.data.var().item(), self.num_timesteps)
+                
                 total_norm = total_norm ** 0.5
-                self.writer.add_scalar("Gradients/TotalNorm", total_norm, self.num_timesteps)
-                self.writer.add_scalar("Gradients/MeanGrad", np.mean(grad_means), self.num_timesteps)
-                self.writer.add_scalar("Gradients/VarGrad", np.mean(grad_vars), self.num_timesteps)
+                self.writer.add_scalar("grad/total_norm", total_norm, self.num_timesteps)
+                self.writer.add_scalar("grad/mean", np.mean(grad_means), self.num_timesteps)
+                self.writer.add_scalar("grad/var", np.mean(grad_vars), self.num_timesteps)
         return True
 
 class LRMonitorCallback(BaseCallback):
@@ -223,14 +225,16 @@ class LRMonitorCallback(BaseCallback):
         super(LRMonitorCallback, self).__init__(verbose)
         self.optimizer = optimizer
         self.writer = writer
-        self.scheduler = ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=10, verbose=DEBUG_MODE)
+        self.scheduler = ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=10)
         self.best_mean_reward = -np.inf
 
     def _on_step(self) -> bool:
         if DEBUG_MODE and self.num_timesteps % 1000 == 0 and self.writer is not None:
             for i, param_group in enumerate(self.optimizer.param_groups):
                 lr = param_group['lr']
-                self.writer.add_scalar(f"LearningRate/group_{i}", lr, self.num_timesteps)
+                self.writer.add_scalar(f"lr/group_{i}", lr, self.num_timesteps)
+                if DEBUG_MODE:
+                    print(f"Current learning rate for group {i}: {lr}")
         return True
 
     def update_scheduler(self, mean_reward):
@@ -247,27 +251,35 @@ class CustomEvalCallback(EvalCallback):
             self.lr_monitor_callback.update_scheduler(self.last_mean_reward)
         return result
 
-class MultiTokenAttention(nn.Module):
-    def __init__(self, dim, num_heads=4):
+class EnhancedMultiTokenAttention(nn.Module):
+    def __init__(self, dim, num_heads=4):  # Add num_heads parameter
         super().__init__()
         self.attn = nn.MultiheadAttention(embed_dim=dim, num_heads=num_heads, batch_first=True)
+        self.norm = nn.LayerNorm(dim)
+        # Preserve more information
+        self.fusion = nn.Sequential(
+            nn.Linear(dim * 2, dim * 3),  # Expand to preserve information
+            nn.ReLU(),
+            nn.Linear(dim * 3, dim * 3)  # Output 192 (64*3)
+        )
 
     def forward(self, tokens):
-        # tokens: [Batch, 3, Dim]
         attended, _ = self.attn(tokens, tokens, tokens)
-        attended = attended.mean(dim=1) # [Batch, Dim]
-        return attended
+        attended = self.norm(attended)
+        max_pooled = th.max(attended, dim=1)[0]
+        avg_pooled = th.mean(attended, dim=1)
+        # Concatenate instead of add
+        combined = th.cat([max_pooled, avg_pooled], dim=1)
+        return self.fusion(combined)
 
 class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
+    _last_logged_step = -1
+
     def __init__(self, observation_space, features_dim=256, debug=False, log_dir=None, get_step_fn=None):
         super(BCMatchingFeatureExtractor, self).__init__(observation_space, features_dim)
         self.debug = debug
         self.writer = SummaryWriter(log_dir=log_dir) if (debug and log_dir is not None) else None
         
-        self._current_step = 0
-        self._initialized = False
-        self.debug = debug
-        self.writer = SummaryWriter(log_dir=log_dir) if (debug and log_dir is not None) else None
         self.get_step_fn = get_step_fn if get_step_fn is not None else (lambda: 0)
 
         image_shape = observation_space.spaces["image"].shape
@@ -342,15 +354,17 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
             def forward(self, x):
                 return F.relu(x + self.block(x))
 
-        # Use attention to fuse tokens
-        self.token_attention = MultiTokenAttention(dim=64, num_heads=4)
+        self.token_attention = EnhancedMultiTokenAttention(dim=64, num_heads=4)
 
         self.fusion_layer = nn.Sequential(
-            nn.Linear(64, 256),
+            nn.Linear(192, 256),  # 192 = 64*3
             nn.ReLU(),
+            nn.LayerNorm(256),  # Add normalization
             ResidualBlock(256),
+            nn.Dropout(0.1),    # Add regularization
             ResidualBlock(256),
-            nn.Linear(256, features_dim),
+            nn.LayerNorm(256),
+            nn.Linear(256, 512),
             nn.ReLU()
         )
 
@@ -367,34 +381,50 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
             "surrounding_blocks": dummy_matrix
         }
         with th.no_grad():
-            test_out = self.forward(dummy_obs, test_mode=True)
+            test_out = self.forward(dummy_obs)
             debug_log(f"Forward pass successful - output shape: {test_out.shape}")
             if self.debug:
                 self._log_feature_stats(test_out, step=0)
 
-        self._num_timesteps = 0
+        self._register_gradient_hooks()
 
-    @property
-    def num_timesteps(self):
-        return self._num_timesteps
+    def _create_hook(self, name):
+        def hook(module, grad_input, grad_output):
+            if not DEBUG_MODE:
+                return
+            if grad_input and grad_input[0] is not None:
+                grad = grad_input[0]
+                grad_mean = grad.mean().item()
+                grad_var = grad.var().item()
+                step = self.get_step_fn()
+                debug_log(f"Gradient stats for {name}: mean={grad_mean:.8f}, var={grad_var:.8f}, step={step}")
+                if self.writer is not None:
+                    self.writer.add_scalar(f"Gradients/{name}_Mean", grad_mean, step)
+                    self.writer.add_scalar(f"Gradients/{name}_Variance", grad_var, step)
+            else:
+                debug_log(f"No gradient flowing through {name}")
+        return hook
 
-    @num_timesteps.setter
-    def num_timesteps(self, steps):
-        self._num_timesteps = steps
+    def _register_gradient_hooks(self):
+        target_modules = {
+            "scalar_inventory_net": self.scalar_inventory_net,
+            "player_state_net": self.player_state_net,
+            "matrix_cnn": self.matrix_cnn,
+            "matrix_fusion": self.matrix_fusion,
+            "spatial_fusion": self.spatial_fusion,
+            "image_net": self.image_net,
+            "image_fc": self.image_fc,
+            "token_attention": self.token_attention,
+            "fusion_layer": self.fusion_layer
+        }
 
-    @property 
-    def current_step(self):
-        return self._current_step
-        
-    @current_step.setter
-    def current_step(self, step):
-        self._current_step = step
-        self._initialized = True
+        for name, module in target_modules.items():
+            for submodule_name, submodule in module.named_modules():
+                if len(list(submodule.children())) == 0:  # leaf module
+                    submodule.register_full_backward_hook(self._create_hook(f"{name}.{submodule_name}" if submodule_name else name))
+            debug_log(f"Registered gradient hook for module: {name}")
 
-    def forward(self, observations, test_mode=False):
-        if not self._initialized and not test_mode:
-            debug_log("Warning: Feature extractor not properly initialized with step count")
-            
+    def forward(self, observations):
         blocks = observations["blocks"]
         hand = observations["hand"]
         target_block = observations["target_block"]
@@ -416,14 +446,15 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
         image_out = self.image_net(image)
         image_features = self.image_fc(image_out)
 
-        tokens = th.stack([spatial_features, inventory_features, image_features], dim=1) # [B,3,64]
-        attended = self.token_attention(tokens) # [B,64]
-
-        final_features = self.fusion_layer(attended) # [B,256]
+        tokens = th.stack([spatial_features, inventory_features, image_features], dim=1)  # [B,3,64]
+        attended = self.token_attention(tokens)  # [B,64]
+        final_features = self.fusion_layer(attended)  # [B,256]
 
         if self.debug:
-            current_step = self.get_step_fn()
-            self._log_feature_stats(final_features, step=current_step)
+            current_step = self.get_step_fn()  
+            if current_step > BCMatchingFeatureExtractor._last_logged_step:
+                self._log_feature_stats(final_features, step=current_step)
+                BCMatchingFeatureExtractor._last_logged_step = current_step
 
         return final_features
 
@@ -434,203 +465,98 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
         var = features.var().item()
         debug_log(f"Feature stats at step {step}: mean={mean:.4f}, var={var:.4f}")
         if self.writer is not None:
-            self.writer.add_scalar("Features/Mean", mean, step)
-            self.writer.add_scalar("Features/Variance", var, step)
+            self.writer.add_scalar("feat/mean", mean, step)
+            self.writer.add_scalar("feat/var", var, step)
 
     def close(self):
         if self.writer is not None:
             self.writer.close()
 
 def transfer_bc_weights_to_dqn(bc_model_path, dqn_model):
-    try:
-        print(f"Loading BC model from {bc_model_path}")
-        bc_state_dict = th.load(bc_model_path, map_location=device, weights_only=True)
-        
-        feature_extractor = BCMatchingFeatureExtractor(dqn_model.observation_space, debug=DEBUG_MODE, log_dir=LOG_DIR)
-        feature_extractor = feature_extractor.to(device)
-        dqn_model.policy.features_extractor = feature_extractor
-        dqn_fe_state_dict = feature_extractor.state_dict()
-        
-        transferred_layers = []
-        skipped_layers = []
-        
-        for dqn_key in dqn_fe_state_dict.keys():
-            bc_key = dqn_key
-            if bc_key in bc_state_dict:
-                if bc_state_dict[bc_key].shape == dqn_fe_state_dict[dqn_key].shape:
-                    dqn_fe_state_dict[dqn_key].copy_(bc_state_dict[bc_key])
-                    transferred_layers.append(dqn_key)
-                else:
-                    skipped_layers.append((dqn_key, bc_state_dict[bc_key].shape, dqn_fe_state_dict[dqn_key].shape))
-            else:
-                skipped_layers.append((dqn_key, 'Not in BC model', dqn_fe_state_dict[dqn_key].shape))
-        
-        feature_extractor.load_state_dict(dqn_fe_state_dict)
-        
-        print(f"\nTransferred layers ({len(transferred_layers)}):")
-        for layer in transferred_layers:
-            print(f"  - {layer}")
-            
-        print(f"\nSkipped layers ({len(skipped_layers)}):")
-        for layer, bc_shape, dqn_shape in skipped_layers:
-            print(f"  - {layer}: BC shape: {bc_shape}, DQN shape: {dqn_shape}")
-            
-        dummy_obs = dqn_model.env.reset()
-        with th.no_grad():
-            actions, _ = dqn_model.predict(dummy_obs, deterministic=True)
-            print(f"Post-transfer prediction test successful - actions: {actions}")
-                
-    except Exception as e:
-        print(f"Error during weight transfer: {str(e)}")
-        raise
+    pass
 
 def create_new_model(env, debug=True, log_dir=None):
     debug_log("Starting model creation...")
     dummy_get_step_fn = lambda: 0
-    
+
     policy_kwargs = dict(
         features_extractor_class=BCMatchingFeatureExtractor,
         features_extractor_kwargs=dict(
-            features_dim=256,
+            features_dim=512,  # Increase feature dimension
             debug=debug,
             log_dir=LOG_DIR,
             get_step_fn=dummy_get_step_fn
         ),
-        net_arch=[256, 256]
+        net_arch=[512, 256, 256]  # Deeper network for action-value estimation
     )
 
-    try:
-        model = DQN(
-            policy=DQNPolicy,
-            env=env,
-            learning_rate=LEARNING_RATE,
-            buffer_size=BUFFER_SIZE,
-            batch_size=BATCH_SIZE,
-            gamma=GAMMA,
-            train_freq=TRAIN_FREQ,
-            gradient_steps=GRADIENT_STEPS,
-            target_update_interval=TARGET_UPDATE_INTERVAL,
-            exploration_fraction=EXPLORATION_FRACTION,
-            exploration_final_eps=EXPLORATION_FINAL_EPS,
-            tensorboard_log=LOG_DIR,
-            device=device,
-            policy_kwargs=policy_kwargs,
-            verbose=1
-        )
+    model = DQN(
+        policy=MlpPolicy,
+        env=env,
+        learning_rate=LEARNING_RATE,
+        buffer_size=BUFFER_SIZE,
+        batch_size=BATCH_SIZE,
+        gamma=GAMMA,
+        train_freq=TRAIN_FREQ,
+        gradient_steps=GRADIENT_STEPS,
+        target_update_interval=TARGET_UPDATE_INTERVAL,
+        exploration_fraction=EXPLORATION_FRACTION,
+        exploration_final_eps=EXPLORATION_FINAL_EPS,
+        tensorboard_log=LOG_DIR,
+        device=device,
+        policy_kwargs=policy_kwargs,
+        verbose=1
+    )
 
-        def get_step_fn():
-            return model.num_timesteps
-        model.policy.features_extractor.get_step_fn = get_step_fn
+    def get_step_fn():
+        return model.num_timesteps
 
-        return model
-    except Exception as e:
-        debug_log(f"Error creating model: {e}")
-        debug_log(f"Policy kwargs: {policy_kwargs}")
-        raise
+    # Force features_extractor creation
+    dummy_obs = env.observation_space.sample()
+    dummy_tensor = model.policy.obs_to_tensor(dummy_obs)[0]
+    with th.no_grad():
+        model.policy(dummy_tensor, deterministic=False)
+
+    model.policy.q_net.features_extractor.get_step_fn = get_step_fn
+
+    # Register additional gradient hooks for q_net and q_net_target
+    def create_grad_hook(net_name, module_name):
+        def hook(module, grad_input, grad_output):
+            if not DEBUG_MODE:
+                return
+            if grad_input and grad_input[0] is not None:
+                grad = grad_input[0]
+                grad_mean = grad.mean().item()
+                grad_var = grad.var().item()
+                step = get_step_fn()
+                debug_log(f"Gradient stats for {net_name}.{module_name}: mean={grad_mean:.4f}, var={grad_var:.4f}, step={step}")
+                if model.logger:
+                    # Shorten and make unique metric names
+                    shortened_name = f"{net_name[:3]}_{module_name[:10]}"
+                    model.logger.record(f"grad_mean/{shortened_name}", grad_mean, step)
+                    model.logger.record(f"grad_var/{shortened_name}", grad_var, step)
+            else:
+                debug_log(f"No gradient flowing through {net_name}.{module_name}")
+        return hook
+
+    def register_q_net_hooks(net, net_name):
+        for name, module in net.named_modules():
+            if len(list(module.children())) == 0 and isinstance(module, (nn.Linear, nn.Conv2d)):
+                module.register_full_backward_hook(create_grad_hook(net_name, name))
+
+    register_q_net_hooks(model.policy.q_net, "q_net")
+    register_q_net_hooks(model.policy.q_net_target, "q_net_target")
+
+    return model
 
 def transfer_weights(old_model, new_model):
-    old_state_dict = old_model.policy.state_dict()
-    new_state_dict = new_model.policy.state_dict()
-
-    transferred_layers = []
-    skipped_layers = []
-
-    for key, param in old_state_dict.items():
-        if key in new_state_dict:
-            if new_state_dict[key].shape == param.shape:
-                new_state_dict[key] = param
-                transferred_layers.append(key)
-            else:
-                skipped_layers.append((key, param.shape, new_state_dict[key].shape))
-        else:
-            skipped_layers.append((key, param.shape, 'Not present in new model'))
-
-    new_model.policy.load_state_dict(new_state_dict, strict=False)
-    print("Weight transfer completed.")
-    print(f"Transferred layers ({len(transferred_layers)}):")
-    for layer in transferred_layers:
-        print(f"  - {layer}")
-    print(f"Skipped layers ({len(skipped_layers)}):")
-    for layer, old_shape, new_shape in skipped_layers:
-        print(f"  - {layer}: {old_shape} -> {new_shape}")
+    pass
 
 def read_dqn_model_metadata(model_path):
-    try:
-        with ZipFile(model_path, 'r') as zip_ref:
-            print("\nZIP file contents:")
-            for info in zip_ref.filelist:
-                print(f"  {info.filename}: {info.file_size} bytes")
-            
-            if 'data' in zip_ref.namelist():
-                with zip_ref.open('data') as f:
-                    content = f.read()
-                    print("\nModel metadata:", content[:1000], "...")
-                    
-            if 'policy.pth' in zip_ref.namelist():
-                print("\nPolicy file found")
-    except Exception as e:
-        print(f"Error reading model file: {e}")
-        raise
+    pass
 
 def raw_transfer_dqn_weights(model_path, new_model):
-    print(f"\nTransferring weights from: {model_path}")
-    
-    try:
-        new_state_dict = new_model.policy.state_dict()
-        print("\nNew model layers:")
-        for key, tensor in new_state_dict.items():
-            print(f"  {key}: {tensor.shape}")
-
-        transferred = []
-        skipped = []
-
-        with ZipFile(model_path, 'r') as zip_ref:
-            print("\nZIP contents:")
-            for info in zip_ref.filelist:
-                print(f"  {info.filename}: {info.file_size} bytes")
-
-            if 'policy.pth' in zip_ref.namelist():
-                with zip_ref.open('policy.pth') as f:
-                    buffer = io.BytesIO(f.read())
-                    old_state_dict = th.load(buffer, map_location=device)
-                    
-                    print("\nLoaded model layers:")
-                    for key, tensor in old_state_dict.items():
-                        print(f"  {key}: {tensor.shape}")
-
-                    for new_key in new_state_dict.keys():
-                        if new_key in old_state_dict:
-                            old_tensor = old_state_dict[new_key]
-                            new_tensor = new_state_dict[new_key]
-                            
-                            if old_tensor.shape == new_tensor.shape:
-                                new_state_dict[new_key].copy_(old_tensor)
-                                transferred.append(new_key)
-                            elif new_key.startswith("features_extractor.scalar_inventory_net") and new_key in old_state_dict:
-                                min_dim = min(old_tensor.shape[1], new_tensor.shape[1])
-                                new_state_dict[new_key][:, :min_dim].copy_(old_tensor[:, :min_dim])
-                                transferred.append(f"{new_key} (partial)")
-                            else:
-                                skipped.append((new_key, old_tensor.shape, new_tensor.shape))
-                        else:
-                            skipped.append((new_key, "Not found in old model", new_state_dict[new_key].shape))
-
-        new_model.policy.load_state_dict(new_state_dict, strict=False)
-
-        print(f"\nTransferred {len(transferred)} layers:")
-        for layer in transferred:
-            print(f"  + {layer}")
-
-        print(f"\nSkipped {len(skipped)} layers:")
-        for layer, old_shape, new_shape in skipped:
-            print(f"  - {layer}: old={old_shape}, new={new_shape}")
-
-        return new_model
-
-    except Exception as e:
-        print(f"Error during transfer: {e}")
-        print(traceback.format_exc())
-        raise
+    pass
 
 def load_dqn_model(model_path, env, device):
     try:
@@ -638,7 +564,6 @@ def load_dqn_model(model_path, env, device):
         model = DQN.load(model_path, env=env, device=device)
         print("Model loaded successfully.")
 
-        # Update learning parameters
         model.learning_rate = LEARNING_RATE
         model.buffer_size = BUFFER_SIZE
         model.batch_size = BATCH_SIZE
@@ -779,7 +704,6 @@ def main():
     )
     grad_norm_callback = GradNormCallback(writer=writer)
 
-    # Ensure FeatureExtractorStepCallback runs first
     callbacks = [
         SaveOnStepCallback(
             save_freq=SAVE_EVERY_STEPS,
