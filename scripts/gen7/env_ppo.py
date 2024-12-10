@@ -128,7 +128,7 @@ class MinecraftEnv(gym.Env):
         # Observation space without 'tasks'
         blocks_dim = 4  # 4 features per block
         hand_dim = 5
-        target_block_dim = 1
+        target_block_dim = 2
         surrounding_blocks_shape = SURROUNDING_BLOCKS_SHAPE  # 13x13x4
         player_state_dim = 8  # x, y, z, yaw, pitch, health, alive, light_level
 
@@ -271,9 +271,9 @@ class MinecraftEnv(gym.Env):
             return np.zeros(block_features, dtype=np.float32)
 
     def normalize_target_block(self, state_dict):
-        """Normalize target block data - use direct value"""
-        target_block = state_dict.get('target_block', 0)
-        return np.array([float(target_block)], dtype=np.float32)
+        """Normalize target block data - use direct values"""
+        target_block = state_dict.get('target_block', [0.0, 0.0])
+        return np.array(target_block, dtype=np.float32)
 
     def normalize_hand(self, state_dict):
         """Normalize hand/item data - use full array"""
@@ -609,7 +609,7 @@ class MinecraftEnv(gym.Env):
             'image': np.zeros(IMAGE_SHAPE, dtype=np.float32),
             'blocks': np.zeros(4, dtype=np.float32),    # block_features = 4
             'hand': np.zeros(5, dtype=np.float32),      # hand_dim = 5
-            'target_block': np.zeros(1, dtype=np.float32),  # target_block_dim = 1
+            'target_block': np.zeros(2, dtype=np.float32),  # target_block_dim = 2
             'surrounding_blocks': np.zeros(SURROUNDING_BLOCKS_SHAPE, dtype=np.float32),  # 13x13x4
             'player_state': default_player_state
         }

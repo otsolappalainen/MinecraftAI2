@@ -32,7 +32,7 @@ import gc
 
 
 # Configuration
-MODEL_PATH_PPO = r"E:\PPO_BC_MODELS\models_ppo_large"
+MODEL_PATH_PPO = r"E:\PPO_BC_MODELS\models_ppo_v2"
 LOG_DIR_BASE = "tensorboard_logs_ppo_from_bc"
 PARALLEL_ENVS = 8
 
@@ -228,7 +228,7 @@ class GradNormCallback(BaseCallback):
 
 
 class LRMonitorCallback(BaseCallback):
-    def __init__(self, optimizer, verbose=0):
+    def __init__(self, optimizer, verbose=1):
         super(LRMonitorCallback, self).__init__(verbose)
         self.optimizer = optimizer
         self.scheduler = ReduceLROnPlateau(
@@ -236,15 +236,23 @@ class LRMonitorCallback(BaseCallback):
             mode='max',
             factor=0.5,
             patience=10,
-            verbose=self.verbose > 0
+            min_lr=1e-7,
         )
         self.best_mean_reward = -np.inf
 
     def _on_step(self) -> bool:
+        # Add logging of current LR if verbose
+        if self.verbose > 0:
+            current_lr = self.scheduler.get_last_lr()[0]
+            #print(f"Current learning rate: {current_lr}")
         return True
 
     def update_scheduler(self, value: float):
+        old_lr = self.optimizer.param_groups[0]['lr']
         self.scheduler.step(value)
+        new_lr = self.optimizer.param_groups[0]['lr']
+        if old_lr != new_lr:
+            print(f"LR changed from {old_lr} to {new_lr}")
 
 
 class CustomEvalCallback(EvalCallback):
@@ -336,13 +344,13 @@ class ImageFeatureExtractor(nn.Module):
         self.conv2 = nn.Sequential(
             nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.MaxPool2d(2)  # 30x30
+            nn.AvgPool2d(2)  # 30x30
         )
 
         self.conv3 = nn.Sequential(
             nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.MaxPool2d(2)  # 15x15
+            nn.AvgPool2d(2)  # 15x15
         )
 
         # Multi-scale feature extraction
@@ -365,8 +373,12 @@ class ImageFeatureExtractor(nn.Module):
 
         # Final fusion to 128 dimensions
         self.fusion = nn.Sequential(
-            nn.Linear(total_features, 512),
+            nn.Linear(total_features, 1024),
             nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.Dropout(0.1),
             nn.Linear(512, 128)
         )
 
@@ -423,16 +435,18 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
             nn.ReLU(),
             nn.Dropout(0.2),
         )
-        self.surrounding_cnn = nn.Sequential(
-            nn.Conv2d(surrounding_blocks_shape[0], 16, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Flatten(),
-        )
+        
         self.surrounding_fc = nn.Sequential(
-            nn.Linear(16 * (surrounding_blocks_shape[1] // 2) * (surrounding_blocks_shape[2] // 2), 128),
+            nn.Flatten(),
+            nn.Linear(surrounding_blocks_shape[0] * surrounding_blocks_shape[1] * surrounding_blocks_shape[2], 512),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(512, 128),
             nn.ReLU()
         )
+
+
+
         self.fusion_layer = nn.Sequential(
             nn.Linear(128 + 128 + 128, 256),
             nn.ReLU(),
@@ -462,10 +476,6 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
                 param.requires_grad = False
             print("[INFO] Inventory layers have been frozen.")
 
-        if SURROUNDING_CNN_FREEZE:
-            for param in self.surrounding_cnn.parameters():
-                param.requires_grad = False
-            print("[INFO] Surrounding CNN layers have been frozen.")
 
         if SURROUNDING_FUSION_FREEZE:
             for param in self.surrounding_fc.parameters():
@@ -483,7 +493,6 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
             IMAGE_CNN_GRAD_MULTIPLIER != 1.0,
             IMAGE_FUSION_GRAD_MULTIPLIER != 1.0,
             INVENTORY_GRAD_MULTIPLIER != 1.0,
-            SURROUNDING_CNN_GRAD_MULTIPLIER != 1.0,
             SURROUNDING_FUSION_GRAD_MULTIPLIER != 1.0,
             FINAL_FUSION_GRAD_MULTIPLIER != 1.0
         ]):
@@ -495,16 +504,14 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
                 'image_cnn': IMAGE_CNN_GRAD_MULTIPLIER,
                 'image_fc': IMAGE_FUSION_GRAD_MULTIPLIER,
                 'inventory_net': INVENTORY_GRAD_MULTIPLIER,
-                'surrounding_cnn': SURROUNDING_CNN_GRAD_MULTIPLIER,
                 'surrounding_fc': SURROUNDING_FUSION_GRAD_MULTIPLIER,
                 'fusion_layer': FINAL_FUSION_GRAD_MULTIPLIER
             }.get(layer_name, 1.0)
 
         layers = {
             'image_cnn': self.image_cnn,
-            'image_fc': self.image_fc if hasattr(self, 'image_fc') else None,
+            #'image_fc': self.image_fc if hasattr(self, 'image_fc') else None,
             'inventory_net': self.inventory_net,
-            'surrounding_cnn': self.surrounding_cnn,
             'surrounding_fc': self.surrounding_fc,
             'fusion_layer': self.fusion_layer
         }
@@ -516,6 +523,35 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
                     for param in layer.parameters():
                         param.register_hook(lambda grad, m=multiplier: grad * m)
                     print(f"[INFO] Applied gradient multiplier {multiplier} to layer '{name}'.")
+
+    
+    def forward(self, observations):
+        blocks = observations["blocks"]
+        hand = observations["hand"]
+        target_block = observations["target_block"]  # Now size 2
+        player_state = observations["player_state"]
+        surrounding_blocks = observations["surrounding_blocks"]
+        image = observations["image"]
+
+        # Extract image features
+        img_feat = self.image_cnn(image)
+
+        # Extract inventory features
+        inventory_input = th.cat([hand, target_block, blocks, player_state], dim=1)
+        inv_feat = self.inventory_net(inventory_input)
+
+        # Extract surrounding features
+        surround_feat = self.surrounding_fc(surrounding_blocks)
+
+        # Fuse all
+        fused = th.cat([img_feat, inv_feat, surround_feat], dim=1)
+        final_features = self.fusion_layer(fused)
+
+        return final_features
+
+    def close(self):
+        if self.writer is not None:
+            self.writer.close()
 
 
 
@@ -746,7 +782,7 @@ def main():
         ),
         eval_callback,
         grad_norm_callback,
-        lr_monitor_callback
+        lr_monitor_callback  # Ensure LRMonitorCallback is always included
     ]
 
     timesteps_done = model.num_timesteps if hasattr(model, 'num_timesteps') else 0
