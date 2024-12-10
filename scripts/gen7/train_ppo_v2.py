@@ -30,6 +30,7 @@ import psutil
 import torch
 import gc
 
+
 # Configuration
 MODEL_PATH_PPO = r"E:\PPO_BC_MODELS\models_ppo_large"
 LOG_DIR_BASE = "tensorboard_logs_ppo_from_bc"
@@ -40,25 +41,39 @@ LOG_DIR = os.path.join(LOG_DIR_BASE, f"run_{RUN_TIMESTAMP}")
 os.makedirs(LOG_DIR, exist_ok=True)
 
 TOTAL_TIMESTEPS = 5_000_000
-LEARNING_RATE = 2e-5  # PPO learning rate
-N_STEPS = 512
-BATCH_SIZE = 64
+LEARNING_RATE = 2e-6  # PPO learning rate
+N_STEPS = 1024
+BATCH_SIZE = 128
 N_EPOCHS = 10
 GAMMA = 0.99
-EVAL_FREQ = 2048
+EVAL_FREQ = 4096
 EVAL_EPISODES = 1
 SAVE_EVERY_STEPS = 20000
 GAE_LAMBDA = 0.95
 CLIP_RANGE = 0.2
-CLIP_RANGE_VF = None  # You can set this to a float value
+CLIP_RANGE_VF = None
 ENT_COEF = 0.01
 VF_COEF = 0.5
 MAX_GRAD_NORM = 0.5
 USE_SDE = False
 SDE_SAMPLE_FREQ = -1
-TARGET_KL = 0.03  # You can set this to a float value
+TARGET_KL = 0.04
 VERBOSE = 1
-SEED = None  # You can set this to an integer
+SEED = None
+
+IMAGE_CNN_FREEZE = False
+IMAGE_FUSION_FREEZE = False
+INVENTORY_FREEZE = False
+SURROUNDING_CNN_FREEZE = False
+SURROUNDING_FUSION_FREEZE = False
+FINAL_FUSION_FREEZE = False
+
+IMAGE_CNN_GRAD_MULTIPLIER = 1.0
+IMAGE_FUSION_GRAD_MULTIPLIER = 1.0
+INVENTORY_GRAD_MULTIPLIER = 1.0
+SURROUNDING_CNN_GRAD_MULTIPLIER = 1.0
+SURROUNDING_FUSION_GRAD_MULTIPLIER = 1.0
+FINAL_FUSION_GRAD_MULTIPLIER = 1.0
 
 
 
@@ -66,7 +81,7 @@ os.makedirs(MODEL_PATH_PPO, exist_ok=True)
 os.makedirs(LOG_DIR_BASE, exist_ok=True)
 
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 def debug_log(msg):
     if DEBUG_MODE:
@@ -96,7 +111,7 @@ def find_minecraft_windows():
                         adjusted_left = original_bounds["left"] + 30
                         adjusted_top = original_bounds["top"] + 50
                         adjusted_width = original_bounds["width"] - 60
-                        adjusted_height = original_bounds["height"] - 70
+                        adjusted_height = original_bounds["height"] - 100
                         
                         if adjusted_width <= 0 or adjusted_height <= 0:
                             print(f"Adjusted window size is non-positive for window: {title}. Skipping.")
@@ -202,62 +217,33 @@ class TensorboardRewardLogger(BaseCallback):
     def _on_training_end(self):
         self.writer.close()
 
+
 class GradNormCallback(BaseCallback):
     def __init__(self, writer, verbose=0):
         super(GradNormCallback, self).__init__(verbose)
         self.writer = writer
 
     def _on_step(self) -> bool:
-        if DEBUG_MODE and self.num_timesteps % 1000 == 0 and self.writer is not None:
-            # Use named_parameters to get both name and parameter
-            parameters = [(name, p) for name, p in self.model.policy.named_parameters() if p.grad is not None]
-            if parameters:
-                total_norm = 0
-                grad_means = []
-                grad_vars = []
-                for name, p in parameters:
-                    param_norm = p.grad.data.norm(2).item()
-                    total_norm += param_norm ** 2
-                    grad_mean = p.grad.data.mean().item()
-                    grad_var = p.grad.data.var().item()
-                    grad_means.append(grad_mean)
-                    grad_vars.append(grad_var)
-
-                    # Sanitize the parameter name
-                    safe_name = name.replace('.', '_')
-                    safe_name = safe_name[:10]  # Limit the name length to 50 characters
-
-                    # Log to TensorBoard with the sanitized name
-                    self.writer.add_scalar(f"grad/{safe_name}_mean", grad_mean, self.num_timesteps)
-                    self.writer.add_scalar(f"grad/{safe_name}_var", grad_var, self.num_timesteps)
-
-                total_norm = total_norm ** 0.5
-                self.writer.add_scalar("grad/total_norm", total_norm, self.num_timesteps)
-                self.writer.add_scalar("grad/mean", np.mean(grad_means), self.num_timesteps)
-                self.writer.add_scalar("grad/var", np.mean(grad_vars), self.num_timesteps)
-
-                if self.verbose > 0:
-                    print(f"Logged gradients at timestep {self.num_timesteps}")
         return True
 
 
 class LRMonitorCallback(BaseCallback):
-    def __init__(self, optimizer, writer, verbose=0):
+    def __init__(self, optimizer, verbose=0):
         super(LRMonitorCallback, self).__init__(verbose)
         self.optimizer = optimizer
-        self.writer = writer
-        self.scheduler = ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=10)
+        self.scheduler = ReduceLROnPlateau(
+            self.optimizer,
+            mode='max',
+            factor=0.5,
+            patience=10,
+            verbose=self.verbose > 0
+        )
         self.best_mean_reward = -np.inf
 
     def _on_step(self) -> bool:
-        if self.num_timesteps % 1000 == 0 and self.writer is not None:
-            for i, param_group in enumerate(self.optimizer.param_groups):
-                lr = param_group['lr']
-                self.writer.add_scalar(f"lr/group_{i}", lr, self.num_timesteps)
-                print(f"Current learning rate for group {i}: {lr}")
         return True
 
-    def update_scheduler(self, value):
+    def update_scheduler(self, value: float):
         self.scheduler.step(value)
 
 
@@ -272,272 +258,266 @@ class CustomEvalCallback(EvalCallback):
             self.lr_monitor_callback.update_scheduler(self.last_mean_reward)
         return result
 
-class EnhancedMultiTokenAttention(nn.Module):
-    def __init__(self, dim, num_heads=4):  # Add num_heads parameter
+
+class TimestampedEvalCallback(EvalCallback):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.best_mean_reward = -np.inf
+
+    def _on_step(self) -> bool:
+        result = super()._on_step()
+        if self.last_mean_reward is not None and self.last_mean_reward > self.best_mean_reward:
+            self.best_mean_reward = self.last_mean_reward
+            if self.best_model_save_path is not None:
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                save_path = os.path.join(
+                    self.best_model_save_path, 
+                    f"best_model_{timestamp}_reward_{self.best_mean_reward:.2f}.zip"
+                )
+                self.model.save(save_path)
+                print(f"New best model saved with reward {self.best_mean_reward:.2f}")
+        return result
+
+
+def get_latest_model(model_dir):
+    models = [f for f in os.listdir(model_dir) if f.endswith('.zip')]
+    if not models:
+        return None
+    latest_model = max(models, key=lambda x: os.path.getctime(os.path.join(model_dir, x)))
+    return os.path.join(model_dir, latest_model)
+
+
+class SaveOnStepCallback(BaseCallback):
+    def __init__(self, save_freq, save_path, verbose=1):
+        super(SaveOnStepCallback, self).__init__(verbose)
+        self.save_freq = save_freq
+        self.save_path = save_path
+        self.last_save_step = 0
+
+    def _on_step(self) -> bool:
+        if self.num_timesteps - self.last_save_step >= self.save_freq:
+            save_file = os.path.join(self.save_path, f"model_step_{self.num_timesteps}.zip")
+            self.model.save(save_file)
+            self.last_save_step = self.num_timesteps
+            if self.verbose > 0:
+                print(f"Model saved at step {self.num_timesteps} to {save_file}")
+        return True
+
+
+################################################################################
+#                          REWORKED FEATURE EXTRACTOR                          #
+################################################################################
+
+# A simpler, more compact CNN to process the image. We do not need a huge model.
+# This small CNN will extract basic spatial features from the image and produce
+# a compact feature vector. The RL model can learn what is important (e.g., sky, ground, walls, ores).
+#
+# Steps:
+# 1. A few convolutional layers to reduce spatial dimensions and extract features.
+# 2. Flatten the result.
+# 3. Optionally add a small FC layer to produce final image features.
+#
+# We'll keep it as simple as possible:
+# - 3x conv layers with small kernels and ReLU
+# - Downsampling with maxpool to reduce dimension
+# - Flatten and a small linear layer to produce the final embedding
+
+class ImageFeatureExtractor(nn.Module):
+    def __init__(self, in_channels=3):
         super().__init__()
-        self.attn = nn.MultiheadAttention(embed_dim=dim, num_heads=num_heads, batch_first=True)
-        self.norm = nn.LayerNorm(dim)
-        # Preserve more information
-        self.fusion = nn.Sequential(
-            nn.Linear(dim * 2, dim * 3),  # Expand to preserve information
+
+        # Initial layers with skip connections
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(in_channels, 16, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
-            nn.Linear(dim * 3, dim * 3)  # Output 192 (64*3)
+            nn.MaxPool2d(2)  # 60x60
         )
 
-    def forward(self, tokens):
-        attended, _ = self.attn(tokens, tokens, tokens)
-        attended = self.norm(attended)
-        max_pooled = th.max(attended, dim=1)[0]
-        avg_pooled = th.mean(attended, dim=1)
-        # Concatenate instead of add
-        combined = th.cat([max_pooled, avg_pooled], dim=1)
-        return self.fusion(combined)
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2)  # 30x30
+        )
+
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2)  # 15x15
+        )
+
+        # Multi-scale feature extraction
+        self.pool_scales = [
+            nn.AdaptiveAvgPool2d((32, 32)),  # Coarse features
+            nn.AdaptiveAvgPool2d((16, 16)),  # Medium features
+            nn.AdaptiveAvgPool2d((8, 8))     # Fine features
+        ]
+
+        # Feature compression for each scale
+        self.compress1 = nn.Conv2d(16, 8, 1)   # Early features
+        self.compress2 = nn.Conv2d(32, 16, 1)  # Mid features
+        self.compress3 = nn.Conv2d(32, 16, 1)  # Late features
+
+        # Calculate feature dimensions
+        scale1_size = 8 * 32 * 32    # Early features (coarse)
+        scale2_size = 16 * 16 * 16   # Mid features (medium)
+        scale3_size = 16 * 8 * 8     # Late features (fine)
+        total_features = scale1_size + scale2_size + scale3_size
+
+        # Final fusion to 128 dimensions
+        self.fusion = nn.Sequential(
+            nn.Linear(total_features, 512),
+            nn.ReLU(),
+            nn.Linear(512, 128)
+        )
+
+    def forward(self, x):
+        # Extract features at different scales
+        x1 = self.conv1(x)         # Early features (coarse spatial info)
+        x2 = self.conv2(x1)        # Mid-level features
+        x3 = self.conv3(x2)        # High-level features
+
+        # Compress channel dimensions
+        f1 = self.compress1(x1)    # Early features
+        f2 = self.compress2(x2)    # Mid features  
+        f3 = self.compress3(x3)    # Late features
+
+        # Multi-scale pooling
+        p1 = self.pool_scales[0](f1)  # 32x32 - preserves fine spatial details
+        p2 = self.pool_scales[1](f2)  # 16x16 - mid-level patterns
+        p3 = self.pool_scales[2](f3)  # 8x8 - abstract features
+
+        # Flatten and concatenate
+        flat = torch.cat([
+            p1.flatten(1),  # Early features (coarse spatial info)
+            p2.flatten(1),  # Mid-level features (patterns)
+            p3.flatten(1)   # High-level features (abstract)
+        ], dim=1)
+
+        # Final fusion to 128 dimensions
+        return self.fusion(flat)
+
+
 
 class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
-    _last_logged_step = -1
-
     def __init__(self, observation_space, features_dim=256, debug=False, log_dir=None, get_step_fn=None):
-        super(BCMatchingFeatureExtractor, self).__init__(observation_space, features_dim)
+        super().__init__(observation_space, features_dim)
         self.debug = debug
         self.writer = SummaryWriter(log_dir=log_dir) if (debug and log_dir is not None) else None
-        
         self.get_step_fn = get_step_fn if get_step_fn is not None else (lambda: 0)
 
+        # Extract dimensions
         image_shape = observation_space.spaces["image"].shape
-        surrounding_blocks = observation_space.spaces["surrounding_blocks"].shape
         blocks_dim = observation_space.spaces["blocks"].shape[0]
         hand_dim = observation_space.spaces["hand"].shape[0]
         target_block_dim = observation_space.spaces["target_block"].shape[0]
         player_state_dim = observation_space.spaces["player_state"].shape[0]
+        surrounding_blocks_shape = observation_space.spaces["surrounding_blocks"].shape
 
-        class ResidualBlock(nn.Module):
-            def __init__(self, features):
-                super().__init__()
-                self.block = nn.Sequential(
-                    nn.Linear(features, features),
-                    nn.ReLU(),
-                    nn.Linear(features, features)
-                )
-                self.relu = nn.ReLU()
-
-            def forward(self, x):
-                return self.relu(x + self.block(x).clone())
-        
-        class FusionResidualBlock(nn.Module):
-            def __init__(self, size, dropout=0.3):
-                super(ResidualBlock, self).__init__()
-                self.linear1 = nn.Linear(size, size)
-                self.relu = nn.ReLU()
-                self.dropout = nn.Dropout(dropout)
-                self.linear2 = nn.Linear(size, size)
-                self.layer_norm = nn.LayerNorm(size)
-
-            def forward(self, x):
-                residual = x
-                out = self.linear1(x)
-                out = self.relu(out)
-                out = self.dropout(out)
-                out = self.linear2(out)
-                out = out + residual
-                out = self.layer_norm(out)
-                out = self.relu(out)
-                return out
-
-            
-
-        # Change scalar inventory network (now includes player state)
-        self.scalar_inventory_net = nn.Sequential(
-            nn.Linear(10 + player_state_dim, 128),
+        # Initialize Feature Extractors
+        self.image_cnn = ImageFeatureExtractor(in_channels=3)
+        self.inventory_net = nn.Sequential(
+            nn.Linear(hand_dim + target_block_dim + blocks_dim + player_state_dim, 128),
             nn.ReLU(),
-            ResidualBlock(128),  # Added ResidualBlock
-            nn.ReLU()
+            nn.Dropout(0.2),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Dropout(0.2),
         )
-
-        # Remove separate player state net since it's now part of inventory
-
-        self.matrix_cnn = nn.Sequential(
-            nn.Conv2d(4, 16, kernel_size=3, stride=1, padding=1),
+        self.surrounding_cnn = nn.Sequential(
+            nn.Conv2d(surrounding_blocks_shape[0], 16, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(2),
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Flatten()
+            nn.Flatten(),
         )
-
-        with th.no_grad():
-            dummy_matrix = th.zeros(1, *surrounding_blocks)
-            matrix_cnn_out = self.matrix_cnn(dummy_matrix)
-            matrix_cnn_out_dim = matrix_cnn_out.shape[1]
-
-        self.matrix_fusion = nn.Sequential(
-            nn.Linear(matrix_cnn_out_dim, 64),
-            nn.ReLU(),
-            ResidualBlock(64),  # Added ResidualBlock
+        self.surrounding_fc = nn.Sequential(
+            nn.Linear(16 * (surrounding_blocks_shape[1] // 2) * (surrounding_blocks_shape[2] // 2), 128),
             nn.ReLU()
         )
-
-
-        class SpatialAttention(nn.Module):
-            def __init__(self, kernel_size=7):
-                super(SpatialAttention, self).__init__()
-                assert kernel_size in (3, 7), "Kernel size must be 3 or 7"
-                padding = 3 if kernel_size == 7 else 1
-
-                self.conv = nn.Conv2d(2, 1, kernel_size, padding=padding, bias=False)
-                self.sigmoid = nn.Sigmoid()
-
-            def forward(self, x):
-                avg_out = th.mean(x, dim=1, keepdim=True)
-                max_out, _ = th.max(x, dim=1, keepdim=True)
-                x = th.cat([avg_out, max_out], dim=1)
-                x = self.conv(x)
-                return self.sigmoid(x)
-
-        # Integrate Spatial Attention into image_net
-        self.image_net = nn.Sequential(
-            nn.Conv2d(3, 8, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(8),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            
-            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(16),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            
-            # Additional Convolutional Layer
-            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1, bias=False),
-            nn.BatchNorm2d(64),
-            nn.ReLU(),
-            
-            SpatialAttention(kernel_size=7),
-            
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten()
-        )
-
-        with th.no_grad():
-            dummy_image = th.zeros(1, *image_shape)
-            image_out = self.image_net(dummy_image)
-            image_out_dim = image_out.shape[1]
-
-        self.image_fc = nn.Sequential(
-            nn.Linear(image_out_dim, 64),
-            nn.ReLU(),
-            nn.Dropout(p=0.2),
-            nn.Linear(64, 64),
-            nn.ReLU()
-        )
-        
-
-        self.token_attention = EnhancedMultiTokenAttention(dim=64, num_heads=4)
-
-        # Update fusion layer for 512 output
         self.fusion_layer = nn.Sequential(
-            ResidualBlock(256),
-            ResidualBlock(256)
+            nn.Linear(128 + 128 + 128, 256),
+            nn.ReLU(),
+            nn.Linear(256, features_dim),
+            nn.ReLU()
         )
 
-        self._features_dim = features_dim
-        debug_log(f"Features dim set to {self._features_dim}")
+        # Apply Freezing
+        self.freeze_layers()
 
-        debug_log("Testing forward pass with dummy data...")
-        dummy_obs = {
-            "image": dummy_image,
-            "blocks": th.zeros(1, blocks_dim),
-            "hand": th.zeros(1, hand_dim),
-            "target_block": th.zeros(1, target_block_dim),
-            "player_state": th.zeros(1, player_state_dim),
-            "surrounding_blocks": dummy_matrix
+        # Apply Gradient Multipliers (if implemented)
+        self.apply_gradient_scaling()
+
+    def freeze_layers(self):
+        if IMAGE_CNN_FREEZE:
+            for param in self.image_cnn.parameters():
+                param.requires_grad = False
+            print("[INFO] Image CNN layers have been frozen.")
+
+        if IMAGE_FUSION_FREEZE:
+            for param in self.image_fc.parameters():
+                param.requires_grad = False
+            print("[INFO] Image Fusion layers have been frozen.")
+
+        if INVENTORY_FREEZE:
+            for param in self.inventory_net.parameters():
+                param.requires_grad = False
+            print("[INFO] Inventory layers have been frozen.")
+
+        if SURROUNDING_CNN_FREEZE:
+            for param in self.surrounding_cnn.parameters():
+                param.requires_grad = False
+            print("[INFO] Surrounding CNN layers have been frozen.")
+
+        if SURROUNDING_FUSION_FREEZE:
+            for param in self.surrounding_fc.parameters():
+                param.requires_grad = False
+            print("[INFO] Surrounding Fusion layers have been frozen.")
+
+        if FINAL_FUSION_FREEZE:
+            for param in self.fusion_layer.parameters():
+                param.requires_grad = False
+            print("[INFO] Final Fusion layers have been frozen.")
+
+    def apply_gradient_scaling(self):
+        # Implement gradient scaling via hooks if gradient multipliers are not all 1.0
+        if any([
+            IMAGE_CNN_GRAD_MULTIPLIER != 1.0,
+            IMAGE_FUSION_GRAD_MULTIPLIER != 1.0,
+            INVENTORY_GRAD_MULTIPLIER != 1.0,
+            SURROUNDING_CNN_GRAD_MULTIPLIER != 1.0,
+            SURROUNDING_FUSION_GRAD_MULTIPLIER != 1.0,
+            FINAL_FUSION_GRAD_MULTIPLIER != 1.0
+        ]):
+            self.register_hooks()
+
+    def register_hooks(self):
+        def get_multiplier(layer_name):
+            return {
+                'image_cnn': IMAGE_CNN_GRAD_MULTIPLIER,
+                'image_fc': IMAGE_FUSION_GRAD_MULTIPLIER,
+                'inventory_net': INVENTORY_GRAD_MULTIPLIER,
+                'surrounding_cnn': SURROUNDING_CNN_GRAD_MULTIPLIER,
+                'surrounding_fc': SURROUNDING_FUSION_GRAD_MULTIPLIER,
+                'fusion_layer': FINAL_FUSION_GRAD_MULTIPLIER
+            }.get(layer_name, 1.0)
+
+        layers = {
+            'image_cnn': self.image_cnn,
+            'image_fc': self.image_fc if hasattr(self, 'image_fc') else None,
+            'inventory_net': self.inventory_net,
+            'surrounding_cnn': self.surrounding_cnn,
+            'surrounding_fc': self.surrounding_fc,
+            'fusion_layer': self.fusion_layer
         }
-        with th.no_grad():
-            test_out = self.forward(dummy_obs)
-            debug_log(f"Forward pass successful - output shape: {test_out.shape}")
-            if self.debug:
-                self._log_feature_stats(test_out, step=0)
 
-        self._register_gradient_hooks()
+        for name, layer in layers.items():
+            if layer is not None:
+                multiplier = get_multiplier(name)
+                if multiplier != 1.0:
+                    for param in layer.parameters():
+                        param.register_hook(lambda grad, m=multiplier: grad * m)
+                    print(f"[INFO] Applied gradient multiplier {multiplier} to layer '{name}'.")
 
-    def _create_hook(self, name):
-        def hook(module, grad_input, grad_output):
-            if not DEBUG_MODE:
-                return
-            if grad_input and grad_input[0] is not None:
-                grad = grad_input[0]
-                grad_mean = grad.mean().item()
-                grad_var = grad.var().item()
-                step = self.get_step_fn()
-                #debug_log(f"Gradient stats for {name}: mean={grad_mean:.8f}, var={grad_var:.8f}, step={step}")
-                if self.writer is not None:
-                    self.writer.add_scalar(f"Gradients/{name}_Mean", grad_mean, step)
-                    self.writer.add_scalar(f"Gradients/{name}_Variance", grad_var, step)
-            else:
-                debug_log(f"No gradient flowing through {name}")
-        return hook
 
-    def _register_gradient_hooks(self):
-        target_modules = {
-            "scalar_inventory_net": self.scalar_inventory_net,
-            "matrix_cnn": self.matrix_cnn,
-            "matrix_fusion": self.matrix_fusion,
-            "image_net": self.image_net,
-            "image_fc": self.image_fc,
-            "token_attention": self.token_attention,
-            "fusion_layer": self.fusion_layer
-        }
-
-        for name, module in target_modules.items():
-            for submodule_name, submodule in module.named_modules():
-                if len(list(submodule.children())) == 0:  # leaf module
-                    submodule.register_full_backward_hook(self._create_hook(f"{name}.{submodule_name}" if submodule_name else name))
-            debug_log(f"Registered gradient hook for module: {name}")
-
-    def forward(self, observations):
-        blocks = observations["blocks"]
-        hand = observations["hand"]
-        target_block = observations["target_block"]
-        player_state = observations["player_state"]
-        surrounding_blocks = observations["surrounding_blocks"]
-        image = observations["image"]
-
-        inventory_input = th.cat([hand, target_block, blocks, player_state], dim=1)
-        inventory_features = self.scalar_inventory_net(inventory_input)
-
-        matrix_out = self.matrix_cnn(surrounding_blocks)
-        matrix_features = self.matrix_fusion(matrix_out)
-
-        image_out = self.image_net(image)
-        image_features = self.image_fc(image_out)
-
-        tokens = th.cat([matrix_features, inventory_features, image_features], dim=1)  # [B,3,64]
-        
-        final_features = self.fusion_layer(tokens)  # [B,256]
-
-        if self.debug:
-            current_step = self.get_step_fn()  
-            if current_step > BCMatchingFeatureExtractor._last_logged_step:
-                self._log_feature_stats(final_features, step=current_step)
-                BCMatchingFeatureExtractor._last_logged_step = current_step
-
-        return final_features
-
-    def _log_feature_stats(self, features, step):
-        if not DEBUG_MODE:
-            return
-        mean = features.mean().item()
-        var = features.var().item()
-        #debug_log(f"Feature stats at step {step}: mean={mean:.4f}, var={var:.4f}")
-        if self.writer is not None:
-            self.writer.add_scalar("feat/mean", mean, step)
-            self.writer.add_scalar("feat/var", var, step)
-
-    def close(self):
-        if self.writer is not None:
-            self.writer.close()
 
 def load_ppo_model(model_path, env, device):
     try:
@@ -561,48 +541,48 @@ def load_ppo_model(model_path, env, device):
         print(f"Error loading model: {e}")
         raise
 
-class SaveOnStepCallback(BaseCallback):
-    def __init__(self, save_freq, save_path, verbose=1):
-        super(SaveOnStepCallback, self).__init__(verbose)
-        self.save_freq = save_freq
-        self.save_path = save_path
-        self.last_save_step = 0
-
-    def _on_step(self) -> bool:
-        if self.num_timesteps - self.last_save_step >= self.save_freq:
-            save_file = os.path.join(self.save_path, f"model_step_{self.num_timesteps}.zip")
-            self.model.save(save_file)
-            self.last_save_step = self.num_timesteps
-            if self.verbose > 0:
-                print(f"Model saved at step {self.num_timesteps} to {save_file}")
-        return True
-
-class TimestampedEvalCallback(EvalCallback):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.best_mean_reward = -np.inf
-
-    def _on_step(self) -> bool:
-        result = super()._on_step()
-        if self.last_mean_reward is not None and self.last_mean_reward > self.best_mean_reward:
-            self.best_mean_reward = self.last_mean_reward
-            if self.best_model_save_path is not None:
-                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                save_path = os.path.join(
-                    self.best_model_save_path, 
-                    f"best_model_{timestamp}_reward_{self.best_mean_reward:.2f}.zip"
-                )
-                self.model.save(save_path)
-                print(f"New best model saved with reward {self.best_mean_reward:.2f}")
-        return result
-
-def get_latest_model(model_dir):
-    models = [f for f in os.listdir(model_dir) if f.endswith('.zip')]
-    if not models:
-        return None
-    latest_model = max(models, key=lambda x: os.path.getctime(os.path.join(model_dir, x)))
-    return os.path.join(model_dir, latest_model)
-
+def load_ppo_model_partial(model_path, env, device):
+    try:
+        print(f"Loading PPO model weights from {model_path}...")
+        
+        # Create new model with current parameters
+        new_model = create_new_model(env, debug=DEBUG_MODE, log_dir=LOG_DIR)
+        
+        # Load old model
+        old_model = PPO.load(model_path, env=env, device=device)
+        
+        # Get state dictionaries
+        new_state_dict = new_model.policy.state_dict()
+        old_state_dict = old_model.policy.state_dict()
+        
+        matched_state_dict = {
+            k: v for k, v in old_state_dict.items()
+            if k in new_state_dict and v.size() == new_state_dict[k].size()
+        }
+        
+        unmatched_keys = [
+            k for k in old_state_dict
+            if k not in matched_state_dict
+        ]
+        
+        new_state_dict.update(matched_state_dict)
+        new_model.policy.load_state_dict(new_state_dict)
+        
+        print(f"Loaded {len(matched_state_dict)} matching layers out of {len(old_state_dict)} from the selected model.")
+        if unmatched_keys:
+            print(f"Could not load {len(unmatched_keys)} layers due to mismatches:")
+            for key in unmatched_keys:
+                print(f"  - {key}")
+        else:
+            print("All layers loaded successfully.")
+        
+        print("Using current training parameters with loaded weights.")
+        
+        return new_model
+        
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        raise
 
 def create_new_model(env, debug=True, log_dir=None):
     debug_log("Starting PPO model creation...")
@@ -643,55 +623,20 @@ def create_new_model(env, debug=True, log_dir=None):
         seed=SEED
     )
 
-    
-    def get_step_fn():
-        return model.num_timesteps
-
     # Force features_extractor creation
     dummy_obs = env.observation_space.sample()
     dummy_tensor = model.policy.obs_to_tensor(dummy_obs)[0]
     with th.no_grad():
         model.policy(dummy_tensor)
 
-    # Set get_step_fn for feature extractor
-    model.policy.features_extractor.get_step_fn = get_step_fn
-
-    # Register gradient hooks for pi_net and value_net
-    def create_grad_hook(net_name, module_name):
-        def hook(module, grad_input, grad_output):
-            if not DEBUG_MODE:
-                return
-            if grad_input and grad_input[0] is not None:
-                grad = grad_input[0]
-                grad_mean = grad.mean().item()
-                grad_var = grad.var().item()
-                step = get_step_fn()
-                debug_log(f"Gradient stats for {net_name}.{module_name}: mean={grad_mean:.4f}, var={grad_var:.4f}, step={step}")
-                # If model.logger existed, we could record there. We'll use writer:
-                if model.logger:
-                    model.logger.record(f"grad_mean/{net_name}.{module_name}", grad_mean, step)
-                    model.logger.record(f"grad_var/{net_name}.{module_name}", grad_var, step)
-            else:
-                debug_log(f"No gradient flowing through {net_name}.{module_name}")
-        return hook
-
-    def register_net_hooks(net, net_name):
-        for name, module in net.named_modules():
-            if len(list(module.children())) == 0 and isinstance(module, (nn.Linear, nn.Conv2d)):
-                module.register_full_backward_hook(create_grad_hook(net_name, name))
-
-    # PPO's MlpPolicy has mlp_extractor with policy_net and value_net
-    register_net_hooks(model.policy.mlp_extractor.policy_net, "policy_net")
-    register_net_hooks(model.policy.mlp_extractor.value_net, "value_net")
-
+    # Just return the model
     return model
 
 def log_memory_usage():
     process = psutil.Process()
     cpu_mem = process.memory_info().rss / 1024 / 1024  # MB
-    gpu_mem = torch.cuda.memory_allocated() / 1024 / 1024  # MB if using CUDA
+    gpu_mem = torch.cuda.memory_allocated() / 1024 / 1024 if torch.cuda.is_available() else 0.0
     print(f"CPU Memory: {cpu_mem:.2f}MB, GPU Memory: {gpu_mem:.2f}MB")
-
 
 def main():
     print("Select an option:")
@@ -705,10 +650,12 @@ def main():
     train_env_fns = [make_env(i, minecraft_windows=minecraft_windows) for i in range(PARALLEL_ENVS)]
     train_env = SubprocVecEnv(train_env_fns)
     train_env = VecMonitor(train_env)
+    train_env = VecNormalize(train_env, norm_obs=True, norm_reward=True, clip_obs=10.0)
     
     eval_env_fn = [make_env(0, is_eval=True, minecraft_windows=minecraft_windows)]
     eval_env = SubprocVecEnv(eval_env_fn)
     eval_env = VecMonitor(eval_env)
+    eval_env = VecNormalize(eval_env, norm_obs=True, norm_reward=True, clip_obs=10.0, training=False)
 
     print("Training Environment observation space:", train_env.observation_space)
     print("Evaluation Environment observation space:", eval_env.observation_space)
@@ -729,11 +676,9 @@ def main():
                 selected_model = ppo_models[model_idx]
                 model_path = os.path.join(MODEL_PATH_PPO, selected_model)
                 
-                model = create_new_model(train_env, debug=DEBUG_MODE, log_dir=LOG_DIR)
-                print(f"Transferring weights from {selected_model}...")
-                # Implement transfer if needed
-                # raw_transfer_ppo_weights(model_path, model)
-                print("Weight transfer completed successfully.")
+                print(f"Attempting to load weights from {selected_model}...")
+                model = load_ppo_model_partial(model_path, train_env, device)
+                
             except ValueError:
                 print("Invalid input. Please enter a valid number.")
                 return
@@ -743,6 +688,7 @@ def main():
             except Exception as e:
                 print(f"An unexpected error occurred during weight transfer: {e}")
                 return
+            
 
     elif choice == "2":
         ppo_models = [f for f in os.listdir(MODEL_PATH_PPO) if f.endswith('.zip')]
@@ -777,7 +723,11 @@ def main():
 
     writer = SummaryWriter(LOG_DIR) if DEBUG_MODE else None
 
-    lr_monitor_callback = LRMonitorCallback(optimizer=model.policy.optimizer, writer=writer)
+    lr_monitor_callback = LRMonitorCallback(
+        optimizer=model.policy.optimizer,
+        verbose=VERBOSE
+    )
+
     eval_callback = CustomEvalCallback(
         lr_monitor_callback=lr_monitor_callback,
         eval_env=eval_env,

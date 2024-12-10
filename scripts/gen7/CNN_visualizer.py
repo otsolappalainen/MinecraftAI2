@@ -8,6 +8,17 @@ from torchvision import transforms
 from stable_baselines3 import PPO
 import warnings
 
+# Add this helper function after imports
+def remove_alpha_channel(image):
+    """Convert RGBA image to RGB by removing alpha channel"""
+    if image.mode == 'RGBA':
+        # Create white background
+        background = Image.new('RGB', image.size, (255, 255, 255))
+        # Paste using alpha channel as mask
+        background.paste(image, mask=image.split()[3])
+        return background
+    return image
+
 class CNNVisualizer:
     def __init__(self, model_path, force_cpu=True):
         # Load the model
@@ -18,7 +29,7 @@ class CNNVisualizer:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             model = PPO.load(model_path)
             
-        self.cnn = model.policy.features_extractor.image_net.to(self.device)
+        self.cnn = model.policy.features_extractor.image_cnn.to(self.device)
         self.cnn.eval()
         
         # Setup image transforms
@@ -27,10 +38,13 @@ class CNNVisualizer:
             transforms.ToTensor(),
         ])
         
+    # Modify the get_feature_maps method:
     def get_feature_maps(self, image_path):
         try:
             # Load and preprocess image
             image = Image.open(image_path)
+            # Remove alpha channel if present
+            image = remove_alpha_channel(image)
             image = self.transform(image).unsqueeze(0)
             image = image.to(self.device)
             
@@ -118,7 +132,7 @@ class CNNVisualizer:
                     plt.close()
 
 def main():
-    model_path = r"E:\PPO_BC_MODELS\models_ppo_large\best_model.zip"
+    model_path = r"E:\PPO_BC_MODELS\models_ppo_large\model_step_20000.zip"
     save_dir = "cnn_visualizations"
     image_dir = "test_images"
     

@@ -19,7 +19,7 @@ import math
 # ================================
 # Constants
 # ================================
-MAX_EPISODE_STEPS = 512
+MAX_EPISODE_STEPS = 1024
 TARGET_HEIGHT_MIN = -63
 TARGET_HEIGHT_MAX = -60
 BLOCK_BREAK_REWARD = 3.0
@@ -392,14 +392,16 @@ class MinecraftEnv(gym.Env):
             # Check if action was 'attack' and process block breaking rewards
             if blocks_norm[0] > 0.0:
                 block_value = blocks_norm[0]  # Value between 0 and 1
-                reward += (block_value ** 4) * 20  # Max reward of 10 for valuable blocks
+                reward += (block_value ** 6) * 20  # Max reward of 10 for valuable blocks
                 self.recent_block_breaks.append(True)
             else:
                 self.recent_block_breaks.append(False)
 
             if action_name == "attack" and target_block_norm[0] > 0.0:
                 block_value = target_block_norm[0]  # Value between 0 and 1
-                reward += (block_value ** 5) * 10
+                reward += (block_value ** 6) * 3
+            elif action_name == "attack" and target_block_norm[0] == 0.0:
+                reward -= 0.2
 
             # Check if any blocks were broken in last 20 steps
             blocks_broken_recently = any(self.recent_block_breaks)
@@ -409,15 +411,27 @@ class MinecraftEnv(gym.Env):
                 reward += 0.5  # Small reward for moving forward after breaking blocks
                 self.cumulative_directional_rewards += 0.5
 
+            
+
             # Encourage looking up or down after breaking blocks  
             if blocks_broken_recently and (action_name == "look_up" or action_name == "look_down"):
-                reward += 0.5  # Small reward for adjusting pitch after breaking blocks
-                self.cumulative_directional_rewards += 0.5
+                reward += 0.2  # Small reward for adjusting pitch after breaking blocks
+                self.cumulative_directional_rewards += 0.2
+
 
             # Penalize looking to the sides shortly after breaking blocks
             if blocks_broken_recently and (action_name == "look_left" or action_name == "look_right"):
-                reward -= 0.5  # Small penalty for looking sideways
-                self.cumulative_directional_rewards -= 0.5
+                reward -= 0.02  # Small penalty for looking sideways
+                self.cumulative_directional_rewards -= 0.02
+            
+            # Penalize looking to the sides shortly after breaking blocks
+            if blocks_broken_recently and (action_name == "move_left" or action_name == "move_right"):
+                reward -= 0.2  # Small penalty for looking sideways
+                self.cumulative_directional_rewards -= 0.2
+            
+            if blocks_broken_recently and (action_name == "move_back" or action_name == "jump"):
+                reward -= 2  # Small penalty for looking sideways
+                self.cumulative_directional_rewards -= 2
 
             # Update previous action
             self.previous_action = action_name
@@ -565,7 +579,7 @@ class MinecraftEnv(gym.Env):
             with mss.mss() as sct:
                 screenshot = sct.grab(self.minecraft_bounds)
                 img = np.array(screenshot)[:, :, :3]  # Ensure RGB
-                img = cv2.resize(img, (IMAGE_WIDTH, IMAGE_HEIGHT), interpolation=cv2.INTER_AREA)
+                img = cv2.resize(img, (IMAGE_WIDTH, IMAGE_HEIGHT), interpolation=cv2.INTER_NEAREST)
                 img = img.transpose(2, 0, 1) / 255.0  # Normalize
 
                 if self.save_screenshots:
