@@ -29,7 +29,7 @@ class CNNVisualizer:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             model = PPO.load(model_path)
             
-        self.cnn = model.policy.features_extractor.image_cnn.to(self.device)
+        self.cnn = model.policy.features_extractor.img_head.to(self.device)
         self.cnn.eval()
         
         # Setup image transforms
@@ -132,7 +132,7 @@ class CNNVisualizer:
                     plt.close()
 
 def main():
-    model_path = r"E:\PPO_BC_MODELS\models_ppo_large\model_step_20000.zip"
+    model_path = r"E:\PPO_BC_MODELS\models_ppo_resnet18\model_step_10000.zip"
     save_dir = "cnn_visualizations"
     image_dir = "test_images"
     

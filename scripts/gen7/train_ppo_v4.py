@@ -29,10 +29,11 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 import psutil
 import torch
 import gc
+import torchvision.models as models
 
 
 # Configuration
-MODEL_PATH_PPO = r"E:\PPO_BC_MODELS\models_ppo_v2"
+MODEL_PATH_PPO = r"E:\PPO_BC_MODELS\models_ppo_resnet18"
 LOG_DIR_BASE = "tensorboard_logs_ppo_from_bc"
 PARALLEL_ENVS = 8
 
@@ -41,14 +42,14 @@ LOG_DIR = os.path.join(LOG_DIR_BASE, f"run_{RUN_TIMESTAMP}")
 os.makedirs(LOG_DIR, exist_ok=True)
 
 TOTAL_TIMESTEPS = 5_000_000
-LEARNING_RATE = 2e-5  # PPO learning rate
+LEARNING_RATE = 2e-6  # PPO learning rate
 N_STEPS = 1024
-BATCH_SIZE = 64
+BATCH_SIZE = 128
 N_EPOCHS = 10
 GAMMA = 0.99
-EVAL_FREQ = 4096
+EVAL_FREQ = 8192
 EVAL_EPISODES = 1
-SAVE_EVERY_STEPS = 20000
+SAVE_EVERY_STEPS = 10000
 GAE_LAMBDA = 0.95
 CLIP_RANGE = 0.2
 CLIP_RANGE_VF = None
@@ -57,7 +58,7 @@ VF_COEF = 0.5
 MAX_GRAD_NORM = 0.5
 USE_SDE = False
 SDE_SAMPLE_FREQ = -1
-TARGET_KL = 0.04
+TARGET_KL = 0.01
 VERBOSE = 1
 SEED = None
 
@@ -75,7 +76,8 @@ SURROUNDING_CNN_GRAD_MULTIPLIER = 1.0
 SURROUNDING_FUSION_GRAD_MULTIPLIER = 1.0
 FINAL_FUSION_GRAD_MULTIPLIER = 1.0
 
-
+SPATIAL_WEIGHT = 0.8
+CLASSIFICATION_WEIGHT = 0.2
 
 os.makedirs(MODEL_PATH_PPO, exist_ok=True)
 os.makedirs(LOG_DIR_BASE, exist_ok=True)
@@ -108,10 +110,17 @@ def find_minecraft_windows():
                             "height": window.height,
                         }
 
-                        adjusted_left = original_bounds["left"] + 30
-                        adjusted_top = original_bounds["top"] + 50
-                        adjusted_width = original_bounds["width"] - 60
-                        adjusted_height = original_bounds["height"] - 100
+                        # Instead of using offsets, we now take a 224x224 area from the center
+                        # Find the center of the window
+                        center_x = original_bounds["left"] + original_bounds["width"] // 2
+                        center_y = original_bounds["top"] + original_bounds["height"] // 2
+                        crop_size = 224
+                        half = crop_size // 2
+
+                        adjusted_left = center_x - half
+                        adjusted_top = center_y - half
+                        adjusted_width = crop_size
+                        adjusted_height = crop_size
                         
                         if adjusted_width <= 0 or adjusted_height <= 0:
                             print(f"Adjusted window size is non-positive for window: {title}. Skipping.")
@@ -131,7 +140,7 @@ def find_minecraft_windows():
     for i, window in enumerate(matched_windows):
         print(f"  Window {i+1}: ({window['left']}, {window['top']}) - {window['width']}x{window['height']}")
 
-    potential_eval_windows = [w for w in matched_windows if w["left"] < 100 and w["top"] < 100]
+    potential_eval_windows = [w for w in matched_windows if w["left"] < 180 and w["top"] < 180]
     if not potential_eval_windows:
         raise ValueError("No suitable eval window found (needs both x < 100 and y < 100)")
     
@@ -140,8 +149,8 @@ def find_minecraft_windows():
 
     print("\nEval window selected:")
     print(f"  ({eval_window['left']}, {eval_window['top']}) - {eval_window['width']}x{eval_window['height']}")
-    small_x = [w for w in matched_windows if w["left"] < 100]
-    large_x = [w for w in matched_windows if w["left"] >= 100]
+    small_x = [w for w in matched_windows if w["left"] < 180]
+    large_x = [w for w in matched_windows if w["left"] >= 180]
 
     print("\nSmall x windows (unsorted):")
     for w in small_x:
@@ -241,10 +250,6 @@ class LRMonitorCallback(BaseCallback):
         self.best_mean_reward = -np.inf
 
     def _on_step(self) -> bool:
-        # Add logging of current LR if verbose
-        if self.verbose > 0:
-            current_lr = self.scheduler.get_last_lr()[0]
-            #print(f"Current learning rate: {current_lr}")
         return True
 
     def update_scheduler(self, value: float):
@@ -252,7 +257,12 @@ class LRMonitorCallback(BaseCallback):
         self.scheduler.step(value)
         new_lr = self.optimizer.param_groups[0]['lr']
         if old_lr != new_lr:
-            print(f"LR changed from {old_lr} to {new_lr}")
+            #print(f"LR changed from {old_lr} to {new_lr}")
+            # Manually update the learning rate in the PPO algorithm
+            self.model.learning_rate = new_lr
+            # Update all optimizer groups
+            for param_group in self.optimizer.param_groups:
+                param_group['lr'] = new_lr
 
 
 class CustomEvalCallback(EvalCallback):
@@ -263,7 +273,11 @@ class CustomEvalCallback(EvalCallback):
     def _on_step(self) -> bool:
         result = super()._on_step()
         if self.last_mean_reward is not None:
+            #rint(f"Passing reward {self.last_mean_reward:.4f} to LR scheduler")
             self.lr_monitor_callback.update_scheduler(self.last_mean_reward)
+            # Log current learning rate
+            current_lr = self.model.learning_rate
+            #print(f"Current learning rate: {current_lr}")
         return result
 
 
@@ -313,169 +327,99 @@ class SaveOnStepCallback(BaseCallback):
 
 
 ################################################################################
-#                          REWORKED FEATURE EXTRACTOR                          #
+#                       REPLACED FEATURE EXTRACTOR WITH RESNET18               #
 ################################################################################
 
-# A simpler, more compact CNN to process the image. We do not need a huge model.
-# This small CNN will extract basic spatial features from the image and produce
-# a compact feature vector. The RL model can learn what is important (e.g., sky, ground, walls, ores).
-#
-# Steps:
-# 1. A few convolutional layers to reduce spatial dimensions and extract features.
-# 2. Flatten the result.
-# 3. Optionally add a small FC layer to produce final image features.
-#
-# We'll keep it as simple as possible:
-# - 3x conv layers with small kernels and ReLU
-# - Downsampling with maxpool to reduce dimension
-# - Flatten and a small linear layer to produce the final embedding
-
-class ImageFeatureExtractor(nn.Module):
-    def __init__(self, in_channels=3):
-        super().__init__()
-
-        # Initial layers with skip connections
-        self.conv1 = nn.Sequential(
-            nn.Conv2d(in_channels, 16, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2)  # 60x60
-        )
-
-        self.conv2 = nn.Sequential(
-            nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.AvgPool2d(2)  # 30x30
-        )
-
-        self.conv3 = nn.Sequential(
-            nn.Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.AvgPool2d(2)  # 15x15
-        )
-
-        # Multi-scale feature extraction
-        self.pool_scales = [
-            nn.AdaptiveAvgPool2d((32, 32)),  # Coarse features
-            nn.AdaptiveAvgPool2d((16, 16)),  # Medium features
-            nn.AdaptiveAvgPool2d((8, 8))     # Fine features
-        ]
-
-        # Feature compression for each scale
-        self.compress1 = nn.Conv2d(16, 8, 1)   # Early features
-        self.compress2 = nn.Conv2d(32, 16, 1)  # Mid features
-        self.compress3 = nn.Conv2d(32, 16, 1)  # Late features
-
-        # Calculate feature dimensions
-        scale1_size = 8 * 32 * 32    # Early features (coarse)
-        scale2_size = 16 * 16 * 16   # Mid features (medium)
-        scale3_size = 16 * 8 * 8     # Late features (fine)
-        total_features = scale1_size + scale2_size + scale3_size
-
-        # Final fusion to 128 dimensions
-        self.fusion = nn.Sequential(
-            nn.Linear(total_features, 1024),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(1024, 512),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(512, 128)
-        )
-
-    def forward(self, x):
-        # Extract features at different scales
-        x1 = self.conv1(x)         # Early features (coarse spatial info)
-        x2 = self.conv2(x1)        # Mid-level features
-        x3 = self.conv3(x2)        # High-level features
-
-        # Compress channel dimensions
-        f1 = self.compress1(x1)    # Early features
-        f2 = self.compress2(x2)    # Mid features  
-        f3 = self.compress3(x3)    # Late features
-
-        # Multi-scale pooling
-        p1 = self.pool_scales[0](f1)  # 32x32 - preserves fine spatial details
-        p2 = self.pool_scales[1](f2)  # 16x16 - mid-level patterns
-        p3 = self.pool_scales[2](f3)  # 8x8 - abstract features
-
-        # Flatten and concatenate
-        flat = torch.cat([
-            p1.flatten(1),  # Early features (coarse spatial info)
-            p2.flatten(1),  # Mid-level features (patterns)
-            p3.flatten(1)   # High-level features (abstract)
-        ], dim=1)
-
-        # Final fusion to 128 dimensions
-        return self.fusion(flat)
 
 
+# Configuration for weighting
 
-class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
+import torch as th
+import torch.nn as nn
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
+from torch.utils.tensorboard import SummaryWriter
+
+class CustomCNNFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space, features_dim=256, debug=False, log_dir=None, get_step_fn=None):
         super().__init__(observation_space, features_dim)
         self.debug = debug
         self.writer = SummaryWriter(log_dir=log_dir) if (debug and log_dir is not None) else None
         self.get_step_fn = get_step_fn if get_step_fn is not None else (lambda: 0)
 
-        # Extract dimensions
-        image_shape = observation_space.spaces["image"].shape
+        self.img_head = nn.Sequential(
+            # First block: subtle feature extraction (112x112 -> 56x56)
+            nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2),  # 112x112 -> 56x56
+            
+            # Second block (56x56 -> 28x28)
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2),  # 56x56 -> 28x28
+            
+            # Final feature refinement at 28x28
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+        )
+
+        # Calculate the flattened size (B, 32, 28, 28) -> B, 25088
+        flattened_size = 32 * 28 * 28
+
+        # Fully connected layers
+        self.fc = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(flattened_size, 512),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.2),
+            nn.Linear(512, features_dim),
+            nn.ReLU(inplace=True),
+        )
+
+        # Additional networks for other observation components
         blocks_dim = observation_space.spaces["blocks"].shape[0]
         hand_dim = observation_space.spaces["hand"].shape[0]
         target_block_dim = observation_space.spaces["target_block"].shape[0]
         player_state_dim = observation_space.spaces["player_state"].shape[0]
-        surrounding_blocks_shape = observation_space.spaces["surrounding_blocks"].shape
-
-        # Initialize Feature Extractors
-        self.image_cnn = ImageFeatureExtractor(in_channels=3)
+        
         self.inventory_net = nn.Sequential(
             nn.Linear(hand_dim + target_block_dim + blocks_dim + player_state_dim, 128),
-            nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.1),
             nn.Linear(128, 128),
-            nn.ReLU(),
+            nn.ReLU(inplace=True),
             nn.Dropout(0.2),
         )
-        
+
+        surrounding_blocks_shape = observation_space.spaces["surrounding_blocks"].shape
         self.surrounding_fc = nn.Sequential(
             nn.Flatten(),
             nn.Linear(surrounding_blocks_shape[0] * surrounding_blocks_shape[1] * surrounding_blocks_shape[2], 512),
-            nn.ReLU(),
-            nn.Dropout(0.2),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.1),
             nn.Linear(512, 128),
-            nn.ReLU()
+            nn.ReLU(inplace=True),
         )
 
-
-
+        # Final fusion layer
         self.fusion_layer = nn.Sequential(
-            nn.Linear(128 + 128 + 128, 256),
-            nn.ReLU(),
-            nn.Linear(256, features_dim),
-            nn.ReLU()
+            nn.Linear(features_dim + 128 + 128, features_dim),
+            nn.ReLU(inplace=True),
         )
 
-        # Apply Freezing
+        # Apply Freezing/Gradient scaling if needed
         self.freeze_layers()
-
-        # Apply Gradient Multipliers (if implemented)
         self.apply_gradient_scaling()
 
     def freeze_layers(self):
         if IMAGE_CNN_FREEZE:
-            for param in self.image_cnn.parameters():
+            for param in self.img_head.parameters():
                 param.requires_grad = False
             print("[INFO] Image CNN layers have been frozen.")
-
-        if IMAGE_FUSION_FREEZE:
-            for param in self.image_fc.parameters():
-                param.requires_grad = False
-            print("[INFO] Image Fusion layers have been frozen.")
 
         if INVENTORY_FREEZE:
             for param in self.inventory_net.parameters():
                 param.requires_grad = False
             print("[INFO] Inventory layers have been frozen.")
-
 
         if SURROUNDING_FUSION_FREEZE:
             for param in self.surrounding_fc.parameters():
@@ -488,10 +432,8 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
             print("[INFO] Final Fusion layers have been frozen.")
 
     def apply_gradient_scaling(self):
-        # Implement gradient scaling via hooks if gradient multipliers are not all 1.0
         if any([
             IMAGE_CNN_GRAD_MULTIPLIER != 1.0,
-            IMAGE_FUSION_GRAD_MULTIPLIER != 1.0,
             INVENTORY_GRAD_MULTIPLIER != 1.0,
             SURROUNDING_FUSION_GRAD_MULTIPLIER != 1.0,
             FINAL_FUSION_GRAD_MULTIPLIER != 1.0
@@ -501,16 +443,14 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
     def register_hooks(self):
         def get_multiplier(layer_name):
             return {
-                'image_cnn': IMAGE_CNN_GRAD_MULTIPLIER,
-                'image_fc': IMAGE_FUSION_GRAD_MULTIPLIER,
+                'img_head': IMAGE_CNN_GRAD_MULTIPLIER,
                 'inventory_net': INVENTORY_GRAD_MULTIPLIER,
                 'surrounding_fc': SURROUNDING_FUSION_GRAD_MULTIPLIER,
                 'fusion_layer': FINAL_FUSION_GRAD_MULTIPLIER
             }.get(layer_name, 1.0)
 
         layers = {
-            'image_cnn': self.image_cnn,
-            #'image_fc': self.image_fc if hasattr(self, 'image_fc') else None,
+            'img_head': self.img_head,
             'inventory_net': self.inventory_net,
             'surrounding_fc': self.surrounding_fc,
             'fusion_layer': self.fusion_layer
@@ -524,35 +464,34 @@ class BCMatchingFeatureExtractor(BaseFeaturesExtractor):
                         param.register_hook(lambda grad, m=multiplier: grad * m)
                     print(f"[INFO] Applied gradient multiplier {multiplier} to layer '{name}'.")
 
-    
     def forward(self, observations):
+        image = observations["image"]
         blocks = observations["blocks"]
         hand = observations["hand"]
-        target_block = observations["target_block"]  # Now size 2
+        target_block = observations["target_block"]
         player_state = observations["player_state"]
         surrounding_blocks = observations["surrounding_blocks"]
-        image = observations["image"]
 
         # Extract image features
-        img_feat = self.image_cnn(image)
+        img_feat = self.img_head(image)
+        img_feat = self.fc(img_feat) * SPATIAL_WEIGHT  # [B, features_dim]
 
         # Extract inventory features
         inventory_input = th.cat([hand, target_block, blocks, player_state], dim=1)
-        inv_feat = self.inventory_net(inventory_input)
+        inv_feat = self.inventory_net(inventory_input)  # [B, 128]
 
         # Extract surrounding features
-        surround_feat = self.surrounding_fc(surrounding_blocks)
+        surround_feat = self.surrounding_fc(surrounding_blocks)  # [B, 128]
 
-        # Fuse all
-        fused = th.cat([img_feat, inv_feat, surround_feat], dim=1)
-        final_features = self.fusion_layer(fused)
+        # Fuse all features
+        fused = th.cat([img_feat, inv_feat, surround_feat], dim=1)  # [B, features_dim + 256]
+        final_features = self.fusion_layer(fused)  # [B, features_dim]
 
         return final_features
 
     def close(self):
         if self.writer is not None:
             self.writer.close()
-
 
 
 def load_ppo_model(model_path, env, device):
@@ -625,20 +564,24 @@ def create_new_model(env, debug=True, log_dir=None):
     dummy_get_step_fn = lambda: 0
 
     policy_kwargs = dict(
-        features_extractor_class=BCMatchingFeatureExtractor,
+        features_extractor_class=CustomCNNFeatureExtractor,
         features_extractor_kwargs=dict(
             features_dim=256,
             debug=debug,
             log_dir=LOG_DIR,
             get_step_fn=dummy_get_step_fn
         ),
-        net_arch=[256, 256]  # Simple network arch
+        net_arch=[256, 256]
     )
+
+    # Create a constant learning rate function
+    def constant_lr(_):
+        return LEARNING_RATE
 
     model = PPO(
         policy=ActorCriticPolicy,
         env=env,
-        learning_rate=LEARNING_RATE,
+        learning_rate=constant_lr,  # Use constant function instead of float
         n_steps=N_STEPS,
         batch_size=BATCH_SIZE,
         n_epochs=N_EPOCHS,
@@ -665,7 +608,6 @@ def create_new_model(env, debug=True, log_dir=None):
     with th.no_grad():
         model.policy(dummy_tensor)
 
-    # Just return the model
     return model
 
 def log_memory_usage():

@@ -40,8 +40,8 @@ TIMEOUT_RESET_LONG = 5
 
 # Screenshot settings
 IMAGE_CHANNELS = 3
-IMAGE_HEIGHT = 120
-IMAGE_WIDTH = 120
+IMAGE_HEIGHT = 112
+IMAGE_WIDTH = 112
 IMAGE_SHAPE = (IMAGE_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)
 
 # Updated surrounding_blocks_dim for 13x13x4
@@ -133,7 +133,7 @@ class MinecraftEnv(gym.Env):
         player_state_dim = 8  # x, y, z, yaw, pitch, health, alive, light_level
 
         self.observation_space = spaces.Dict({
-            'image': spaces.Box(low=0, high=1, shape=IMAGE_SHAPE, dtype=np.float32),
+            'image': spaces.Box(low=0, high=1, shape=IMAGE_SHAPE, dtype=np.float32), # 3x112x112
             'blocks': spaces.Box(low=0, high=1, shape=(blocks_dim,), dtype=np.float32),
             'hand': spaces.Box(low=0, high=1, shape=(hand_dim,), dtype=np.float32),
             'target_block': spaces.Box(low=0, high=1, shape=(target_block_dim,), dtype=np.float32),
@@ -173,6 +173,7 @@ class MinecraftEnv(gym.Env):
         self.cumulative_rewards = 0.0
         self.episode_counts = 0
         self.cumulative_directional_rewards = 0.0
+        self.cumulative_block_reward = 0.0
 
         # Initialize additional variables
         self.repetitive_non_productive_counter = 0  # Counter from 0 to REPETITIVE_NON_PRODUCTIVE_MAX
@@ -392,16 +393,17 @@ class MinecraftEnv(gym.Env):
             # Check if action was 'attack' and process block breaking rewards
             if blocks_norm[0] > 0.0:
                 block_value = blocks_norm[0]  # Value between 0 and 1
-                reward += (block_value ** 6) * 20  # Max reward of 10 for valuable blocks
+                reward += (block_value ** 3) * 10  # Max reward of 10 for valuable blocks
+                self.cumulative_block_reward += (block_value ** 3) * 10
                 self.recent_block_breaks.append(True)
             else:
                 self.recent_block_breaks.append(False)
 
             if action_name == "attack" and target_block_norm[0] > 0.0:
                 block_value = target_block_norm[0]  # Value between 0 and 1
-                reward += (block_value ** 6) * 3
-            elif action_name == "attack" and target_block_norm[0] == 0.0:
-                reward -= 0.2
+                reward += (block_value ** 3) * 3
+                self.cumulative_block_reward += (block_value ** 3) * 3
+            
 
             # Check if any blocks were broken in last 20 steps
             blocks_broken_recently = any(self.recent_block_breaks)
@@ -415,19 +417,19 @@ class MinecraftEnv(gym.Env):
 
             # Encourage looking up or down after breaking blocks  
             if blocks_broken_recently and (action_name == "look_up" or action_name == "look_down"):
-                reward += 0.2  # Small reward for adjusting pitch after breaking blocks
-                self.cumulative_directional_rewards += 0.2
+                reward += 0  # Small reward for adjusting pitch after breaking blocks
+                self.cumulative_directional_rewards += 0
 
 
             # Penalize looking to the sides shortly after breaking blocks
-            if blocks_broken_recently and (action_name == "look_left" or action_name == "look_right"):
-                reward -= 0.02  # Small penalty for looking sideways
-                self.cumulative_directional_rewards -= 0.02
+            if blocks_broken_recently and (action_name == "look_left" or action_name == "look_right") and target_block_norm[0] < 0.5:
+                reward -= 0.1  # Small penalty for looking sideways
+                self.cumulative_directional_rewards -= 0.1
             
             # Penalize looking to the sides shortly after breaking blocks
-            if blocks_broken_recently and (action_name == "move_left" or action_name == "move_right"):
-                reward -= 0.2  # Small penalty for looking sideways
-                self.cumulative_directional_rewards -= 0.2
+            if blocks_broken_recently and (action_name == "move_left" or action_name == "move_right") and target_block_norm[0] < 0.5:
+                reward -= 0.1  # Small penalty for looking sideways
+                self.cumulative_directional_rewards -= 0.1
             
             if blocks_broken_recently and (action_name == "move_back" or action_name == "jump"):
                 reward -= 2  # Small penalty for looking sideways
@@ -447,7 +449,7 @@ class MinecraftEnv(gym.Env):
 
         self.cumulative_rewards += reward
         if self.steps % 50 == 0 and self.uri == "ws://localhost:8081":
-                print(f"Reward: {reward}, Cumulative Direction Reward: {self.cumulative_directional_rewards} Cumulative Rewards: {self.cumulative_rewards}")
+                print(f"Reward: {reward:.2f}, Cumulative Direction Reward: {self.cumulative_directional_rewards:.2f} Cumulative Rewards: {self.cumulative_rewards:.2f}, Cumulative Block Reward: {self.cumulative_block_reward:.2f}")
 
 
         # Check if episode is terminated
@@ -483,6 +485,7 @@ class MinecraftEnv(gym.Env):
         self.episode_counts = 0
         self.cumulative_directional_rewards = 0.0
         self.cumulative_movement_bonus = 0.0
+        self.cumulative_block_reward = 0.0
 
         # Reset additional variables
         self.repetitive_non_productive_counter = 0
