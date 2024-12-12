@@ -7,65 +7,115 @@ import os
 from torchvision import transforms
 from stable_baselines3 import PPO
 import warnings
+import datetime
+from matplotlib.colors import LinearSegmentedColormap
+import cv2
 
-# Add this helper function after imports
+
 def remove_alpha_channel(image):
-    """Convert RGBA image to RGB by removing alpha channel"""
     if image.mode == 'RGBA':
-        # Create white background
         background = Image.new('RGB', image.size, (255, 255, 255))
-        # Paste using alpha channel as mask
         background.paste(image, mask=image.split()[3])
         return background
     return image
 
+def compute_mean_std(image_dir, transform):
+    mean = 0.0
+    std = 0.0
+    count = 0
+    for img_name in os.listdir(image_dir):
+        if img_name.lower().endswith(('.png', '.jpg', '.jpeg')):
+            img_path = os.path.join(image_dir, img_name)
+            image = Image.open(img_path)
+            image = remove_alpha_channel(image)
+            image = transform(image)
+            image = image.unsqueeze(0)
+            mean += image.mean([0, 2, 3])
+            std += image.std([0, 2, 3])
+            count += 1
+    if count == 0:
+        raise ValueError(f"No images found in {image_dir}")
+    mean /= count
+    std /= count
+    return mean.tolist(), std.tolist()
+
+def get_model_path():
+    model_dir = r"E:\PPO_BC_MODELS\models_ppo_v5"
+    models = [f for f in os.listdir(model_dir) if f.endswith('.zip')]
+    
+    if not models:
+        raise ValueError("No models found in directory")
+    
+    print("\nAvailable models:")
+    for idx, name in enumerate(models, 1):
+        print(f"{idx}. {name}")
+    
+    while True:
+        try:
+            choice = int(input("\nSelect model number: ")) - 1
+            if 0 <= choice < len(models):
+                return os.path.join(model_dir, models[choice])
+            print("Invalid selection")
+        except ValueError:
+            print("Please enter a number")
+
 class CNNVisualizer:
-    def __init__(self, model_path, force_cpu=True):
-        # Load the model
+    def __init__(self, model_path, image_dir, force_cpu=True):
+        # Load model
         if force_cpu:
             self.device = torch.device("cpu")
             model = PPO.load(model_path, device=self.device)
         else:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             model = PPO.load(model_path)
-            
+        
+        # Extract only CNN layers
         self.cnn = model.policy.features_extractor.img_head.to(self.device)
         self.cnn.eval()
         
-        # Setup image transforms
+        # Setup transforms
         self.transform = transforms.Compose([
             transforms.Resize((120, 120)),
             transforms.ToTensor(),
         ])
         
-    # Modify the get_feature_maps method:
+        print("Computing normalization parameters...")
+        self.mean, self.std = compute_mean_std(image_dir, self.transform)
+        print(f"Mean: {self.mean}")
+        print(f"Std: {self.std}")
+        
+        self.transform = transforms.Compose([
+            transforms.Resize((120, 120)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=self.mean, std=self.std),
+        ])
+
     def get_feature_maps(self, image_path):
         try:
-            # Load and preprocess image
             image = Image.open(image_path)
-            # Remove alpha channel if present
             image = remove_alpha_channel(image)
             image = self.transform(image).unsqueeze(0)
             image = image.to(self.device)
             
-            # Store activations
             activations = []
             
             def hook_fn(module, input, output):
                 activations.append(output.detach())
-                
+            
             hooks = []
+            # Add hooks for conv layers
             for module in self.cnn.modules():
                 if isinstance(module, nn.Conv2d):
                     hooks.append(module.register_forward_hook(hook_fn))
-                    
+            
             with torch.no_grad():
                 _ = self.cnn(image)
-                
+            
             for hook in hooks:
                 hook.remove()
                 
             return activations
+            
         except Exception as e:
             print(f"Error processing {image_path}: {str(e)}")
             return None
@@ -75,13 +125,16 @@ class CNNVisualizer:
         if activations is None:
             return
             
-        for i, layer_activations in enumerate(activations):
+        layer_names = ['conv1_16', 'conv2_32', 'conv3_64', 'conv4_32']
+        
+        for i, (layer_activations, layer_name) in enumerate(zip(activations, layer_names)):
             n_features = layer_activations.shape[1]
             size = int(np.ceil(np.sqrt(n_features)))
             
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 fig, axes = plt.subplots(size, size, figsize=(12, 12))
+                fig.suptitle(f'{layer_name} Features', fontsize=16)
                 
                 if size == 1:
                     axes = np.array([[axes]])
@@ -90,14 +143,15 @@ class CNNVisualizer:
                 
                 for idx in range(n_features):
                     ax = axes[idx//size, idx%size]
-                    ax.imshow(layer_activations[0, idx].cpu().numpy(), cmap='viridis')
+                    feature_map = layer_activations[0, idx].cpu().numpy()
+                    ax.imshow(feature_map, cmap='viridis')
                     ax.axis('off')
                 
                 for idx in range(n_features, size*size):
                     axes[idx//size, idx%size].axis('off')
                 
                 plt.tight_layout()
-                save_path = os.path.join(save_dir, f'layer_{i+1}_features.png')
+                save_path = os.path.join(save_dir, f'{layer_name}_features.png')
                 plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
                 plt.close()
 
@@ -131,20 +185,79 @@ class CNNVisualizer:
                     plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
                     plt.close()
 
+    def create_heatmap(self, image_path, save_dir, overlay_alpha=0.7):
+        """
+        Create heatmap from final layer activations and overlay on original image
+        Args:
+            overlay_alpha: Float 0-1, higher means more heatmap visible
+        """
+        activations = self.get_feature_maps(image_path)
+        if activations is None:
+            return
+            
+        # Get final layer activations
+        final_layer = activations[-1]  # Shape: [1, 32, H, W]
+        
+        # Combine all feature maps and normalize
+        heatmap = final_layer.mean(dim=1)[0]  # Average across channels
+        heatmap = heatmap.cpu().numpy()
+        
+        # Normalize to 0-1
+        heatmap = heatmap - heatmap.min()
+        heatmap = heatmap / heatmap.max()
+        
+        # Resize heatmap to original image size
+        original_image = Image.open(image_path)
+        original_image = remove_alpha_channel(original_image)
+        heatmap = cv2.resize(heatmap, original_image.size)
+        
+        # Create colormap
+        colors = [(0, 0, 0, 0), (1, 0, 0, 1)]  # Transparent to red
+        cmap = LinearSegmentedColormap.from_list('custom', colors)
+        
+        # Create figure
+        plt.figure(figsize=(12, 6))
+        
+        # Plot original image
+        plt.subplot(1, 2, 1)
+        plt.imshow(original_image)
+        plt.axis('off')
+        plt.title('Original Image')
+        
+        # Plot overlay
+        plt.subplot(1, 2, 2)
+        plt.imshow(original_image)
+        plt.imshow(heatmap, cmap=cmap, alpha=overlay_alpha)
+        plt.axis('off')
+        plt.title('Activation Heatmap Overlay')
+        
+        # Save
+        save_path = os.path.join(save_dir, 'heatmap_overlay.png')
+        plt.savefig(save_path, bbox_inches='tight', pad_inches=0)
+        plt.close()
+
 def main():
-    model_path = r"E:\PPO_BC_MODELS\models_ppo_resnet18\model_step_10000.zip"
-    save_dir = "cnn_visualizations"
-    image_dir = "test_images"
-    
-    os.makedirs(save_dir, exist_ok=True)
-    
-    print("Loading model and initializing visualizer...")
-    visualizer = CNNVisualizer(model_path, force_cpu=True)
-    
-    print("Visualizing CNN filters...")
-    visualizer.visualize_filters(save_dir)
-    
-    if os.path.exists(image_dir):
+    try:
+        model_path = get_model_path()
+        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        save_dir = os.path.join("cnn_visualizations", f"run_{timestamp}")
+        image_dir = "test_images"
+        
+        # Add heatmap overlay strength parameter
+        HEATMAP_ALPHA = 0.7  # Adjust this value between 0-1
+        
+        os.makedirs(save_dir, exist_ok=True)
+        
+        if not os.path.exists(image_dir):
+            print(f"Image directory {image_dir} not found!")
+            return
+            
+        print("Initializing visualizer...")
+        visualizer = CNNVisualizer(model_path, image_dir, force_cpu=True)
+        
+        print("Visualizing CNN filters...")
+        visualizer.visualize_filters(save_dir)
+        
         print(f"Processing images from {image_dir}...")
         image_files = [f for f in os.listdir(image_dir) 
                       if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
@@ -156,10 +269,12 @@ def main():
             os.makedirs(img_save_dir, exist_ok=True)
             
             visualizer.visualize_feature_maps(image_path, img_save_dir)
-    else:
-        print(f"Image directory {image_dir} not found!")
-
-    print(f"Visualizations saved to {save_dir}")
+            visualizer.create_heatmap(image_path, img_save_dir, HEATMAP_ALPHA)
+        
+        print(f"Visualizations saved to {save_dir}")
+        
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
     main()

@@ -5,7 +5,7 @@ import time
 
 async def send_turn_right(uri):
     message = {
-        "action": "turn_right"
+        "action": "reset 2",
     }
 
     async with websockets.connect(uri) as websocket:

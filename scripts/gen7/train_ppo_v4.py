@@ -33,8 +33,8 @@ import torchvision.models as models
 
 
 # Configuration
-MODEL_PATH_PPO = r"E:\PPO_BC_MODELS\models_ppo_resnet18"
-LOG_DIR_BASE = "tensorboard_logs_ppo_from_bc"
+MODEL_PATH_PPO = r"E:\PPO_BC_MODELS\models_ppo_v4"
+LOG_DIR_BASE = "tensorboard_logs_ppo_v4"
 PARALLEL_ENVS = 8
 
 RUN_TIMESTAMP = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -42,12 +42,12 @@ LOG_DIR = os.path.join(LOG_DIR_BASE, f"run_{RUN_TIMESTAMP}")
 os.makedirs(LOG_DIR, exist_ok=True)
 
 TOTAL_TIMESTEPS = 5_000_000
-LEARNING_RATE = 2e-6  # PPO learning rate
+LEARNING_RATE = 3e-5  # PPO learning rate
 N_STEPS = 1024
-BATCH_SIZE = 128
+BATCH_SIZE = 64
 N_EPOCHS = 10
 GAMMA = 0.99
-EVAL_FREQ = 8192
+EVAL_FREQ = 4096
 EVAL_EPISODES = 1
 SAVE_EVERY_STEPS = 10000
 GAE_LAMBDA = 0.95
@@ -58,7 +58,7 @@ VF_COEF = 0.5
 MAX_GRAD_NORM = 0.5
 USE_SDE = False
 SDE_SAMPLE_FREQ = -1
-TARGET_KL = 0.01
+TARGET_KL = 0.03
 VERBOSE = 1
 SEED = None
 
@@ -78,6 +78,9 @@ FINAL_FUSION_GRAD_MULTIPLIER = 1.0
 
 SPATIAL_WEIGHT = 0.8
 CLASSIFICATION_WEIGHT = 0.2
+
+SMALL_KERNEL_WEIGHT = 0.6  # Emphasize fine details
+LARGE_KERNEL_WEIGHT = 0.4  # De-emphasize broader patterns
 
 os.makedirs(MODEL_PATH_PPO, exist_ok=True)
 os.makedirs(LOG_DIR_BASE, exist_ok=True)
@@ -349,30 +352,41 @@ class CustomCNNFeatureExtractor(BaseFeaturesExtractor):
         self.img_head = nn.Sequential(
             # First block: subtle feature extraction (112x112 -> 56x56)
             nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(inplace=True),
+            nn.LeakyReLU(negative_slope=0.01, inplace=True),
             nn.MaxPool2d(2),  # 112x112 -> 56x56
             
-            # Second block (56x56 -> 28x28)
+            # Second block (56x56)
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(2),  # 56x56 -> 28x28
-            
-            # Final feature refinement at 28x28
-            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(inplace=True),
+            nn.LeakyReLU(negative_slope=0.01, inplace=True),
         )
 
-        # Calculate the flattened size (B, 32, 28, 28) -> B, 25088
-        flattened_size = 32 * 28 * 28
+        # Add parallel conv paths with LeakyReLU
+        self.final_small = nn.Sequential(
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(negative_slope=0.01, inplace=True)
+        )
+        self.final_large = nn.Sequential(
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=5, stride=1, padding=2),
+            nn.LeakyReLU(negative_slope=0.01, inplace=True)
+        )
+        self.final_combine = nn.Sequential(
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(negative_slope=0.01, inplace=True)
+        )
 
-        # Fully connected layers
+
+        # Calculate the flattened size (B, 32, 28, 28) -> B, 25088
+        flattened_size = (64 + 2) * 56 * 56  # 66 channels now
+
+
         self.fc = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(flattened_size, 512),
+            nn.Linear(flattened_size, 256),
             nn.ReLU(inplace=True),
-            nn.Dropout(0.2),
-            nn.Linear(512, features_dim),
+            nn.Dropout(0.1),
+            nn.Linear(256, 256),
             nn.ReLU(inplace=True),
+            nn.Dropout(0.1),
         )
 
         # Additional networks for other observation components
@@ -382,27 +396,35 @@ class CustomCNNFeatureExtractor(BaseFeaturesExtractor):
         player_state_dim = observation_space.spaces["player_state"].shape[0]
         
         self.inventory_net = nn.Sequential(
-            nn.Linear(hand_dim + target_block_dim + blocks_dim + player_state_dim, 128),
+            nn.Linear(hand_dim + blocks_dim + player_state_dim, 128),
             nn.ReLU(inplace=True),
-            nn.Dropout(0.1),
-            nn.Linear(128, 128),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.2),
         )
 
         surrounding_blocks_shape = observation_space.spaces["surrounding_blocks"].shape
-        self.surrounding_fc = nn.Sequential(
+        
+        # Separate pathways for surrounding blocks and direction
+        self.surrounding_processor = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(surrounding_blocks_shape[0] * surrounding_blocks_shape[1] * surrounding_blocks_shape[2], 512),
+            nn.Linear(surrounding_blocks_shape[0] * surrounding_blocks_shape[1] * surrounding_blocks_shape[2], 96),
             nn.ReLU(inplace=True),
             nn.Dropout(0.1),
-            nn.Linear(512, 128),
+        )
+
+        self.direction_processor = nn.Sequential(
+            nn.Linear(2, 32),  # yaw and pitch
             nn.ReLU(inplace=True),
+        )
+
+        # Combined fusion layer for surrounding + direction
+        self.surrounding_fusion = nn.Sequential(
+            nn.Linear(96 + 32, 128),  # Combine processed features
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.1),
         )
 
         # Final fusion layer
         self.fusion_layer = nn.Sequential(
-            nn.Linear(features_dim + 128 + 128, features_dim),
+            nn.Linear(256 + 128 + 128, features_dim),
             nn.ReLU(inplace=True),
         )
 
@@ -465,29 +487,47 @@ class CustomCNNFeatureExtractor(BaseFeaturesExtractor):
                     print(f"[INFO] Applied gradient multiplier {multiplier} to layer '{name}'.")
 
     def forward(self, observations):
-        image = observations["image"]
+        image = observations["image"]  
         blocks = observations["blocks"]
         hand = observations["hand"]
-        target_block = observations["target_block"]
+        target_spatial = observations["target_block"]
         player_state = observations["player_state"]
         surrounding_blocks = observations["surrounding_blocks"]
 
         # Extract image features
-        img_feat = self.img_head(image)
-        img_feat = self.fc(img_feat) * SPATIAL_WEIGHT  # [B, features_dim]
+        x = self.img_head(image)
+        small_features = self.final_small(x)
+        large_features = self.final_large(x)
+        
+        # Combine image features
+        combined = torch.cat([small_features, large_features], dim=1)
+        img_feat = self.final_combine(combined)  # [B, 64, H, W]
+        
+        
+        # Concatenate target block info with image features
+        img_feat = torch.cat([img_feat, target_spatial], dim=1)  # Now 66 channels
+        
+        # Now apply FC layers to flattened features
+        img_feat = self.fc(img_feat)
 
         # Extract inventory features
-        inventory_input = th.cat([hand, target_block, blocks, player_state], dim=1)
-        inv_feat = self.inventory_net(inventory_input)  # [B, 128]
+        inventory_input = th.cat([hand, blocks, player_state], dim=1)
+        inv_feat = self.inventory_net(inventory_input)
 
-        # Extract surrounding features
-        surround_feat = self.surrounding_fc(surrounding_blocks)  # [B, 128]
+        # Extract direction-aware surrounding features
+        direction_feat = self.direction_processor(player_state[:, 3:5])  # yaw and pitch
+        surrounding_feat = self.surrounding_processor(surrounding_blocks.flatten(1))
+        surround_with_dir = torch.cat([surrounding_feat, direction_feat], dim=1)
+        surround_feat = self.surrounding_fusion(surround_with_dir)
 
-        # Fuse all features
-        fused = th.cat([img_feat, inv_feat, surround_feat], dim=1)  # [B, features_dim + 256]
-        final_features = self.fusion_layer(fused)  # [B, features_dim]
+        # Final fusion
+        fused = th.cat([img_feat, inv_feat, surround_feat], dim=1)
+        final_features = self.fusion_layer(fused)
 
         return final_features
+    
+
+
 
     def close(self):
         if self.writer is not None:

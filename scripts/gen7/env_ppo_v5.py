@@ -15,21 +15,25 @@ import logging
 import uuid
 from collections import deque
 import math
+from threading import Lock
 
 # ================================
 # Constants
 # ================================
-MAX_EPISODE_STEPS = 512
+MAX_EPISODE_STEPS = 256
 TARGET_HEIGHT_MIN = -63
 TARGET_HEIGHT_MAX = -60
-BLOCK_BREAK_REWARD = 3.0
-HEIGHT_PENALTY = -0.2
-STEP_PENALTY = -0.1
-ADDITIONAL_REWARD_AMOUNT = 0.2
-PENALTY_AMOUNT = 0.2
-REPETITIVE_NON_PRODUCTIVE_MAX = 50
-STEP_PENALTY_MULTIPLIER = 0.005
 
+
+STEP_PENALTY = -0.1
+MAX_BLOCK_REWARD = 10
+ATTACK_BLOCK_REWARD_SCALE = 2
+ATTACK_MISS_PENALTY = -0.3
+JUMP_PENALTY = -1
+FORWARD_MOVE_BONUS = 0.8
+LOOK_ADJUST_BONUS = 0.05
+SIDE_PENALTY = -0.2
+BACKWARD_PENALTY = -0.5
 
 # Timeout settings in seconds
 TIMEOUT_STEP = 5
@@ -40,31 +44,15 @@ TIMEOUT_RESET_LONG = 5
 
 # Screenshot settings
 IMAGE_CHANNELS = 3
-IMAGE_HEIGHT = 112
-IMAGE_WIDTH = 112
+IMAGE_HEIGHT = 120
+IMAGE_WIDTH = 120
 IMAGE_SHAPE = (IMAGE_CHANNELS, IMAGE_HEIGHT, IMAGE_WIDTH)
 
 # Updated surrounding_blocks_dim for 13x13x4
 SURROUNDING_BLOCKS_SHAPE = (13, 13, 4)
 
-# Save Example Step Data Constants
-EXAMPLE_DATA_DIR = "example_step_data"
-MAX_SAMPLES = 25
-MAX_SAVE_STEPS = 10000
-CONSECUTIVE_STEPS = 3
 
-# Add to constants section at top
-DIRECTIONAL_REWARD_SCALE = 1.0  # Scaling factor for directional reward
 
-# Directional reward settings
-DIRECTIONAL_REWARD_MAX = 0.5  # Maximum reward/penalty per step
-CONSIDERATION_WINDOW = 200     # Number of timesteps to consider
-REWARD_START_PERCENTAGE = 0.1  # Percentage of window to start giving rewards
-NULLIFY_PERCENTAGE = 0.1       # Percentage of dominant direction to nullify reward
-DIRECTION_THRESHOLD = 0.0      # Minimum change to consider movement (keep at 0 for now)
-
-TARGET_SPATIAL_SIZE = 56  # Match the CNN output size
-TARGET_RADIUS = 10  # Same radius as in feature extractor
 
 # =================================
 # Minecraft Environment Class
@@ -80,7 +68,12 @@ class MinecraftEnv(gym.Env):
 
     def __init__(self, uri="ws://localhost:8080", task=None, window_bounds=None, save_example_step_data=False):
         super(MinecraftEnv, self).__init__()
-
+        
+        # Initialize mss with thread safety
+        self.screenshot_lock = Lock()
+        self.sct = None  # Will be initialized in capture_screenshot
+        self.minecraft_bounds = window_bounds if window_bounds else self.find_minecraft_window()
+        
         # Set up logging
         logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -131,7 +124,7 @@ class MinecraftEnv(gym.Env):
         # Observation space without 'tasks'
         blocks_dim = 4  # 4 features per block
         hand_dim = 5
-        target_block_dim = 2
+        target_block_dim = 3  # type, distance, break_progress
         surrounding_blocks_shape = SURROUNDING_BLOCKS_SHAPE  # 13x13x4
         player_state_dim = 8  # x, y, z, yaw, pitch, health, alive, light_level
 
@@ -139,7 +132,7 @@ class MinecraftEnv(gym.Env):
             'image': spaces.Box(low=0, high=1, shape=IMAGE_SHAPE, dtype=np.float32),
             'blocks': spaces.Box(low=0, high=1, shape=(blocks_dim,), dtype=np.float32),
             'hand': spaces.Box(low=0, high=1, shape=(hand_dim,), dtype=np.float32),
-            'target_block': spaces.Box(low=0, high=1, shape=(2, TARGET_SPATIAL_SIZE, TARGET_SPATIAL_SIZE), dtype=np.float32),
+            'target_block': spaces.Box(low=0, high=1, shape=(target_block_dim,), dtype=np.float32),
             'surrounding_blocks': spaces.Box(low=0, high=1, shape=surrounding_blocks_shape[::-1], dtype=np.float32),
             'player_state': spaces.Box(low=0, high=1, shape=(player_state_dim,), dtype=np.float32)
         })
@@ -168,8 +161,7 @@ class MinecraftEnv(gym.Env):
         self.max_episode_steps = MAX_EPISODE_STEPS
         self.target_height_min = TARGET_HEIGHT_MIN
         self.target_height_max = TARGET_HEIGHT_MAX
-        self.block_break_reward = BLOCK_BREAK_REWARD
-        self.height_penalty = HEIGHT_PENALTY
+        
         self.step_penalty = STEP_PENALTY
 
         # Cumulative reward and episode count
@@ -191,6 +183,8 @@ class MinecraftEnv(gym.Env):
             'x': deque(maxlen=200),
             'z': deque(maxlen=200)
         }
+
+        self.block_break_history = deque(maxlen=30)
         self.directional_consistency_bonus = 0.05  # Reward multiplier for consistent movement
         self.directional_consistency_bonus = 0.05  # Base multiplier
         self.direction_change_cooldown = 50  # Steps to wait before new direction bonus
@@ -198,7 +192,7 @@ class MinecraftEnv(gym.Env):
         self.previous_direction = None  # Track previous main direction
         self.direction_strength = 0  # Track current direction commitment
         self.recent_block_breaks = deque(maxlen=20)  # Track block breaks in last 20 steps
-        
+        self.prev_break_progress = 0.0
 
 
     def start_connection(self):
@@ -276,28 +270,11 @@ class MinecraftEnv(gym.Env):
 
     def normalize_target_block(self, state_dict):
         """Normalize target block data - use direct values"""
-        target_block = state_dict.get('target_block', [0.0, 0.0])
+        target_block = state_dict.get('target_block', [0.0, 0.0, 0.0])
         return np.array(target_block, dtype=np.float32)
     
 
-    def create_target_block_channels(self, state_dict):
-        """Return target block data as 2x56x56 spatial map"""
-        # Get raw target block values [type, distance]
-        target_block = state_dict.get('target_block', [0.0, 0.0])
-        target_vals = np.array(target_block, dtype=np.float32)
-        
-        # Create spatial map filled with 0.5
-        spatial_map = np.full((2, TARGET_SPATIAL_SIZE, TARGET_SPATIAL_SIZE), 0.5, dtype=np.float32)
-        
-        # Calculate center coordinates
-        center = TARGET_SPATIAL_SIZE // 2
-        
-        # Set target block values in center region
-        spatial_map[:, 
-                center-TARGET_RADIUS:center+TARGET_RADIUS,
-                center-TARGET_RADIUS:center+TARGET_RADIUS] = target_vals[:, None, None]
-        
-        return spatial_map
+
 
 
     def normalize_hand(self, state_dict):
@@ -369,7 +346,7 @@ class MinecraftEnv(gym.Env):
         screenshot = await screenshot_task
 
         # Initialize reward with small constant step penalty
-        reward = -0.05  # Adjust the step penalty as needed
+        reward = STEP_PENALTY  # Base step penalty
 
         if state is not None:
             # Extract relevant data from state
@@ -381,8 +358,7 @@ class MinecraftEnv(gym.Env):
             hand_norm = self.normalize_hand(state)
             target_block_norm = self.normalize_target_block(state)
             surrounding_blocks_norm = self.flatten_surrounding_blocks(state)
-            target_block_channels = self.create_target_block_channels(state)
-
+            
             x = state.get('x', 0.0)  # Normalized
             y = state.get('y', 0.0)
             z = state.get('z', 0.0)
@@ -400,7 +376,7 @@ class MinecraftEnv(gym.Env):
                 'image': screenshot,
                 'blocks': blocks_norm,
                 'hand': hand_norm,
-                'target_block': target_block_channels,
+                'target_block': target_block_norm,
                 'surrounding_blocks': surrounding_blocks_norm,
                 'player_state': player_state
             }
@@ -418,57 +394,68 @@ class MinecraftEnv(gym.Env):
 
             ##print(f"Min: {screenshot.min()}, Max: {screenshot.max()}, Mean: {screenshot.mean()}")
 
-            # Check if action was 'attack' and process block breaking rewards
             if blocks_norm[0] > 0.0:
-                block_value = blocks_norm[0]  # Value between 0 and 1
-                reward += (block_value ** 3) * 10  # Max reward of 10 for valuable blocks
-                self.cumulative_block_reward += (block_value ** 3) * 10
-                self.recent_block_breaks.append(True)
+                # Block successfully broken
+                block_value = blocks_norm[0]  
+                block_reward = (block_value ** 3) * MAX_BLOCK_REWARD
+                reward += block_reward
+                self.cumulative_block_reward += block_reward
+                self.block_break_history.append(True)
+                self.prev_break_progress = 0.0  # Reset progress
             else:
-                self.recent_block_breaks.append(False)
+                self.block_break_history.append(False)
 
-            if action_name == "attack" and target_block_norm[0] > 0.0:
-                block_value = target_block_norm[0]  # Value between 0 and 1
-                reward += (block_value ** 3) * 4
-                self.cumulative_block_reward += (block_value ** 3) * 4
-            elif action_name == "attack" and target_block_norm[0] == 0.0:
-                reward -= 0.1
-                self.cumulative_block_reward -= 0.1
-
-            if action_name == "jump" or action_name == "jump_walk_forward":
-                reward -= 0.1
-                self.cumulative_block_reward -= 0.1
+            if target_block_norm[0] == 0:
+                target_block_norm[2] = 0.0  # Reset progress if no target
             
 
-            # Check if any blocks were broken in last 20 steps
+            if action_name == "attack":
+                blocks_broken_recently = any(self.block_break_history)
+                current_progress = target_block_norm[2]  # Get breaking progress
+                
+                if target_block_norm[0] > 0.0:
+                    # Target exists
+                    if current_progress > self.prev_break_progress:
+                        # Progress increased
+                        progress_delta = current_progress - self.prev_break_progress
+                        progress_reward = progress_delta * ATTACK_BLOCK_REWARD_SCALE
+                        reward += progress_reward
+                        self.cumulative_block_reward += progress_reward
+                    elif current_progress < self.prev_break_progress and not blocks_broken_recently:
+                        # Breaking interrupted
+                        penalty = ATTACK_MISS_PENALTY * 5.0  # Double penalty for interruption
+                        reward += penalty
+                        self.cumulative_block_reward += penalty
+                else:
+                    # No valid target
+                    reward += ATTACK_MISS_PENALTY
+                    self.cumulative_block_reward += ATTACK_MISS_PENALTY
+                
+                self.prev_break_progress = current_progress
+
+            # Jump penalty
+            if action_name in ["jump", "jump_walk_forward"]:
+                reward += JUMP_PENALTY
+                self.cumulative_directional_rewards += JUMP_PENALTY
+
+            # Movement and looking rewards/penalties
             blocks_broken_recently = any(self.recent_block_breaks)
+            if blocks_broken_recently:
+                if action_name == "move_forward" and (abs(x - 0.5) > 0.02 or abs(z - 0.5) > 0.02):
+                    reward += FORWARD_MOVE_BONUS
+                    self.cumulative_directional_rewards += FORWARD_MOVE_BONUS
 
-            # Encourage moving forward after breaking blocks
-            if blocks_broken_recently and action_name == "move_forward" and (0.02 < abs(x-0.5) or 0.02 < abs(z-0.5)):
-                reward += 0.4  # Small reward for moving forward after breaking blocks
-                self.cumulative_directional_rewards += 0.4
+                if action_name in ["look_up", "look_down"]:
+                    reward += LOOK_ADJUST_BONUS
+                    self.cumulative_directional_rewards += LOOK_ADJUST_BONUS
 
-            
+                if action_name in ["look_left", "look_right", "move_left", "move_right"] and target_block_norm[0] < 0.5:
+                    reward += SIDE_PENALTY
+                    self.cumulative_directional_rewards += SIDE_PENALTY
 
-            # Encourage looking up or down after breaking blocks  
-            if blocks_broken_recently and (action_name == "look_up" or action_name == "look_down"):
-                reward += 0.05  # Small reward for adjusting pitch after breaking blocks
-                self.cumulative_directional_rewards += 0.05
-
-
-            # Penalize looking to the sides shortly after breaking blocks
-            if blocks_broken_recently and (action_name == "look_left" or action_name == "look_right") and target_block_norm[0] < 0.5:
-                reward -= 0.1 # Small penalty for looking sideways
-                self.cumulative_directional_rewards -= 0.1
-            
-            # Penalize looking to the sides shortly after breaking blocks
-            if blocks_broken_recently and (action_name == "move_left" or action_name == "move_right") and target_block_norm[0] < 0.5:
-                reward -= 0.05  # Small penalty for looking sideways
-                self.cumulative_directional_rewards -= 0.05
-            
-            if blocks_broken_recently and (action_name == "move_back" or action_name == "jump"):
-                reward -= 0.4  # Small penalty for looking sideways
-                self.cumulative_directional_rewards -= 0.4
+                if action_name in ["move_backward", "jump"]:
+                    reward += BACKWARD_PENALTY
+                    self.cumulative_directional_rewards += BACKWARD_PENALTY
 
             # Update previous action
             self.previous_action = action_name
@@ -521,10 +508,12 @@ class MinecraftEnv(gym.Env):
         self.cumulative_directional_rewards = 0.0
         self.cumulative_movement_bonus = 0.0
         self.cumulative_block_reward = 0.0
+        self.block_break_history.clear()
 
         # Reset additional variables
         self.repetitive_non_productive_counter = 0
         self.prev_target_block = 0
+        self.prev_break_progress = 0.0
 
         try:
             # Clear the state queue
@@ -567,7 +556,7 @@ class MinecraftEnv(gym.Env):
                 hand_norm = self.normalize_hand(state)
                 target_block_norm = self.normalize_target_block(state)
                 surrounding_blocks_norm = self.flatten_surrounding_blocks(state)
-                target_block_channels = self.create_target_block_channels(state) 
+                
 
                 # Extract and normalize player state
                 x = state.get('x', 0.0)  # Now comes pre-normalized
@@ -584,18 +573,18 @@ class MinecraftEnv(gym.Env):
                     x,  # Already normalized
                     y,  # Already normalized
                     z,  # Already normalized
-                    self.normalize_to_unit(max(min(yaw, 180), -180), -180, 180),
-                    self.normalize_to_unit(max(min(pitch, 25), -25), -25, 25),
-                    self.normalize_to_unit(health, *self.health_range),
+                    yaw,
+                    pitch,
+                    health,
                     1.0 if alive else 0.0,
-                    self.normalize_to_unit(light_level, *self.light_level_range)
+                    light_level
                 ], dtype=np.float32)
 
                 state_data = {
                     'image': screenshot,
                     'blocks': blocks_norm,
                     'hand': hand_norm,
-                    'target_block': target_block_channels,
+                    'target_block': target_block_norm,
                     'surrounding_blocks': surrounding_blocks_norm,
                     'player_state': player_state
                 }
@@ -612,24 +601,24 @@ class MinecraftEnv(gym.Env):
             return state_data, {}
 
     def capture_screenshot(self):
-        """Capture a screenshot of the assigned Minecraft window"""
-        #print(f"window {self.minecraft_bounds}, uri: {self.uri}")
-        try:
-            with mss.mss() as sct:
-                screenshot = sct.grab(self.minecraft_bounds)
-                img = np.array(screenshot)[:, :, :3]  # Ensure RGB
-                img = cv2.resize(img, (IMAGE_WIDTH, IMAGE_HEIGHT), interpolation=cv2.INTER_AREA)
-                img = img.transpose(2, 0, 1) / 255.0  # Normalize
-
-                if self.save_screenshots and self.uri == "ws://localhost:8081":
-                    timestamp = time.strftime('%Y%m%d_%H%M%S')
-                    screenshot_path = os.path.join(self.screenshot_dir, f"screenshot_{timestamp}.png")
-                    cv2.imwrite(screenshot_path, img.transpose(1, 2, 0) * 255)
-                    logging.debug(f"Saved screenshot to {screenshot_path}")
-        except Exception as e:
-            logging.error(f"Error capturing screenshot: {e}")
-            img = np.zeros(IMAGE_SHAPE, dtype=np.float32)
-        return img.astype(np.float32)
+        """Thread-safe screenshot capture"""
+        with self.screenshot_lock:
+            try:
+                # Lazy initialization of mss
+                if self.sct is None:
+                    self.sct = mss.mss()
+                
+                screenshot = self.sct.grab(self.minecraft_bounds)
+                img = np.array(screenshot)[:, :, :3]
+                img = cv2.resize(img, (IMAGE_WIDTH, IMAGE_HEIGHT), 
+                               interpolation=cv2.INTER_AREA)
+                img = img.transpose(2, 0, 1) / 255.0
+                return img.astype(np.float32)
+            except Exception as e:
+                # Only log critical screenshot errors
+                if "srcdc" not in str(e):
+                    logging.error(f"Critical screenshot error: {e}")
+                return np.zeros(IMAGE_SHAPE, dtype=np.float32)
 
     def _get_default_state(self):
         """Return default state when real state cannot be obtained"""
@@ -648,7 +637,7 @@ class MinecraftEnv(gym.Env):
             'image': np.zeros(IMAGE_SHAPE, dtype=np.float32),
             'blocks': np.zeros(4, dtype=np.float32),    # block_features = 4
             'hand': np.zeros(5, dtype=np.float32),      # hand_dim = 5
-            'target_block': np.full((2, TARGET_SPATIAL_SIZE, TARGET_SPATIAL_SIZE), 0.5, dtype=np.float32),  # New spatial shape with 0.5 default
+            'target_block': np.full(3, dtype=np.float32),  # New spatial shape with 0.5 default
             'surrounding_blocks': np.zeros(SURROUNDING_BLOCKS_SHAPE, dtype=np.float32),  # 13x13x4
             'player_state': default_player_state
         }
@@ -659,11 +648,17 @@ class MinecraftEnv(gym.Env):
         pass
 
     def close(self):
-        """Close the WebSocket connection and stop the thread"""
+        """Clean up resources"""
         if self.connected and self.websocket:
             self.connected = False
             asyncio.run_coroutine_threadsafe(self.websocket.close(), self.loop)
             self.websocket = None
+
+        # Clean up mss
+        with self.screenshot_lock:
+            if self.sct:
+                self.sct.close()
+                self.sct = None
 
         if self.loop and self.loop.is_running():
             self.loop.call_soon_threadsafe(self.loop.stop)
@@ -674,4 +669,3 @@ class MinecraftEnv(gym.Env):
     def __del__(self):
         """Cleanup before deleting the environment object."""
         self.close()
-
