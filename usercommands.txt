@@ -44,3 +44,4 @@ tensorboard --logdir=./tensorboard_logs
 tensorboard --logdir=./tensorboard_logs_dqn_from_bc
 tensorboard --logdir=./tensorboard_logs_ppo_from_bc
 tensorboard --logdir=./tensorboard_logs_ppo_v4
+tensorboard --logdir=./tensorboard_logs_ppo_v5

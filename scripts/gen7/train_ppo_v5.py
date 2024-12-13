@@ -49,7 +49,7 @@ os.makedirs(MODEL_PATH_PPO, exist_ok=True)
 device = th.device("cuda" if th.cuda.is_available() else "cpu")
 
 TOTAL_TIMESTEPS = 5_000_000
-LEARNING_RATE = 5e-6  # PPO learning rate
+LEARNING_RATE = 1e-5  # PPO learning rate
 N_STEPS = 2048
 BATCH_SIZE = 512
 N_EPOCHS = 5
@@ -60,7 +60,7 @@ SAVE_EVERY_STEPS = 10000
 GAE_LAMBDA = 0.95
 CLIP_RANGE = 0.2
 CLIP_RANGE_VF = None
-ENT_COEF = 0.02
+ENT_COEF = 0.01
 VF_COEF = 0.5
 MAX_GRAD_NORM = 0.5
 USE_SDE = False
@@ -73,11 +73,12 @@ SEED = None
 # Constants for schedulers
 MIN_LR = 1e-7
 MIN_ENT_COEF = 0.001
-DECAY_STEPS = 300_000
+DECAY_STEPS = 600_000
 
 def get_scheduled_lr(initial_lr, progress_remaining: float):
     """Linear decay based on remaining progress"""
-    return max(MIN_LR, initial_lr * progress_remaining)
+    decay_rate = -5 * (1 - progress_remaining)
+    return max(MIN_LR, initial_lr * np.exp(decay_rate))
 
 def get_scheduled_ent_coef(initial_ent, progress_remaining: float):
     """Exponential decay based on remaining progress""" 
@@ -247,7 +248,7 @@ def find_minecraft_windows():
                     if window._hWnd not in seen_handles:
                         center_x = window.left + window.width // 2
                         center_y = window.top + window.height // 2
-                        crop_size = 120
+                        crop_size = 240
                         half = crop_size // 2
                         
                         window_info = {
@@ -261,13 +262,13 @@ def find_minecraft_windows():
                         windows.append(window_info)
                         seen_handles.add(window._hWnd)
 
-    if len(windows) < 9:
+    if len(windows) < (PARALLEL_ENVS + 1):
         raise ValueError(f"Found only {len(windows)} Minecraft windows, need 9")
 
     print(f"\nFound {len(windows)} Minecraft windows")
     sct = mss.mss()
 
-    async def get_stable_screenshot(bounds, num_samples=3, delay=0.1):
+    async def get_stable_screenshot(bounds, num_samples=1, delay=0.1):
         screens = []
         for _ in range(num_samples):
             screen = np.array(sct.grab(bounds))[:,:,:3]
@@ -275,7 +276,7 @@ def find_minecraft_windows():
             await asyncio.sleep(delay)
         return np.mean(screens, axis=0)
 
-    async def test_uri(uri, window_idx, max_retries=3):
+    async def test_uri(uri, window_idx, max_retries=2):
         for attempt in range(max_retries):
             try:
                 # Get stable before screenshots
@@ -290,7 +291,7 @@ def find_minecraft_windows():
                 # Send turn command
                 async with websockets.connect(uri) as ws:
                     await ws.send(json.dumps({"action": "reset 2"}))
-                    await asyncio.sleep(0.5)  # Wait longer for movement
+                    await asyncio.sleep(0.3)  # Wait longer for movement
                 
                 # Get stable after screenshots
                 after = await get_stable_screenshot(bounds)
@@ -312,10 +313,10 @@ def find_minecraft_windows():
         return False
 
     async def map_windows():
-        unmapped_uris = [f"ws://localhost:{8080+i}" for i in range(9)]
+        unmapped_uris = [f"ws://localhost:{8080+i}" for i in range(PARALLEL_ENVS + 1)]
         mapped_windows = set()
         
-        while unmapped_uris and len(mapped_windows) < 9:
+        while unmapped_uris and len(mapped_windows) < (PARALLEL_ENVS + 1):
             for uri in unmapped_uris[:]:
                 print(f"\nTesting {uri}...")
                 
@@ -359,7 +360,7 @@ def find_minecraft_windows():
         key=lambda w: int(w["uri"].split(":")[-1])
     )
 
-    if len(sorted_windows) != 9:
+    if len(sorted_windows) != (PARALLEL_ENVS + 1):
         raise ValueError(f"Could only map {len(sorted_windows)} windows")
 
     # Visual verification in reading order

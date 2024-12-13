@@ -1,0 +1,45 @@
+Stress Test Results
+==================
+
+
+Capture Interval: 0.050s
+FPS: 1933.7 ± 52.3
+Latency: 0.0 ± 0.0ms
+CPU Usage: 0.0 ± 0.0%
+Memory Usage: 54.8 ± 0.3MB
+--------------------------------------------------
+
+Capture Interval: 0.040s
+FPS: 1940.6 ± 39.5
+Latency: 0.0 ± 0.0ms
+CPU Usage: 0.0 ± 0.0%
+Memory Usage: 54.8 ± 0.0MB
+--------------------------------------------------
+
+Capture Interval: 0.030s
+FPS: 1951.2 ± 28.9
+Latency: 0.0 ± 0.0ms
+CPU Usage: 0.0 ± 0.0%
+Memory Usage: 54.8 ± 0.0MB
+--------------------------------------------------
+
+Capture Interval: 0.020s
+FPS: 1938.6 ± 34.9
+Latency: 0.0 ± 0.0ms
+CPU Usage: 0.0 ± 0.0%
+Memory Usage: 54.8 ± 0.0MB
+--------------------------------------------------
+
+Capture Interval: 0.010s
+FPS: 1945.1 ± 97.0
+Latency: 0.0 ± 0.0ms
+CPU Usage: 0.0 ± 0.0%
+Memory Usage: 54.8 ± 0.0MB
+--------------------------------------------------
+
+Capture Interval: 0.005s
+FPS: 1931.6 ± 40.9
+Latency: 0.0 ± 0.0ms
+CPU Usage: 0.0 ± 0.0%
+Memory Usage: 54.9 ± 0.0MB
+--------------------------------------------------

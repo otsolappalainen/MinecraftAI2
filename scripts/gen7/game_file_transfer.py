@@ -31,7 +31,7 @@ def copy_files(source, destination):
 def main():
     source_folder = r"E:\mcmodding\fabric-example-mod\instances\client1"
     destination_folders = [
-        rf"E:\mcmodding\fabric-example-mod\instances\client{i}" for i in range(2, 10)
+        rf"E:\mcmodding\fabric-example-mod\instances\client{i}" for i in range(2, 16)
     ]
 
     for dest in destination_folders:

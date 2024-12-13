@@ -20,7 +20,7 @@ from threading import Lock
 # ================================
 # Constants
 # ================================
-MAX_EPISODE_STEPS = 256
+MAX_EPISODE_STEPS = 512
 TARGET_HEIGHT_MIN = -63
 TARGET_HEIGHT_MAX = -60
 
@@ -37,7 +37,7 @@ BACKWARD_PENALTY = -0.5
 
 # Timeout settings in seconds
 TIMEOUT_STEP = 5
-TIMEOUT_STATE = 1
+TIMEOUT_STATE = 2
 TIMEOUT_RESET = 10
 TIMEOUT_STEP_LONG = 5
 TIMEOUT_RESET_LONG = 5
@@ -460,6 +460,8 @@ class MinecraftEnv(gym.Env):
             # Update previous action
             self.previous_action = action_name
 
+            self.save_screenshot_if_needed(screenshot)
+
         else:
             logging.warning("No state received after action.")
             state_data = self._get_default_state()
@@ -611,7 +613,7 @@ class MinecraftEnv(gym.Env):
                 screenshot = self.sct.grab(self.minecraft_bounds)
                 img = np.array(screenshot)[:, :, :3]
                 img = cv2.resize(img, (IMAGE_WIDTH, IMAGE_HEIGHT), 
-                               interpolation=cv2.INTER_AREA)
+                               interpolation=cv2.INTER_NEAREST)
                 img = img.transpose(2, 0, 1) / 255.0
                 return img.astype(np.float32)
             except Exception as e:
@@ -619,6 +621,30 @@ class MinecraftEnv(gym.Env):
                 if "srcdc" not in str(e):
                     logging.error(f"Critical screenshot error: {e}")
                 return np.zeros(IMAGE_SHAPE, dtype=np.float32)
+
+    def save_screenshot_if_needed(self, screenshot):
+        """Save screenshot if enabled and meets timing conditions"""
+        if self.save_screenshots and self.steps % 250 == 0:
+            try:
+                # Get the last character of the URI (e.g., '0' or '1')
+                uri_suffix = self.uri[-1]
+                
+                # Create timestamp
+                timestamp = int(time.time() * 1000)
+                
+                # Convert screenshot from CHW to HWC format and scale to 0-255
+                img_save = (screenshot.transpose(1, 2, 0) * 255).astype(np.uint8)
+                
+                # Create filename with timestamp and URI suffix
+                filename = f"screenshot_{timestamp}_env{uri_suffix}.png"
+                filepath = os.path.join(self.screenshot_dir, filename)
+                
+                # Save the image
+                cv2.imwrite(filepath, cv2.cvtColor(img_save, cv2.COLOR_RGB2BGR))
+                logging.info(f"Saved screenshot: {filename}")
+                
+            except Exception as e:
+                logging.error(f"Error saving screenshot: {e}")
 
     def _get_default_state(self):
         """Return default state when real state cannot be obtained"""
